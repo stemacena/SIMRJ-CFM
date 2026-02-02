@@ -1,11 +1,10 @@
 :root {
-    /* Paleta de Cores do SIM-RJ/CFM */
+    /* Cores Institucionais */
     --color-purple: #6b4e7e;
     --color-blue: #0034bb;
     --color-green-olive: #899b1c;
     --color-yellow: #e2a512;
-    --color-green-light: #72b993;
-    --color-beige: #e0c091;
+    --color-cfm-teal: #006666; /* Nova cor do CFM (Verde Petróleo) */
     --color-dark: #2c3e50;
 }
 
@@ -14,80 +13,68 @@ body {
     background-color: #f8f9fa;
 }
 
+/* Correção da Rolagem (O título não fica escondido atrás do menu) */
+section {
+    scroll-margin-top: 100px;
+}
+
 /* Barra Governamental */
 .gov-bar {
     background-color: var(--color-blue);
     font-size: 0.85rem;
 }
 
+/* Cabeçalho */
+.header-logo {
+    max-height: 70px; /* Ajustado para não estourar */
+    width: auto;
+    object-fit: contain;
+}
+
 /* Botões */
 .btn-custom {
-    background-color: var(--color-yellow);
+    background-color: var(--color-cfm-teal); /* Botão agora segue a cor do CFM */
     border: none;
-    color: #000 !important; /* Contraste preto no amarelo */
+    color: #fff !important;
 }
 .btn-custom:hover {
-    background-color: #c7900f;
+    background-color: #004d4d;
 }
 
-.btn-primary {
-    background-color: var(--color-blue);
-    border-color: var(--color-blue);
-}
-
-/* Títulos */
-.section-title {
-    color: var(--color-purple);
-    border-bottom: 3px solid var(--color-green-light);
-    display: inline-block;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-}
-
-/* Hero Section */
+/* Hero Section (Fundo Principal) */
 .hero-section {
-    background: linear-gradient(rgba(107, 78, 126, 0.9), rgba(0, 52, 187, 0.8)), url('logo-plano.jpg'); /* Fundo com cores da marca */
+    /* Gradiente usando a cor do CFM */
+    background: linear-gradient(rgba(0, 102, 102, 0.9), rgba(0, 52, 187, 0.8)), url('logo-plano.jpg');
     background-size: cover;
     background-position: center;
 }
 
-/* Cards de Museus */
+/* Sidebar e Filtros */
+.sidebar-filters {
+    border-top: 4px solid var(--color-cfm-teal);
+}
+
+.filter-group-box {
+    max-height: 150px; 
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+/* Cards */
 .museum-card {
-    transition: transform 0.2s;
     border-left: 5px solid var(--color-green-olive);
+    transition: transform 0.2s;
 }
 .museum-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-/* Sidebar */
-.sidebar-filters {
-    border-top: 4px solid var(--color-purple);
-}
-
-/* Marcadores do Mapa */
-.custom-popup .leaflet-popup-content-wrapper {
-    border-radius: 0;
-    border-top: 3px solid var(--color-blue);
-}
-/* --- CORREÇÃO DAS LOGOS --- */
-.header-logo {
-    max-height: 80px;  /* Altura máxima fixa para Desktop */
-    width: auto;       /* Mantém a proporção (não estica) */
-    object-fit: contain;
-    display: block;
-}
-
-/* Ajuste para telas menores (Celular) para não quebrar */
+/* Ajustes Mobile */
 @media (max-width: 768px) {
-    .header-logo {
-        max-height: 50px; /* Fica menor no celular */
-    }
-    
-    .stats-box {
-        margin-top: 1rem;
-        width: 100%;
-        text-align: center;
-    }
+    .header-logo { max-height: 50px; }
+    .hero-section { text-align: center; }
 }

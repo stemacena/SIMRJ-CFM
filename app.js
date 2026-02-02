@@ -1,211 +1,159 @@
-// --- CONFIGURAÇÃO INICIAL DO MAPA ---
+// --- 1. CONFIGURAÇÃO DO MAPA ---
 const map = L.map('map').setView([-22.9068, -43.1729], 8);
-
-// Adicionar camada do OpenStreetMap
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
+    attribution: '&copy; OpenStreetMap'
 }).addTo(map);
 
-// Ícone personalizado (Simples)
 const museumIcon = L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', 
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -30]
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+    iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
 });
 
-// --- DADOS INICIAIS (SIMULAÇÃO) ---
-let museumsData = [
-    {
-        id: 1,
-        nome: "Museu Imperial",
-        municipio: "Petrópolis",
-        regiao: "Serrana",
-        natureza: "Federal",
-        situacao: "Aberto",
-        ingresso: "R$10 a R$20",
-        gratuidades: "Sim, idosos e estudantes",
-        educativo: true,
-        acessibilidade: true,
-        acervo: "Histórico",
-        lat: -22.5046,
-        lng: -43.1752,
-        descricao: "Palácio de verão de D. Pedro II."
-    },
-    {
-        id: 2,
-        nome: "Museu de Arte do Rio (MAR)",
-        municipio: "Rio de Janeiro",
-        regiao: "Metropolitana I",
-        natureza: "Municipal",
-        situacao: "Aberto",
-        ingresso: "R$20 a R$30",
-        gratuidades: "Terças-feiras",
-        educativo: true,
-        acessibilidade: true,
-        acervo: "Artes Visuais",
-        lat: -22.8965,
-        lng: -43.1819,
-        descricao: "Museu dedicado à arte e cultura carioca."
-    },
-    {
-        id: 3,
-        nome: "Museu Casa de Casimiro de Abreu",
-        municipio: "Casimiro de Abreu",
-        regiao: "Baixadas Litorâneas",
-        natureza: "Municipal",
-        situacao: "Aberto",
-        ingresso: "Gratuito",
-        gratuidades: "Sempre gratuito",
-        educativo: false,
-        acessibilidade: false,
-        acervo: "Histórico",
-        lat: -22.4811,
-        lng: -42.2033,
-        descricao: "Casa onde nasceu o poeta."
-    }
-];
-
 let markersLayer = L.layerGroup().addTo(map);
+let museumsData = []; // Começa vazio, espera upload
 
-// --- FUNÇÕES ---
+// --- 2. BASE DE COORDENADAS (SOLUÇÃO PARA FALTA DE LAT/LONG) ---
+// Como a planilha só tem endereço, mapeamos o centro dos principais municípios.
+// Adicione mais cidades aqui conforme necessário para o protótipo.
+const cityCoords = {
+    "Rio de Janeiro": [-22.9068, -43.1729],
+    "Petrópolis": [-22.5050, -43.1788],
+    "Niterói": [-22.8859, -43.1152],
+    "Cabo Frio": [-22.8869, -42.0266],
+    "Campos dos Goytacazes": [-21.7618, -41.3239],
+    "Duque de Caxias": [-22.7915, -43.3005],
+    "Nova Friburgo": [-22.2887, -42.5341],
+    "Paraty": [-23.2198, -44.7175],
+    "Vassouras": [-22.4042, -43.6631],
+    "Volta Redonda": [-22.5202, -44.1033]
+};
 
-// 1. Inicializar
+// --- 3. FUNÇÕES PRINCIPAIS ---
+
 function init() {
+    // Carrega dados de exemplo se não houver upload
+    if(museumsData.length === 0) {
+        // Exemplo fictício só pra não ficar vazio ao abrir
+        museumsData = [{
+            id: 0, nome: "Exemplo: Faça Upload da Planilha", municipio: "Rio de Janeiro",
+            regiao: "Metropolitana I", natureza: "Estadual", situacao: "Aberto",
+            lat: -22.9, lng: -43.1, ingresso: "Gratuito", museologo: true,
+            descricao: "Use o painel de gestor para carregar os dados reais."
+        }];
+    }
     renderMuseums(museumsData);
     updateStats(museumsData);
 }
 
-// 2. Renderizar Museus (Mapa e Lista)
 function renderMuseums(data) {
     const listContainer = document.getElementById('museum-list');
     listContainer.innerHTML = '';
     markersLayer.clearLayers();
-    
     document.getElementById('resultCount').innerText = data.length;
 
     data.forEach(museum => {
-        // Criar Card na Lista
-        const cardCol = document.createElement('div');
-        cardCol.className = 'col-md-6 mb-3';
-        cardCol.innerHTML = `
+        // Renderiza Card
+        const card = document.createElement('div');
+        card.className = 'col-md-6 mb-3';
+        card.innerHTML = `
             <div class="card h-100 museum-card bg-white shadow-sm">
                 <div class="card-body">
-                    <span class="badge bg-primary mb-2">${museum.regiao}</span>
-                    <span class="badge ${museum.situacao === 'Aberto' ? 'bg-success' : 'bg-warning text-dark'} mb-2">${museum.situacao}</span>
+                    <div class="d-flex justify-content-between">
+                        <span class="badge bg-secondary mb-2">${museum.regiao}</span>
+                        ${museum.museologo ? '<span class="badge bg-info text-dark mb-2"><i class="bi bi-person-badge"></i> Museólogo</span>' : ''}
+                    </div>
                     <h5 class="card-title text-dark fw-bold">${museum.nome}</h5>
-                    <p class="card-text small text-muted"><i class="bi bi-geo-alt"></i> ${museum.municipio}</p>
-                    <p class="card-text small"><strong>Acervo:</strong> ${museum.acervo}</p>
-                    <button class="btn btn-sm btn-outline-secondary w-100 mt-2" onclick="showDetails(${museum.id})">Ver Perfil Completo</button>
+                    <p class="card-text small text-muted mb-1"><i class="bi bi-geo-alt"></i> ${museum.municipio}</p>
+                    <p class="card-text small mb-1"><strong>Endereço:</strong> ${museum.endereco}</p>
+                    <p class="card-text small"><strong>Situação:</strong> ${museum.situacao}</p>
+                    <button class="btn btn-sm btn-outline-secondary w-100 mt-2" onclick="showDetails(${museum.id})">Ver Detalhes</button>
                 </div>
-            </div>
-        `;
-        listContainer.appendChild(cardCol);
+            </div>`;
+        listContainer.appendChild(card);
 
-        // Adicionar Pin no Mapa
-        if(museum.lat && museum.lng) {
-            const marker = L.marker([museum.lat, museum.lng], {icon: museumIcon})
-                .bindPopup(`<b>${museum.nome}</b><br>${museum.municipio}<br><small>${museum.situacao}</small>`);
-            markersLayer.addLayer(marker);
+        // Renderiza Pin no Mapa
+        // Se tiver Lat/Long, usa. Se não, tenta achar pelo município.
+        let lat = museum.lat;
+        let lng = museum.lng;
+
+        if (!lat && cityCoords[museum.municipio]) {
+            lat = cityCoords[museum.municipio][0];
+            lng = cityCoords[museum.municipio][1];
+            // Pequena variação aleatória para pinos da mesma cidade não ficarem 100% sobrepostos
+            lat += (Math.random() - 0.5) * 0.01;
+            lng += (Math.random() - 0.5) * 0.01;
+        }
+
+        if (lat && lng) {
+            L.marker([lat, lng], {icon: museumIcon})
+                .bindPopup(`<b>${museum.nome}</b><br>${museum.municipio}`)
+                .addTo(markersLayer);
         }
     });
 }
 
-// 3. Atualizar Estatísticas
 function updateStats(data) {
     document.getElementById('count-total').innerText = data.length;
-    const free = data.filter(m => m.ingresso === 'Gratuito').length;
+    // Lógica frouxa para identificar gratuidade no texto
+    const free = data.filter(m => m.ingresso && m.ingresso.toLowerCase().includes('gratuito')).length;
     document.getElementById('count-free').innerText = free;
 }
 
-// --- NOVAS FUNÇÕES DE FILTRAGEM (MULTIPLA ESCOLHA) ---
+// --- 4. FILTROS ---
 
-// Função Auxiliar: Pega valores dos checkboxes marcados
 function getCheckedValues(className) {
-    const checkboxes = document.querySelectorAll('.' + className + ':checked');
-    return Array.from(checkboxes).map(cb => cb.value);
+    return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => cb.value);
 }
 
-// 4. Filtragem Atualizada
 function applyFilters() {
-    const nameInput = document.getElementById('searchName').value.toLowerCase();
+    const term = document.getElementById('searchName').value.toLowerCase();
+    const regions = getCheckedValues('filter-region');
+    const natures = getCheckedValues('filter-nature');
+    const costs = getCheckedValues('filter-cost'); // Ex: ['Gratuito']
     
-    // Captura os arrays de itens marcados
-    const selectedRegions = getCheckedValues('filter-region');
-    const selectedNature = getCheckedValues('filter-nature');
-    const selectedStatus = getCheckedValues('filter-status');
-    const selectedCosts = getCheckedValues('filter-cost');
-    
-    const hasEdu = document.getElementById('checkEdu').checked;
-    const hasAccess = document.getElementById('checkAccess').checked;
+    const requireMuseologo = document.getElementById('checkMuseologo').checked;
+    const requireEdu = document.getElementById('checkEdu').checked;
+    const requireAccess = document.getElementById('checkAccess').checked;
 
     const filtered = museumsData.filter(m => {
-        // Filtro Nome
-        const matchName = m.nome.toLowerCase().includes(nameInput);
+        // Busca textual
+        const matchName = m.nome.toLowerCase().includes(term);
         
-        // Filtro Região (Se a lista estiver vazia, aceita todos. Se não, verifica se o item está na lista)
-        const matchRegion = selectedRegions.length === 0 || selectedRegions.includes(m.regiao);
+        // Filtros de múltipla escolha
+        const matchRegion = regions.length === 0 || regions.includes(m.regiao);
+        const matchNature = natures.length === 0 || natures.includes(m.natureza);
         
-        // Filtro Natureza
-        const matchNature = selectedNature.length === 0 || selectedNature.includes(m.natureza);
-        
-        // Filtro Situação
-        const matchStatus = selectedStatus.length === 0 || selectedStatus.includes(m.situacao);
-
-        // Filtro Custo
+        // Filtro de Custo (Simplificado)
         let matchCost = true;
-        if (selectedCosts.length > 0) {
-            matchCost = false; // Assume falso até provar o contrário
-            
-            // Verifica Gratuito
-            if (selectedCosts.includes('Gratuito') && m.ingresso === 'Gratuito') matchCost = true;
-            
-            // Verifica Faixas (Lógica simplificada para protótipo)
-            if (selectedCosts.includes('Até 10') && m.ingresso !== 'Gratuito') matchCost = true; 
-            if (selectedCosts.includes('10-20') && m.ingresso.includes('10')) matchCost = true;
-            
-            // Fallback genérico: se o texto do ingresso bater com o filtro
-            if (selectedCosts.includes(m.ingresso)) matchCost = true; 
+        if (costs.includes('Gratuito')) {
+            matchCost = m.ingresso && m.ingresso.toLowerCase().includes('gratuito');
         }
 
-        const matchEdu = hasEdu ? m.educativo === true : true;
-        const matchAccess = hasAccess ? m.acessibilidade === true : true;
-        
-        return matchName && matchRegion && matchNature && matchStatus && matchCost && matchEdu && matchAccess;
+        // Filtros Booleanos (Sim/Não)
+        const matchMuseologo = !requireMuseologo || m.museologo;
+        const matchEdu = !requireEdu || (m.educativo && m.educativo.toLowerCase() === 'sim');
+        const matchAccess = !requireAccess || (m.acessibilidade && m.acessibilidade.toLowerCase().includes('sim')); // Verifica se tem "Sim" no texto
+
+        return matchName && matchRegion && matchNature && matchCost && matchMuseologo && matchEdu && matchAccess;
     });
 
     renderMuseums(filtered);
 }
 
-// 5. Resetar Filtros (Agora desmarca checkboxes)
 function resetFilters() {
     document.getElementById('searchName').value = '';
-    
-    // Desmarcar todos os checkboxes
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(cb => cb.checked = false);
-    
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
     renderMuseums(museumsData);
 }
 
-// --- ÁREA ADMINISTRATIVA ---
+// --- 5. GESTÃO DE DADOS (UPLOAD E MANUAL) ---
 
-// 6. Toggle Admin
 function toggleAdmin() {
-    const panel = document.getElementById('admin-panel');
-    if(panel.style.display === 'none') {
-        const pass = prompt("Senha de Administrador (Protótipo: digite 'simrj')");
-        if(pass === 'simrj') {
-            panel.style.display = 'block';
-        } else {
-            alert('Senha incorreta');
-        }
-    } else {
-        panel.style.display = 'none';
-    }
+    const p = document.getElementById('admin-panel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
 }
 
-// 7. Upload de CSV (PapaParse)
+// Upload CSV
 document.getElementById('csvFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -214,35 +162,97 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-            console.log("Dados carregados:", results.data);
-            alert(`Sucesso! ${results.data.length} museus carregados.`);
-            
-            museumsData = results.data.map((row, index) => ({
-                id: index + 100,
-                nome: row.Nome || row.nome,
-                municipio: row.Municipio || "Não informado",
-                regiao: row.Regiao || "Não informada",
-                natureza: row.Natureza || "Privada",
-                situacao: row.Situacao || "Aberto",
-                lat: parseFloat(row.Latitude) || -22.9,
-                lng: parseFloat(row.Longitude) || -43.2,
-                ingresso: row.Ingresso || "Não informado",
-                acervo: row.Acervo || "Outros",
-                educativo: row.Educativo === 'Sim',
-                descricao: row.Descricao || ""
-            }));
-
-            renderMuseums(museumsData);
-            updateStats(museumsData);
+            processCSVData(results.data);
         }
     });
 });
 
-// Detalhes
-function showDetails(id) {
-    const m = museumsData.find(x => x.id === id);
-    alert(`Nome: ${m.nome}\nDescrição: ${m.descricao}\nIngresso: ${m.ingresso}\nAcessibilidade: ${m.acessibilidade ? 'Sim' : 'Não'}`);
+function processCSVData(rawData) {
+    let successCount = 0;
+    let errors = [];
+    let cleanData = [];
+
+    rawData.forEach((row, index) => {
+        // Validação: Campos obrigatórios
+        // Verifica se existe a coluna "Nome da Instituição". Se não, tenta "Nome".
+        const nome = row["Nome da Instituição"];
+        const municipio = row["Município"];
+
+        if (!nome || !municipio) {
+            errors.push(`Linha ${index + 2}: Falta Nome ou Município.`);
+            return; // Pula este registro
+        }
+
+        // Verifica campos indefinidos importantes
+        if (!row["Região"]) errors.push(`Aviso Linha ${index+2}: Região indefinida.`);
+
+        cleanData.push({
+            id: index + 1000,
+            nome: nome,
+            endereco: row["Endereço"] || "Não informado",
+            municipio: municipio,
+            regiao: row["Região"] || "Outra",
+            natureza: row["Natureza Administrativa"] || "Privada",
+            situacao: row["Situação"] || "Desconhecida",
+            ingresso: row["Valor do Ingresso"] || "Não informado",
+            educativo: row["Setor Educativo"] || "Não",
+            acervo: row["Acervo Predominante"] || "Diversos",
+            // Verifica se tem museólogo (Procura "Sim" na resposta)
+            museologo: row["Museólogo"] && row["Museólogo"].includes("Sim"),
+            acessibilidade: row["Acessibilidade"] || "Não informado",
+            historico: row["Histórico"] || "",
+            // Deixa lat/lng nulos para usar o fallback de cidade
+            lat: null, 
+            lng: null
+        });
+        successCount++;
+    });
+
+    museumsData = cleanData;
+    renderMuseums(museumsData);
+    updateStats(museumsData);
+
+    // Feedback visual
+    const statusBox = document.getElementById('upload-status');
+    statusBox.className = 'alert alert-info small mt-2 d-block';
+    statusBox.innerHTML = `<strong>Sucesso:</strong> ${successCount} carregados.<br>`;
+    
+    if (errors.length > 0) {
+        statusBox.className = 'alert alert-warning small mt-2 d-block';
+        statusBox.innerHTML += `<strong>Erros/Avisos:</strong><br>${errors.slice(0, 5).join('<br>')}`;
+        if(errors.length > 5) statusBox.innerHTML += `<br>...e mais ${errors.length - 5} avisos.`;
+    }
 }
 
-// Rodar ao iniciar
+// Adicionar Manualmente
+function addManualMuseum(e) {
+    e.preventDefault();
+    const nome = document.getElementById('newNome').value;
+    const muni = document.getElementById('newMunicipio').value;
+    
+    const novo = {
+        id: Date.now(),
+        nome: nome,
+        municipio: muni,
+        regiao: document.getElementById('newRegiao').value,
+        situacao: document.getElementById('newSituacao').value,
+        endereco: "Inserido Manualmente",
+        natureza: "Privada", // Default
+        ingresso: "Não informado",
+        museologo: false,
+        lat: null, lng: null
+    };
+
+    museumsData.push(novo);
+    renderMuseums(museumsData);
+    updateStats(museumsData);
+    alert(`${nome} adicionado com sucesso!`);
+    document.getElementById('manualForm').reset();
+}
+
+function showDetails(id) {
+    const m = museumsData.find(x => x.id === id);
+    alert(`Instituição: ${m.nome}\nHistórico: ${m.historico.substring(0, 150)}...\nEndereço: ${m.endereco}`);
+}
+
 init();
