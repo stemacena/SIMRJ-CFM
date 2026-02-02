@@ -71,3 +71,23 @@ body {
     border-radius: 0;
     border-top: 3px solid var(--color-blue);
 }
+/* --- CORREÇÃO DAS LOGOS --- */
+.header-logo {
+    max-height: 80px;  /* Altura máxima fixa para Desktop */
+    width: auto;       /* Mantém a proporção (não estica) */
+    object-fit: contain;
+    display: block;
+}
+
+/* Ajuste para telas menores (Celular) para não quebrar */
+@media (max-width: 768px) {
+    .header-logo {
+        max-height: 50px; /* Fica menor no celular */
+    }
+    
+    .stats-box {
+        margin-top: 1rem;
+        width: 100%;
+        text-align: center;
+    }
+}

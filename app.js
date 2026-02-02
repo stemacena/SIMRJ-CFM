@@ -1,4 +1,4 @@
-// Configuração Inicial do Mapa (Centrado no RJ)
+// --- CONFIGURAÇÃO INICIAL DO MAPA ---
 const map = L.map('map').setView([-22.9068, -43.1729], 8);
 
 // Adicionar camada do OpenStreetMap
@@ -8,14 +8,13 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Ícone personalizado (Simples)
 const museumIcon = L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // Ícone genérico de localização
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', 
     iconSize: [30, 30],
     iconAnchor: [15, 30],
     popupAnchor: [0, -30]
 });
 
 // --- DADOS INICIAIS (SIMULAÇÃO) ---
-// No sistema final, isso viria do arquivo carregado ou banco de dados.
 let museumsData = [
     {
         id: 1,
@@ -65,7 +64,6 @@ let museumsData = [
         lng: -42.2033,
         descricao: "Casa onde nasceu o poeta."
     }
-    // Adicione mais dados aqui para teste se quiser
 ];
 
 let markersLayer = L.layerGroup().addTo(map);
@@ -80,7 +78,6 @@ function init() {
 
 // 2. Renderizar Museus (Mapa e Lista)
 function renderMuseums(data) {
-    // Limpar lista e mapa
     const listContainer = document.getElementById('museum-list');
     listContainer.innerHTML = '';
     markersLayer.clearLayers();
@@ -105,7 +102,7 @@ function renderMuseums(data) {
         `;
         listContainer.appendChild(cardCol);
 
-        // Adicionar Pin no Mapa (Se tiver coordenadas)
+        // Adicionar Pin no Mapa
         if(museum.lat && museum.lng) {
             const marker = L.marker([museum.lat, museum.lng], {icon: museumIcon})
                 .bindPopup(`<b>${museum.nome}</b><br>${museum.municipio}<br><small>${museum.situacao}</small>`);
@@ -121,41 +118,79 @@ function updateStats(data) {
     document.getElementById('count-free').innerText = free;
 }
 
-// 4. Filtragem
+// --- NOVAS FUNÇÕES DE FILTRAGEM (MULTIPLA ESCOLHA) ---
+
+// Função Auxiliar: Pega valores dos checkboxes marcados
+function getCheckedValues(className) {
+    const checkboxes = document.querySelectorAll('.' + className + ':checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// 4. Filtragem Atualizada
 function applyFilters() {
     const nameInput = document.getElementById('searchName').value.toLowerCase();
-    const region = document.getElementById('filterRegion').value;
-    const nature = document.getElementById('filterNature').value;
-    const status = document.getElementById('filterStatus').value;
-    const cost = document.getElementById('filterCost').value;
+    
+    // Captura os arrays de itens marcados
+    const selectedRegions = getCheckedValues('filter-region');
+    const selectedNature = getCheckedValues('filter-nature');
+    const selectedStatus = getCheckedValues('filter-status');
+    const selectedCosts = getCheckedValues('filter-cost');
+    
     const hasEdu = document.getElementById('checkEdu').checked;
+    const hasAccess = document.getElementById('checkAccess').checked;
 
     const filtered = museumsData.filter(m => {
+        // Filtro Nome
         const matchName = m.nome.toLowerCase().includes(nameInput);
-        const matchRegion = region ? m.regiao === region : true;
-        const matchNature = nature ? m.natureza === nature : true;
-        const matchStatus = status ? m.situacao === status : true;
-        const matchEdu = hasEdu ? m.educativo === true : true;
         
+        // Filtro Região (Se a lista estiver vazia, aceita todos. Se não, verifica se o item está na lista)
+        const matchRegion = selectedRegions.length === 0 || selectedRegions.includes(m.regiao);
+        
+        // Filtro Natureza
+        const matchNature = selectedNature.length === 0 || selectedNature.includes(m.natureza);
+        
+        // Filtro Situação
+        const matchStatus = selectedStatus.length === 0 || selectedStatus.includes(m.situacao);
+
+        // Filtro Custo
         let matchCost = true;
-        if(cost === 'Gratuito') matchCost = m.ingresso === 'Gratuito';
+        if (selectedCosts.length > 0) {
+            matchCost = false; // Assume falso até provar o contrário
+            
+            // Verifica Gratuito
+            if (selectedCosts.includes('Gratuito') && m.ingresso === 'Gratuito') matchCost = true;
+            
+            // Verifica Faixas (Lógica simplificada para protótipo)
+            if (selectedCosts.includes('Até 10') && m.ingresso !== 'Gratuito') matchCost = true; 
+            if (selectedCosts.includes('10-20') && m.ingresso.includes('10')) matchCost = true;
+            
+            // Fallback genérico: se o texto do ingresso bater com o filtro
+            if (selectedCosts.includes(m.ingresso)) matchCost = true; 
+        }
+
+        const matchEdu = hasEdu ? m.educativo === true : true;
+        const matchAccess = hasAccess ? m.acessibilidade === true : true;
         
-        return matchName && matchRegion && matchNature && matchStatus && matchCost && matchEdu;
+        return matchName && matchRegion && matchNature && matchStatus && matchCost && matchEdu && matchAccess;
     });
 
     renderMuseums(filtered);
 }
 
-// 5. Resetar Filtros
+// 5. Resetar Filtros (Agora desmarca checkboxes)
 function resetFilters() {
     document.getElementById('searchName').value = '';
-    document.getElementById('filterRegion').value = '';
-    document.getElementById('filterNature').value = '';
-    // ... resetar outros inputs
+    
+    // Desmarcar todos os checkboxes
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = false);
+    
     renderMuseums(museumsData);
 }
 
-// 6. Área Admin: Toggle
+// --- ÁREA ADMINISTRATIVA ---
+
+// 6. Toggle Admin
 function toggleAdmin() {
     const panel = document.getElementById('admin-panel');
     if(panel.style.display === 'none') {
@@ -170,7 +205,7 @@ function toggleAdmin() {
     }
 }
 
-// 7. Área Admin: Upload de CSV (Usando PapaParse)
+// 7. Upload de CSV (PapaParse)
 document.getElementById('csvFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -182,8 +217,6 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
             console.log("Dados carregados:", results.data);
             alert(`Sucesso! ${results.data.length} museus carregados.`);
             
-            // Atualizar os dados do site com o CSV
-            // ATENÇÃO: Os cabeçalhos do CSV devem bater com as chaves do objeto (nome, municipio, etc)
             museumsData = results.data.map((row, index) => ({
                 id: index + 100,
                 nome: row.Nome || row.nome,
@@ -191,7 +224,7 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
                 regiao: row.Regiao || "Não informada",
                 natureza: row.Natureza || "Privada",
                 situacao: row.Situacao || "Aberto",
-                lat: parseFloat(row.Latitude) || -22.9, // Fallback RJ
+                lat: parseFloat(row.Latitude) || -22.9,
                 lng: parseFloat(row.Longitude) || -43.2,
                 ingresso: row.Ingresso || "Não informado",
                 acervo: row.Acervo || "Outros",
@@ -205,7 +238,7 @@ document.getElementById('csvFile').addEventListener('change', function(e) {
     });
 });
 
-// Detalhes (Simples Alert por enquanto, poderia ser um Modal)
+// Detalhes
 function showDetails(id) {
     const m = museumsData.find(x => x.id === id);
     alert(`Nome: ${m.nome}\nDescrição: ${m.descricao}\nIngresso: ${m.ingresso}\nAcessibilidade: ${m.acessibilidade ? 'Sim' : 'Não'}`);
