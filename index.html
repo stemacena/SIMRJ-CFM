@@ -12,11 +12,20 @@
 </head>
 <body>
 
+    <div id="login-overlay" class="login-overlay" style="display: none;">
+        <div class="login-box">
+            <h5 class="mb-3 text-dark">Acesso do Gestor</h5>
+            <input type="password" id="adminPassword" class="form-control mb-3" placeholder="Senha">
+            <button class="btn btn-custom w-100" onclick="checkAdminPassword()">Entrar</button>
+            <button class="btn btn-link text-secondary btn-sm mt-2" onclick="closeLogin()">Cancelar</button>
+        </div>
+    </div>
+
     <div class="gov-bar py-2 text-white">
         <div class="container d-flex flex-wrap justify-content-between align-items-center">
             <small>Governo do Estado do Rio de Janeiro | SECEC | Superintendência de Museus</small>
             <div class="admin-login">
-                <button class="btn btn-sm btn-outline-light" onclick="toggleAdmin()">Área do Gestor</button>
+                <button class="btn btn-sm btn-outline-light" onclick="openLogin()">Área do Gestor</button>
             </div>
         </div>
     </div>
@@ -34,7 +43,7 @@
                         <li class="nav-item"><a href="#sobre" class="nav-link text-secondary">O Projeto</a></li>
                         <li class="nav-item"><a href="#mapa-section" class="nav-link text-secondary">Mapa & Busca</a></li>
                         <li class="nav-item ms-2">
-                            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdn3nw0uumL4Aj-MZ_QVQwsVwEE9d1TPacGjK40x-dQ0QGBvw/viewform" target="_blank" class="btn btn-custom fw-bold btn-sm">
+                            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdn3nw0uumL4Aj-MZ_QVQwsVwEE9d1TPacGjK40x-dQ0QGBvw/viewform" target="_blank" class="btn btn-custom btn-sm rounded-pill px-3">
                                 Inscreva-se no CFM
                             </a>
                         </li>
@@ -47,39 +56,72 @@
     <div id="admin-panel" class="bg-dark text-white p-4" style="display: none;">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3><i class="bi bi-gear-fill"></i> Painel do Gestor</h3>
-                <button class="btn btn-sm btn-outline-danger" onclick="toggleAdmin()">Fechar</button>
+                <h3 class="text-warning"><i class="bi bi-database-fill-gear"></i> Painel do Gestor</h3>
+                <button class="btn btn-sm btn-outline-light" onclick="closeAdmin()">Sair com Segurança</button>
             </div>
             
             <div class="row">
-                <div class="col-md-6 border-end border-secondary">
-                    <h5>Importação em Massa</h5>
-                    <p class="small text-muted">Carregue a planilha padrão do CFM (.csv).</p>
-                    <div class="mb-3">
-                        <input class="form-control" type="file" id="csvFile" accept=".csv">
-                    </div>
-                    <div id="upload-status" class="alert alert-secondary d-none small"></div>
+                <div class="col-lg-4 border-end border-secondary mb-3">
+                    <h5><i class="bi bi-filetype-csv"></i> Importar Planilha</h5>
+                    <p class="small text-muted mb-2">Envie o CSV com as colunas padrão.</p>
+                    <input class="form-control form-control-sm mb-2" type="file" id="csvFile" accept=".csv">
+                    <div id="upload-status" class="alert alert-secondary d-none small p-2"></div>
                 </div>
 
-                <div class="col-md-6 ps-md-4">
-                    <h5>Adicionar Instituição Manualmente</h5>
+                <div class="col-lg-8 ps-lg-4">
+                    <h5><i class="bi bi-pencil-square"></i> Cadastro Manual Completo</h5>
                     <form id="manualForm" onsubmit="addManualMuseum(event)">
                         <div class="row g-2">
-                            <div class="col-6"><input type="text" class="form-control form-control-sm" id="newNome" placeholder="Nome da Instituição" required></div>
-                            <div class="col-6"><input type="text" class="form-control form-control-sm" id="newMunicipio" placeholder="Município" required></div>
-                            <div class="col-6">
-                                <select id="newRegiao" class="form-select form-select-sm">
+                            <div class="col-md-6"><input type="text" class="form-control form-control-sm" id="mNome" placeholder="Nome da Instituição" required></div>
+                            <div class="col-md-6"><input type="text" class="form-control form-control-sm" id="mEndereco" placeholder="Endereço Completo" required></div>
+                            
+                            <div class="col-md-4"><input type="text" class="form-control form-control-sm" id="mMunicipio" placeholder="Município" required></div>
+                            <div class="col-md-4">
+                                <select id="mRegiao" class="form-select form-select-sm">
                                     <option value="Metropolitana I">Metropolitana I</option>
                                     <option value="Serrana">Serrana</option>
                                     <option value="Baixadas Litorâneas">Baixadas Litorâneas</option>
-                                    </select>
-                            </div>
-                            <div class="col-6">
-                                <select id="newSituacao" class="form-select form-select-sm">
-                                    <option value="Aberto">Aberto</option>
-                                    <option value="Em implantação">Em implantação</option>
+                                    <option value="Norte Fluminense">Norte Fluminense</option>
+                                    <option value="Noroeste Fluminense">Noroeste Fluminense</option>
+                                    <option value="Médio Paraíba">Médio Paraíba</option>
+                                    <option value="Centro-Sul">Centro-Sul</option>
+                                    <option value="Costa Verde">Costa Verde</option>
                                 </select>
                             </div>
+                            <div class="col-md-4">
+                                <select id="mNatureza" class="form-select form-select-sm">
+                                    <option value="Municipal">Municipal</option>
+                                    <option value="Estadual">Estadual</option>
+                                    <option value="Federal">Federal</option>
+                                    <option value="Privada">Privada</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <select id="mStatus" class="form-select form-select-sm">
+                                    <option value="Aberto">Aberto</option>
+                                    <option value="Em implantação">Em implantação</option>
+                                    <option value="Desativado temporariamente">Desativado temp.</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="mMuseologo" class="form-select form-select-sm">
+                                    <option value="Sim">Possui Museólogo</option>
+                                    <option value="Não">Sem Museólogo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="mAcervo" class="form-select form-select-sm">
+                                    <option value="Histórico">Histórico</option>
+                                    <option value="Artes Visuais">Artes Visuais</option>
+                                    <option value="Ciência e Tecnologia">Ciência e Tec.</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" class="form-control form-control-sm" id="mIngresso" placeholder="Valor Ingresso">
+                            </div>
+
                             <div class="col-12"><button type="submit" class="btn btn-success btn-sm w-100">Adicionar ao Mapa</button></div>
                         </div>
                     </form>
@@ -89,14 +131,13 @@
     </div>
 
     <section class="hero-section text-white py-5">
-        <div class="container py-5">
+        <div class="container py-5 text-center text-lg-start">
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <h1 class="display-4 fw-bold">Conectar para Preservar</h1>
-                    <p class="lead">Ferramenta estratégica para valorizar os espaços de memória do nosso estado.</p>
-                    <div class="stats-box p-3 rounded bg-white text-dark d-inline-block mt-3 shadow">
-                        <span class="h2 fw-bold text-primary" id="count-total">0</span> instituições cadastradas<br>
-                        <span class="h5 fw-bold text-success" id="count-free">0</span> gratuitas
+                    <p class="lead mb-4">O Cadastro Fluminense de Museus é a ferramenta estratégica para valorizar os espaços de memória do nosso estado.</p>
+                    <div class="stats-box p-3 rounded bg-white text-dark d-inline-block shadow">
+                        <span class="h2 fw-bold text-primary" id="count-total">0</span> instituições cadastradas
                     </div>
                 </div>
             </div>
@@ -107,12 +148,24 @@
         <div class="container">
             <div class="row g-5">
                 <div class="col-md-6">
-                    <h2 class="section-title" style="color: var(--color-cfm-teal); border-color: var(--color-green-olive);">O que é o CFM?</h2>
-                    <p>O Cadastro Fluminense de Museus (CFM) é um instrumento fundamental do Sistema Estadual de Museus...</p>
+                    <h2 class="section-title" style="color: var(--color-cfm-teal); border-bottom: 3px solid var(--color-green-olive);">O que é o CFM?</h2>
+                    <p>O Cadastro Fluminense de Museus (CFM) é um instrumento fundamental do Sistema Estadual de Museus. O cadastro autodeclarado é o primeiro passo, onde o museu fornece suas informações básicas para integrar o sistema.</p>
+                    <p>Responsável por produzir informações sistematizadas que possam ser geradas com periodicidade, aberta ao público, que sirva de base para elaboração de diagnósticos, para orientação de tomada de decisões e avaliação das políticas do setor.</p>
+                    <ul>
+                        <li>Auxiliar o estímulo ao aperfeiçoamento e consolidação do campo museológico.</li>
+                        <li>Estabelecer indicadores de sucesso das políticas públicas.</li>
+                    </ul>
                 </div>
                 <div class="col-md-6">
-                    <h2 class="section-title" style="color: var(--color-cfm-teal); border-color: var(--color-green-olive);">Sobre o SIM-RJ</h2>
-                    <p>Vinculado à Superintendência de Museus da Secretaria de Estado de Cultura e Economia Criativa...</p>
+                    <h2 class="section-title" style="color: var(--color-cfm-teal); border-bottom: 3px solid var(--color-green-olive);">Sobre o SIM-RJ</h2>
+                    <p class="small text-muted">Vinculado à Superintendência de Museus da Secretaria de Estado de Cultura e Economia Criativa.</p>
+                    <p>O SIM-RJ, criado pelo Decreto nº 42.306 de 22/02/2010 e alterado pelo Decreto nº 46.332 de 06/06/2018, mas com atuação desde 2009, tem a finalidade de integrar uma ampla e diversificada rede de instituições de caráter museológico.</p>
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHistory">Ler histórico completo</button>
+                    <div class="collapse mt-2" id="collapseHistory">
+                        <div class="card card-body text-muted small">
+                            Nesses anos de atuação, o SIM-RJ prestou assessoramento e apoio técnico e institucional a todos os 92 municípios do Estado do RJ, promovendo a inserção e a participação da Superintendência de Museus junto aos municípios do interior do estado, permitindo, desse modo, a criação de uma rede fluente de diálogos e cooperação. Destacam-se nas ações empreendidas pelo Sistema a instauração da Comissão Consultiva do SIM-RJ em 2010 e a assinatura do Termo de Cooperação Técnica entre o IBRAM e a Secretaria de Estado.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -121,81 +174,183 @@
     <section id="mapa-section" class="py-4">
         <div class="container-fluid px-4">
             <div class="row">
-                <div class="col-lg-3 bg-white p-4 shadow-sm rounded border sidebar-filters">
-                    <h4 class="mb-3"><i class="bi bi-funnel"></i> Filtros</h4>
+                <div class="col-lg-3 sidebar-filters p-4 shadow-sm rounded">
+                    <h4 class="mb-3"><i class="bi bi-funnel"></i> Busca Detalhada</h4>
                     
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Buscar por Nome</label>
-                        <input type="text" id="searchName" class="form-control form-control-sm">
+                        <label class="filter-label">Nome da Instituição</label>
+                        <input type="text" id="searchName" class="form-control form-control-sm" placeholder="Digite o nome...">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Região</label>
-                        <div class="filter-group-box">
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Baixadas Litorâneas" id="r1"><label class="form-check-label small" for="r1">Baixadas Litorâneas</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Centro-Sul" id="r2"><label class="form-check-label small" for="r2">Centro-Sul</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Costa Verde" id="r3"><label class="form-check-label small" for="r3">Costa Verde</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Médio Paraíba" id="r4"><label class="form-check-label small" for="r4">Médio Paraíba</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana I" id="r5"><label class="form-check-label small" for="r5">Metropolitana I</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana II" id="r6"><label class="form-check-label small" for="r6">Metropolitana II</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana III" id="r7"><label class="form-check-label small" for="r7">Metropolitana III</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Noroeste Fluminense" id="r8"><label class="form-check-label small" for="r8">Noroeste Fluminense</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Norte Fluminense" id="r9"><label class="form-check-label small" for="r9">Norte Fluminense</label></div>
-                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Serrana" id="r10"><label class="form-check-label small" for="r10">Serrana</label></div>
+                        <label class="filter-label">Município</label>
+                        <select id="filterMunicipio" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="filter-label">Região</label>
+                        <div class="filter-scroll-box">
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Baixadas Litorâneas"><label class="form-check-label small">Baixadas Litorâneas</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Centro-Sul"><label class="form-check-label small">Centro-Sul</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Costa Verde"><label class="form-check-label small">Costa Verde</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Médio Paraíba"><label class="form-check-label small">Médio Paraíba</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana I"><label class="form-check-label small">Metropolitana I</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana II"><label class="form-check-label small">Metropolitana II</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana III"><label class="form-check-label small">Metropolitana III</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Noroeste Fluminense"><label class="form-check-label small">Noroeste Fluminense</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Norte Fluminense"><label class="form-check-label small">Norte Fluminense</label></div>
+                            <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Serrana"><label class="form-check-label small">Serrana</label></div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Natureza Administrativa</label>
-                        <div class="filter-group-box" style="max-height: 100px;">
+                        <label class="filter-label">Natureza Administrativa</label>
+                        <div class="filter-scroll-box" style="max-height: 100px;">
                             <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Estadual"><label class="form-check-label small">Estadual</label></div>
                             <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Federal"><label class="form-check-label small">Federal</label></div>
                             <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Municipal"><label class="form-check-label small">Municipal</label></div>
                             <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Privada"><label class="form-check-label small">Privada</label></div>
+                            <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Público-privada"><label class="form-check-label small">Público-privada</label></div>
                         </div>
                     </div>
 
-                    <div class="accordion" id="accordionAdvanced">
+                    <div class="mb-3">
+                        <label class="filter-label">Acervo Predominante</label>
+                        <div class="filter-scroll-box">
+                            <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Antropologia e Etnografia"><label class="form-check-label small">Antropologia/Etnografia</label></div>
+                            <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Arqueologia"><label class="form-check-label small">Arqueologia</label></div>
+                            <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Artes Visuais"><label class="form-check-label small">Artes Visuais</label></div>
+                            <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Ciência e Tecnologia"><label class="form-check-label small">Ciência e Tecnologia</label></div>
+                            <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Histórico"><label class="form-check-label small">Histórico</label></div>
+                            <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Imagem e Som"><label class="form-check-label small">Imagem e Som</label></div>
+                            <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Virtual"><label class="form-check-label small">Virtual</label></div>
+                            <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Outros"><label class="form-check-label small">Outros</label></div>
+                        </div>
+                    </div>
+
+                    <div class="accordion mb-3" id="filtersAdv">
                         <div class="accordion-item">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne">
-                                    Detalhes Técnicos
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#colAdv">
+                                    Funcionamento e Status
                                 </button>
                             </h2>
-                            <div id="flush-collapseOne" class="accordion-collapse collapse p-3">
-                                <div class="form-check mb-2">
+                            <div id="colAdv" class="accordion-collapse collapse p-2">
+                                <label class="filter-label mt-2">Situação</label>
+                                <div class="filter-scroll-box mb-2">
+                                    <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Aberto"><label class="form-check-label small">Aberto</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Aberto funcionando parcialmente"><label class="form-check-label small">Aberto Parcial</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Em implantação"><label class="form-check-label small">Em implantação</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Desativado temporariamente"><label class="form-check-label small">Desativado Temp.</label></div>
+                                </div>
+
+                                <label class="filter-label">Turno (Funcionamento)</label>
+                                <div class="filter-scroll-box mb-2">
+                                    <div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Manha"><label class="form-check-label small">Manhã</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Tarde"><label class="form-check-label small">Tarde</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Noite"><label class="form-check-label small">Noite</label></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#colTech">
+                                    Técnico e Acessibilidade
+                                </button>
+                            </h2>
+                            <div id="colTech" class="accordion-collapse collapse p-2">
+                                <label class="filter-label mt-2">Equipe e Serviços</label>
+                                <div class="form-check mb-1">
                                     <input class="form-check-input" type="checkbox" id="checkMuseologo">
-                                    <label class="form-check-label small fw-bold" for="checkMuseologo">Possui Museólogo</label>
+                                    <label class="form-check-label small" for="checkMuseologo">Possui Museólogo (Sim)</label>
                                 </div>
-                                <div class="form-check mb-2">
+                                <div class="form-check mb-1">
                                     <input class="form-check-input" type="checkbox" id="checkEdu">
-                                    <label class="form-check-label small" for="checkEdu">Setor Educativo</label>
+                                    <label class="form-check-label small" for="checkEdu">Setor Educativo (Sim)</label>
                                 </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="checkAccess">
-                                    <label class="form-check-label small" for="checkAccess">Acessibilidade</label>
+                                
+                                <hr class="my-2">
+                                <label class="filter-label">Valor Ingresso</label>
+                                <div class="filter-scroll-box mb-2">
+                                    <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="Gratuito"><label class="form-check-label small">Gratuito</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="R$1 a R$10"><label class="form-check-label small">R$1 a R$10</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="R$10 a R$20"><label class="form-check-label small">R$10 a R$20</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="R$20 a R$30"><label class="form-check-label small">R$20 a R$30</label></div>
+                                    <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="Acima de R$30"><label class="form-check-label small">Acima de R$30</label></div>
                                 </div>
-                                <hr>
-                                <label class="form-label small fw-bold">Ingresso</label>
-                                <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="Gratuito"><label class="form-check-label small">Gratuito</label></div>
+
+                                <label class="filter-label">Busca Específica</label>
+                                <input type="text" id="searchGratuidade" class="form-control form-control-sm mb-2" placeholder="Gratuidades (ex: idoso)">
+                                <input type="text" id="searchAccess" class="form-control form-control-sm" placeholder="Acessibilidade (ex: rampa)">
                             </div>
                         </div>
                     </div>
                     
-                    <button class="btn btn-custom w-100 mt-3" onclick="applyFilters()">Aplicar Filtros</button>
-                    <button class="btn btn-outline-secondary w-100 mt-2 btn-sm" onclick="resetFilters()">Limpar</button>
+                    <button class="btn btn-custom w-100 mt-2" onclick="applyFilters()">Aplicar Filtros</button>
+                    <button class="btn btn-outline-secondary w-100 mt-2 btn-sm" onclick="resetFilters()">Limpar Filtros</button>
                 </div>
 
                 <div class="col-lg-9">
                     <div id="map" style="height: 500px; border-radius: 8px; z-index: 1;"></div>
                     <div class="mt-4">
-                        <h4 class="mb-3">Instituições Encontradas (<span id="resultCount">0</span>)</h4>
+                        <h4 class="mb-3">Resultados (<span id="resultCount">0</span>)</h4>
                         <div class="row" id="museum-list"></div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+
+    <div class="modal fade" id="museumModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nome do Museu</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <p class="mb-1"><i class="bi bi-geo-alt-fill text-danger"></i> <span id="modalEndereco">Endereço</span></p>
+                            <p class="mb-1"><strong>Município:</strong> <span id="modalMunicipio"></span> | <strong>Região:</strong> <span id="modalRegiao"></span></p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-secondary" id="modalNatureza">Natureza</span>
+                            <span class="badge bg-success" id="modalStatus">Status</span>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-subtitle">Funcionamento e Acesso</div>
+                    <p><strong>Funcionamento:</strong> <span id="modalFunc"></span></p>
+                    <p><strong>Ingresso:</strong> <span id="modalIngresso"></span></p>
+                    <p><strong>Gratuidades:</strong> <span id="modalGratuidade"></span></p>
+
+                    <div class="modal-subtitle">Técnico e Acervo</div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Museólogo:</strong> <span id="modalMuseologo"></span></p>
+                            <p><strong>Setor Educativo:</strong> <span id="modalEducativo"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Acervo Predominante:</strong> <span id="modalAcervo"></span></p>
+                        </div>
+                    </div>
+
+                    <div class="modal-subtitle">Acessibilidade</div>
+                    <p id="modalAcessibilidade"></p>
+
+                    <div class="modal-subtitle">Histórico</div>
+                    <p id="modalHistorico" class="text-muted small"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="bg-dark text-white py-4 mt-5">
         <div class="container text-center">

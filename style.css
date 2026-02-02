@@ -1,79 +1,127 @@
 :root {
-    /* Cores Institucionais */
+    /* Identidade Visual CFM/SIM-RJ */
     --color-purple: #6b4e7e;
     --color-blue: #0034bb;
     --color-green-olive: #899b1c;
     --color-yellow: #e2a512;
-    --color-cfm-teal: #006666; /* Nova cor do CFM (Verde Petróleo) */
+    --color-cfm-teal: #006666; /* Verde Petróleo (Principal) */
     --color-dark: #2c3e50;
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f8f9fa;
+    color: #333;
 }
 
-/* Correção da Rolagem (O título não fica escondido atrás do menu) */
+/* Correção de Rolagem */
 section {
-    scroll-margin-top: 100px;
+    scroll-margin-top: 110px;
 }
 
-/* Barra Governamental */
+/* Barra Gov */
 .gov-bar {
     background-color: var(--color-blue);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 500;
 }
 
 /* Cabeçalho */
 .header-logo {
-    max-height: 70px; /* Ajustado para não estourar */
+    max-height: 70px;
     width: auto;
     object-fit: contain;
 }
 
 /* Botões */
 .btn-custom {
-    background-color: var(--color-cfm-teal); /* Botão agora segue a cor do CFM */
+    background-color: var(--color-cfm-teal);
     border: none;
     color: #fff !important;
+    font-weight: 600;
+    transition: all 0.3s;
 }
 .btn-custom:hover {
     background-color: #004d4d;
+    transform: translateY(-1px);
 }
 
-/* Hero Section (Fundo Principal) */
+/* Hero Section */
 .hero-section {
-    /* Gradiente usando a cor do CFM */
-    background: linear-gradient(rgba(0, 102, 102, 0.9), rgba(0, 52, 187, 0.8)), url('logo-plano.jpg');
+    background: linear-gradient(rgba(0, 102, 102, 0.92), rgba(0, 52, 187, 0.85)), url('logo-plano.jpg');
     background-size: cover;
     background-position: center;
 }
 
-/* Sidebar e Filtros */
+/* Sidebar de Filtros */
 .sidebar-filters {
     border-top: 4px solid var(--color-cfm-teal);
+    background-color: #fff;
 }
 
-.filter-group-box {
-    max-height: 150px; 
+.filter-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-cfm-teal);
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* Caixas de rolagem para filtros longos */
+.filter-scroll-box {
+    max-height: 140px; 
     overflow-y: auto;
-    background-color: #fff;
+    background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     padding: 8px;
     border-radius: 4px;
+    margin-bottom: 1rem;
 }
 
 /* Cards */
 .museum-card {
     border-left: 5px solid var(--color-green-olive);
     transition: transform 0.2s;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 .museum-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
 
-/* Ajustes Mobile */
+/* Modal de Perfil */
+.modal-header {
+    background-color: var(--color-cfm-teal);
+    color: white;
+}
+.modal-subtitle {
+    color: var(--color-blue);
+    font-weight: bold;
+    border-bottom: 2px solid var(--color-yellow);
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+}
+
+/* Login Admin Overlay */
+.login-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.login-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 300px;
+    text-align: center;
+}
+
 @media (max-width: 768px) {
     .header-logo { max-height: 50px; }
     .hero-section { text-align: center; }
