@@ -13,13 +13,29 @@ let markersLayer = L.layerGroup().addTo(map);
 let museumsData = [];
 // Variável de controle do Admin
 let isAdmin = false;
-
-// Modal Bootstrap
 let profileModal;
 
-// --- 2. BASE DE COORDENADAS (Fallback) ---
-// Como não temos Lat/Long, usamos o centro do município.
-// Adicionei mais municípios para cobrir as regiões.
+// LISTA COMPLETA 92 MUNICÍPIOS RJ (Para o filtro sempre ter todos)
+const allMunicipalitiesRJ = [
+    "Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo", 
+    "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana", 
+    "Cabo Frio", "Cachoeiras de Macacu", "Cambuci", "Campos dos Goytacazes", "Cantagalo", 
+    "Carapebus", "Cardoso Moreira", "Carmo", "Casimiro de Abreu", "Comendador Levy Gasparian", 
+    "Conceição de Macabu", "Cordeiro", "Duas Barras", "Duque de Caxias", "Engenheiro Paulo de Frontin", 
+    "Guapimirim", "Iguaba Grande", "Itaboraí", "Itaguaí", "Italva", "Itaocara", "Itaperuna", 
+    "Itatiaia", "Japeri", "Laje do Muriaé", "Macaé", "Macuco", "Magé", "Mangaratiba", "Maricá", 
+    "Mendes", "Mesquita", "Miguel Pereira", "Miracema", "Natividade", "Nilópolis", "Niterói", 
+    "Nova Friburgo", "Nova Iguaçu", "Paracambi", "Paraíba do Sul", "Paraty", "Paty do Alferes", 
+    "Petrópolis", "Pinheiral", "Piraí", "Porciúncula", "Porto Real", "Quatis", "Queimados", 
+    "Quissamã", "Resende", "Rio Bonito", "Rio das Flores", "Rio das Ostras", "Rio de Janeiro", 
+    "Rio Claro", "Santa Maria Madalena", "Santo Antônio de Pádua", "São Fidélis", "São Francisco de Itabapoana", 
+    "São Gonçalo", "São João da Barra", "São João de Meriti", "São José de Ubá", "São José do Vale do Rio Preto", 
+    "São Pedro da Aldeia", "São Sebastião do Alto", "Sapucaia", "Saquarema", "Seropédica", "Silva Jardim", 
+    "Sumidouro", "Tanguá", "Teresópolis", "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", 
+    "Vassouras", "Volta Redonda"
+];
+
+// COORDENADAS (Fallback para mapear cidades sem Lat/Long exata)
 const cityCoords = {
     "Rio de Janeiro": [-22.9068, -43.1729], "Petrópolis": [-22.5050, -43.1788],
     "Niterói": [-22.8859, -43.1152], "Cabo Frio": [-22.8869, -42.0266],
@@ -28,17 +44,19 @@ const cityCoords = {
     "Vassouras": [-22.4042, -43.6631], "Volta Redonda": [-22.5202, -44.1033],
     "Angra dos Reis": [-23.0067, -44.3181], "Teresópolis": [-22.4123, -42.9664],
     "Macaé": [-22.3708, -41.7869], "Itaperuna": [-21.2057, -41.8888]
+    // O sistema funciona sem todas aqui, mas para o protótipo adicionei as principais.
 };
 
 // --- 3. INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', function() {
     profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
+    populateCitySelects(); // Preenche filtros e form manual com 92 cidades
     init();
 });
 
 function init() {
+    // Dados de exemplo caso não tenha CSV
     if(museumsData.length === 0) {
-        // Exemplo fictício para o site não abrir vazio
         museumsData = [{
             id: 0, nome: "Exemplo: Faça Upload da Planilha", municipio: "Rio de Janeiro",
             regiao: "Metropolitana I", natureza: "Estadual", situacao: "Aberto",
@@ -49,24 +67,28 @@ function init() {
             lat: -22.9258, lng: -43.1763
         }];
     }
-    populateCitySelect();
     renderMuseums(museumsData);
 }
 
-// Preenche o filtro de municípios dinamicamente com base nos dados
-function populateCitySelect() {
-    const select = document.getElementById('filterMunicipio');
-    // Pega cidades únicas e ordena
-    const cities = [...new Set(museumsData.map(m => m.municipio))].sort();
+// Preenche Selects com os 92 Municípios
+function populateCitySelects() {
+    const filterSelect = document.getElementById('filterMunicipio');
+    const manualSelect = document.getElementById('mMunicipio');
     
-    // Mantém a primeira opção "Todos"
-    select.innerHTML = '<option value="">Todos os Municípios</option>';
+    // Limpa e Adiciona default
+    filterSelect.innerHTML = '<option value="">Todos os 92 Municípios</option>';
+    manualSelect.innerHTML = '<option value="">Selecione...</option>';
     
-    cities.forEach(city => {
-        const option = document.createElement('option');
-        option.value = city;
-        option.innerText = city;
-        select.appendChild(option);
+    allMunicipalitiesRJ.sort().forEach(city => {
+        // No filtro
+        const opt1 = document.createElement('option');
+        opt1.value = city; opt1.innerText = city;
+        filterSelect.appendChild(opt1);
+
+        // No form manual
+        const opt2 = document.createElement('option');
+        opt2.value = city; opt2.innerText = city;
+        manualSelect.appendChild(opt2);
     });
 }
 
@@ -79,11 +101,8 @@ function renderMuseums(data) {
     document.getElementById('count-total').innerText = museumsData.length;
 
     data.forEach(museum => {
-        // 1. Cria Card HTML
         const card = document.createElement('div');
         card.className = 'col-md-6 mb-3';
-        
-        // Verifica se tem museólogo e educativo para badges
         const hasMus = museum.museologo === "Sim";
         
         card.innerHTML = `
@@ -104,17 +123,13 @@ function renderMuseums(data) {
             </div>`;
         listContainer.appendChild(card);
 
-        // 2. Cria Pino no Mapa
+        // Mapa
         let lat = museum.lat;
         let lng = museum.lng;
 
-        // Fallback para cidade se não tiver lat/lng
         if (!lat && cityCoords[museum.municipio]) {
-            lat = cityCoords[museum.municipio][0];
-            lng = cityCoords[museum.municipio][1];
-            // Dispersão aleatória pequena para não sobrepor
-            lat += (Math.random() - 0.5) * 0.015;
-            lng += (Math.random() - 0.5) * 0.015;
+            lat = cityCoords[museum.municipio][0] + (Math.random() - 0.5) * 0.015;
+            lng = cityCoords[museum.municipio][1] + (Math.random() - 0.5) * 0.015;
         }
 
         if (lat && lng) {
@@ -125,61 +140,42 @@ function renderMuseums(data) {
     });
 }
 
-// --- 5. FILTROS PODEROSOS ---
+// --- 5. FILTROS ---
 function getCheckedValues(className) {
     return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => cb.value);
 }
 
 function applyFilters() {
-    // 1. Busca Textual
     const term = document.getElementById('searchName').value.toLowerCase();
-    
-    // 2. Município (Select)
     const selectedMuni = document.getElementById('filterMunicipio').value;
-
-    // 3. Checkboxes (Multi-select)
     const regions = getCheckedValues('filter-region');
-    const natures = getCheckedValues('filter-nature');
-    const statusList = getCheckedValues('filter-status');
     const acervos = getCheckedValues('filter-acervo');
+    const statusList = getCheckedValues('filter-status');
+    const funcTerms = getCheckedValues('filter-func'); // Dias/Turnos
     const costs = getCheckedValues('filter-cost');
-    const turnos = getCheckedValues('filter-func');
-
-    // 4. Campos Específicos e Descritivos
+    
     const reqMuseologo = document.getElementById('checkMuseologo').checked;
     const reqEdu = document.getElementById('checkEdu').checked;
-    
     const textGratuidade = document.getElementById('searchGratuidade').value.toLowerCase();
     const textAccess = document.getElementById('searchAccess').value.toLowerCase();
 
-    // FILTRAGEM
     const filtered = museumsData.filter(m => {
-        // Texto Nome
         if (!m.nome.toLowerCase().includes(term)) return false;
-
-        // Município
         if (selectedMuni && m.municipio !== selectedMuni) return false;
-
-        // Listas (Se houver algo marcado, o item DEVE estar na lista)
         if (regions.length > 0 && !regions.includes(m.regiao)) return false;
-        if (natures.length > 0 && !natures.includes(m.natureza)) return false;
-        if (statusList.length > 0 && !statusList.includes(m.situacao)) return false;
         if (acervos.length > 0 && !acervos.includes(m.acervo)) return false;
+        if (statusList.length > 0 && !statusList.includes(m.situacao)) return false;
         if (costs.length > 0 && !costs.includes(m.ingresso)) return false;
 
-        // Funcionamento (Busca se a string contém "Manhã", "Tarde" etc)
-        if (turnos.length > 0) {
-            // Verifica se ALGUM dos turnos marcados aparece no texto de funcionamento
+        // Funcionamento Inteligente (Procura palavras chave)
+        if (funcTerms.length > 0) {
             const funcText = (m.funcionamento || "").toLowerCase();
-            const hasTurno = turnos.some(t => funcText.includes(t.toLowerCase()));
-            if (!hasTurno) return false;
+            const match = funcTerms.some(t => funcText.includes(t.toLowerCase()));
+            if (!match) return false;
         }
 
-        // Sim/Não
         if (reqMuseologo && m.museologo !== "Sim") return false;
         if (reqEdu && m.educativo !== "Sim") return false;
-
-        // Busca Descritiva (Gratuidade e Acessibilidade)
         if (textGratuidade && !(m.gratuidades || "").toLowerCase().includes(textGratuidade)) return false;
         if (textAccess && !(m.acessibilidade || "").toLowerCase().includes(textAccess)) return false;
 
@@ -198,12 +194,10 @@ function resetFilters() {
     renderMuseums(museumsData);
 }
 
-// --- 6. PERFIL COMPLETO (MODAL) ---
+// --- 6. PERFIL COMPLETO ---
 function openProfile(id) {
     const m = museumsData.find(x => x.id === id);
     if(!m) return;
-
-    // Função auxiliar para "Não informado"
     const val = (v) => v ? v : '<span class="text-muted fst-italic">Não informado</span>';
 
     document.getElementById('modalTitle').innerText = m.nome;
@@ -212,114 +206,82 @@ function openProfile(id) {
     document.getElementById('modalRegiao').innerText = val(m.regiao);
     document.getElementById('modalNatureza').innerText = val(m.natureza);
     document.getElementById('modalStatus').innerText = val(m.situacao);
-    
     document.getElementById('modalFunc').innerText = val(m.funcionamento);
     document.getElementById('modalIngresso').innerText = val(m.ingresso);
     document.getElementById('modalGratuidade').innerText = val(m.gratuidades);
-    
     document.getElementById('modalMuseologo').innerText = val(m.museologo);
     document.getElementById('modalEducativo').innerText = val(m.educativo);
     document.getElementById('modalAcervo').innerText = val(m.acervo);
-    
     document.getElementById('modalAcessibilidade').innerHTML = val(m.acessibilidade);
     document.getElementById('modalHistorico').innerText = val(m.historico);
-
     profileModal.show();
 }
 
-// --- 7. SEGURANÇA E ADMINISTRAÇÃO ---
-
+// --- 7. ADMINISTRAÇÃO ---
 function openLogin() {
     document.getElementById('login-overlay').style.display = 'flex';
     document.getElementById('adminPassword').value = '';
     document.getElementById('adminPassword').focus();
 }
-
-function closeLogin() {
-    document.getElementById('login-overlay').style.display = 'none';
-}
-
+function closeLogin() { document.getElementById('login-overlay').style.display = 'none'; }
 function checkAdminPassword() {
-    const pass = document.getElementById('adminPassword').value;
-    if(pass === 'simrj') { // Senha protótipo
+    if(document.getElementById('adminPassword').value === 'simrj') {
         isAdmin = true;
         document.getElementById('admin-panel').style.display = 'block';
         closeLogin();
-        // Rola até o painel
         document.getElementById('admin-panel').scrollIntoView({behavior: 'smooth'});
-    } else {
-        alert('Senha incorreta.');
-    }
+    } else { alert('Senha incorreta.'); }
 }
-
 function closeAdmin() {
-    isAdmin = false; // Logout
+    isAdmin = false;
     document.getElementById('admin-panel').style.display = 'none';
 }
 
-// --- 8. PROCESSAMENTO DE DADOS (CSV e MANUAL) ---
-
-// Upload CSV (Mapeamento EXATO das colunas do usuário)
+// --- 8. PROCESSAMENTO DE DADOS ---
 document.getElementById('csvFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
-
     Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-            processCSVData(results.data);
-        }
+        header: true, skipEmptyLines: true,
+        complete: function(results) { processCSVData(results.data); }
     });
 });
 
 function processCSVData(rawData) {
     let cleanData = [];
-    let errors = 0;
-
     rawData.forEach((row, index) => {
-        // Mapeamento das colunas da planilha para o objeto interno
         const nome = row["Nome da Instituição"];
-        
-        if (!nome) { errors++; return; } // Pula se não tiver nome
+        if (!nome) return;
 
         cleanData.push({
             id: index + 2000,
             nome: nome,
-            // Campos Importantes para Filtro
             municipio: row["Município"] || "Não informado",
             regiao: row["Região"] || "Outra",
             natureza: row["Natureza Administrativa"] || "Privada",
             situacao: row["Situação"] || "Aberto",
-            endereco: row["Endereço"] || "Endereço não informado", // Fundamental para mapa
+            endereco: row["Endereço"] || "Endereço não informado",
             funcionamento: row["Funcionamento"] || "",
-            
-            // Filtros Específicos
             ingresso: row["Valor do Ingresso"] || "Não informado",
-            gratuidades: row["Gratuidades"] || "", // Campo descritivo
-            educativo: row["Setor Educativo"] || "Não", // Sim/Não
+            gratuidades: row["Gratuidades"] || "",
+            educativo: row["Setor Educativo"] || "Não",
             acervo: row["Acervo Predominante"] || "Outros",
-            museologo: row["Museólogo"] || "Não", // Sim/Não
-            acessibilidade: row["Acessibilidade"] || "", // Campo descritivo
+            museologo: row["Museólogo"] || "Não",
+            acessibilidade: row["Acessibilidade"] || "",
             historico: row["Histórico"] || "",
-            
-            lat: null, lng: null // Será calculado via cityCoords
+            lat: null, lng: null
         });
     });
-
     museumsData = cleanData;
-    populateCitySelect(); // Atualiza o filtro de cidades com as novas do CSV
     renderMuseums(museumsData);
-
+    
     const statusBox = document.getElementById('upload-status');
     statusBox.className = 'alert alert-success small p-2 d-block';
-    statusBox.innerText = `${cleanData.length} instituições carregadas com sucesso.`;
+    statusBox.innerText = `${cleanData.length} carregados com sucesso.`;
 }
 
-// Cadastro Manual (Campos Completos)
 function addManualMuseum(e) {
     e.preventDefault();
-    
     const novo = {
         id: Date.now(),
         nome: document.getElementById('mNome').value,
@@ -328,21 +290,13 @@ function addManualMuseum(e) {
         regiao: document.getElementById('mRegiao').value,
         natureza: document.getElementById('mNatureza').value,
         situacao: document.getElementById('mStatus').value,
-        museologo: document.getElementById('mMuseologo').value,
         acervo: document.getElementById('mAcervo').value,
+        museologo: document.getElementById('mMuseologo').value,
         ingresso: document.getElementById('mIngresso').value || "Não informado",
-        educativo: "Não informado", // Simplificado no manual, poderia ter campo
-        gratuidades: "Inserido manualmente",
-        acessibilidade: "Inserido manualmente",
-        historico: "Inserido manualmente",
-        funcionamento: "Não informado",
-        lat: null, lng: null
+        funcionamento: "Inserido manualmente", gratuidades: "", educativo: "Não", acessibilidade: "", historico: "", lat: null, lng: null
     };
-
     museumsData.push(novo);
-    populateCitySelect();
     renderMuseums(museumsData);
-    
-    alert(`${novo.nome} adicionado com sucesso!`);
+    alert('Cadastrado com sucesso!');
     document.getElementById('manualForm').reset();
 }
