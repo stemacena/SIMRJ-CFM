@@ -60,51 +60,70 @@
                 <button class="btn btn-sm btn-outline-light" onclick="closeAdmin()">Sair com Segurança</button>
             </div>
             
-            <div class="row">
-                <div class="col-lg-3 border-end border-secondary mb-3">
-                    <h5>Importar Planilha</h5>
-                    <p class="small text-muted mb-2">Envie o arquivo .csv gerado pelo formulário do Google.</p>
-                    <input class="form-control form-control-sm mb-2" type="file" id="csvFile" accept=".csv">
-                    <div id="upload-status" class="alert alert-secondary d-none small p-2"></div>
+            <ul class="nav nav-tabs mb-3" id="adminTabs">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-import">Importar / Cadastro</a></li>
+                <li class="nav-item"><a class="nav-link text-warning fw-bold" data-bs-toggle="tab" href="#tab-pending"><i class="bi bi-geo-alt-fill"></i> Museus sem Pin no Mapa (<span id="pendingCount">0</span>)</a></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="tab-import">
+                    <div class="row">
+                        <div class="col-lg-3 border-end border-secondary mb-3">
+                            <h5>Importar Planilha</h5>
+                            <p class="small text-muted mb-2">Envie o arquivo .csv gerado pelo formulário do Google.</p>
+                            <input class="form-control form-control-sm mb-2" type="file" id="csvFile" accept=".csv">
+                            <div id="upload-status" class="alert alert-secondary d-none small p-2"></div>
+                            
+                            <div class="progress mt-2 d-none" id="upload-progress-container" style="height: 10px;">
+                                <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-9 ps-lg-4">
+                            <h5>Cadastro Manual de Instituição</h5>
+                            <form id="manualForm" onsubmit="addManualMuseum(event)">
+                                <div class="row g-2">
+                                    <div class="col-md-6"><label class="form-label-admin">Nome da Instituição</label><input type="text" class="form-control form-control-sm" id="mNome" required></div>
+                                    <div class="col-md-6"><label class="form-label-admin">Endereço Completo</label><input type="text" class="form-control form-control-sm" id="mEndereco" required></div>
+                                    <div class="col-md-4"><label class="form-label-admin">Município</label><select id="mMunicipio" class="form-select form-select-sm"></select></div>
+                                    <div class="col-md-4"><label class="form-label-admin">Região</label>
+                                        <select id="mRegiao" class="form-select form-select-sm">
+                                            <option value="Metropolitana I">Metropolitana I</option><option value="Serrana">Serrana</option><option value="Baixadas Litorâneas">Baixadas Litorâneas</option><option value="Norte Fluminense">Norte Fluminense</option><option value="Noroeste Fluminense">Noroeste Fluminense</option><option value="Médio Paraíba">Médio Paraíba</option><option value="Centro-Sul">Centro-Sul</option><option value="Costa Verde">Costa Verde</option><option value="Metropolitana II">Metropolitana II</option><option value="Metropolitana III">Metropolitana III</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4"><label class="form-label-admin">Natureza Adm.</label>
+                                        <select id="mNatureza" class="form-select form-select-sm">
+                                            <option value="Municipal">Municipal</option><option value="Estadual">Estadual</option><option value="Federal">Federal</option><option value="Privada">Privada</option><option value="Público-privada">Público-privada</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3"><label class="form-label-admin">Tipologia do Acervo</label>
+                                        <select id="mAcervo" class="form-select form-select-sm">
+                                            <option value="Histórico">Histórico</option><option value="Artes Visuais">Artes Visuais</option><option value="Antropologia e Etnografia">Antropologia e Etnografia</option><option value="Arqueologia">Arqueologia</option><option value="Ciência e Tecnologia">Ciência e Tecnologia</option><option value="Imagem e Som">Imagem e Som</option><option value="Patrimônio Científico e Histórico Natural">Patrimônio Científico</option><option value="Virtual">Virtual</option><option value="Outros">Outros</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3"><label class="form-label-admin">Situação</label>
+                                        <select id="mStatus" class="form-select form-select-sm">
+                                            <option value="Aberto">Aberto</option><option value="Aberto funcionando parcialmente">Aberto Parcial</option><option value="Em implantação">Em implantação</option><option value="Desativado temporariamente">Desativado temp.</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3"><label class="form-label-admin">Museólogo</label><select id="mMuseologo" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+                                    <div class="col-md-3"><label class="form-label-admin">Setor Educativo</label><select id="mEducativo" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+                                    <div class="col-md-4"><label class="form-label-admin">Funcionamento</label><input type="text" class="form-control form-control-sm" id="mFunc" placeholder="Ex: Terça a Domingo"></div>
+                                    <div class="col-md-4"><label class="form-label-admin">Valor Ingresso</label><input type="text" class="form-control form-control-sm" id="mIngresso" placeholder="Ex: R$ 10,00 ou Gratuito"></div>
+                                    <div class="col-md-4"><label class="form-label-admin">Gratuidades</label><input type="text" class="form-control form-control-sm" id="mGratuidade" placeholder="Ex: Estudantes e Idosos"></div>
+                                    <div class="col-md-6"><label class="form-label-admin">Acessibilidade</label><textarea class="form-control form-control-sm" id="mAcessibilidade" rows="2"></textarea></div>
+                                    <div class="col-md-6"><label class="form-label-admin">Histórico</label><textarea class="form-control form-control-sm" id="mHistorico" rows="2"></textarea></div>
+                                    <div class="col-12 mt-3"><button type="submit" class="btn btn-success btn-sm w-100">Registrar Instituição no Mapa</button></div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-lg-9 ps-lg-4">
-                    <h5>Cadastro Manual de Instituição</h5>
-                    <form id="manualForm" onsubmit="addManualMuseum(event)">
-                        <div class="row g-2">
-                            <div class="col-md-6"><label class="form-label-admin">Nome da Instituição</label><input type="text" class="form-control form-control-sm" id="mNome" required></div>
-                            <div class="col-md-6"><label class="form-label-admin">Endereço Completo</label><input type="text" class="form-control form-control-sm" id="mEndereco" required></div>
-                            <div class="col-md-4"><label class="form-label-admin">Município</label><select id="mMunicipio" class="form-select form-select-sm"></select></div>
-                            <div class="col-md-4"><label class="form-label-admin">Região</label>
-                                <select id="mRegiao" class="form-select form-select-sm">
-                                    <option value="Metropolitana I">Metropolitana I</option><option value="Serrana">Serrana</option><option value="Baixadas Litorâneas">Baixadas Litorâneas</option><option value="Norte Fluminense">Norte Fluminense</option><option value="Noroeste Fluminense">Noroeste Fluminense</option><option value="Médio Paraíba">Médio Paraíba</option><option value="Centro-Sul">Centro-Sul</option><option value="Costa Verde">Costa Verde</option><option value="Metropolitana II">Metropolitana II</option><option value="Metropolitana III">Metropolitana III</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4"><label class="form-label-admin">Natureza Adm.</label>
-                                <select id="mNatureza" class="form-select form-select-sm">
-                                    <option value="Municipal">Municipal</option><option value="Estadual">Estadual</option><option value="Federal">Federal</option><option value="Privada">Privada</option><option value="Público-privada">Público-privada</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3"><label class="form-label-admin">Tipologia do Acervo</label>
-                                <select id="mAcervo" class="form-select form-select-sm">
-                                    <option value="Histórico">Histórico</option><option value="Artes Visuais">Artes Visuais</option><option value="Antropologia e Etnografia">Antropologia e Etnografia</option><option value="Arqueologia">Arqueologia</option><option value="Ciência e Tecnologia">Ciência e Tecnologia</option><option value="Imagem e Som">Imagem e Som</option><option value="Patrimônio Científico e Histórico Natural">Patrimônio Científico</option><option value="Virtual">Virtual</option><option value="Outros">Outros</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3"><label class="form-label-admin">Situação</label>
-                                <select id="mStatus" class="form-select form-select-sm">
-                                    <option value="Aberto">Aberto</option><option value="Aberto funcionando parcialmente">Aberto Parcial</option><option value="Em implantação">Em implantação</option><option value="Desativado temporariamente">Desativado temp.</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3"><label class="form-label-admin">Museólogo</label><select id="mMuseologo" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
-                            <div class="col-md-3"><label class="form-label-admin">Setor Educativo</label><select id="mEducativo" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
-                            <div class="col-md-4"><label class="form-label-admin">Funcionamento</label><input type="text" class="form-control form-control-sm" id="mFunc" placeholder="Ex: Terça a Domingo"></div>
-                            <div class="col-md-4"><label class="form-label-admin">Valor Ingresso</label><input type="text" class="form-control form-control-sm" id="mIngresso" placeholder="Ex: R$ 10,00 ou Gratuito"></div>
-                            <div class="col-md-4"><label class="form-label-admin">Gratuidades</label><input type="text" class="form-control form-control-sm" id="mGratuidade" placeholder="Ex: Estudantes e Idosos"></div>
-                            <div class="col-md-6"><label class="form-label-admin">Acessibilidade</label><textarea class="form-control form-control-sm" id="mAcessibilidade" rows="2"></textarea></div>
-                            <div class="col-md-6"><label class="form-label-admin">Histórico</label><textarea class="form-control form-control-sm" id="mHistorico" rows="2"></textarea></div>
-                            <div class="col-12 mt-3"><button type="submit" class="btn btn-success btn-sm w-100">Registrar Instituição no Mapa</button></div>
+                <div class="tab-pane fade" id="tab-pending">
+                    <p class="text-muted small">Os museus abaixo foram importados da planilha, mas a API não localizou o endereço exato. Clique em "Mapear" para clicar no mapa e definir o local manualmente.</p>
+                    <div id="pending-list" class="pending-list pe-2">
                         </div>
-                    </form>
                 </div>
             </div>
         </div>
@@ -116,44 +135,53 @@
             <div class="container">
                 <h1 class="display-4 fw-bold mb-3">Sistema Estadual de Museus</h1>
                 <p class="lead mb-4">Integrando e fortalecendo as instituições de memória do Rio de Janeiro.</p>
-                <button class="btn btn-light btn-lg text-primary fw-bold" onclick="switchView('cfm')">Acessar o Cadastro Fluminense</button>
+                <button class="btn btn-light btn-lg text-primary fw-bold px-5" onclick="switchView('cfm')">Acessar o Cadastro Fluminense</button>
             </div>
         </section>
 
         <section class="py-5 bg-white">
             <div class="container">
                 <div class="row align-items-center g-5">
-                    <div class="col-md-6">
+                    <div class="col-lg-5">
                         <h2 class="section-title">Nossa Missão</h2>
                         <p class="text-justify text-muted">O SIM-RJ, criado pelo Decreto nº 42.306, tem a finalidade de integrar uma ampla e diversificada rede de instituições de caráter museológico. Ele presta assessoramento aos 92 municípios do Estado, promovendo a valorização, preservação e gerenciamento do patrimônio cultural fluminense.</p>
                         <p class="text-justify text-muted">Através de oficinas, visitas técnicas e encontros regionais, criamos uma rede fluente de diálogos e cooperação para fortalecer a cultura em nosso estado.</p>
                     </div>
                     
-                    <div class="col-md-6">
-                        <h4 class="mb-4 text-center" style="color: var(--color-blue);"><i class="bi bi-instagram"></i> Acompanhe o @sistemademuseusrj</h4>
-                        <div id="instaCarousel" class="carousel slide" data-bs-ride="carousel">
-                            <div class="carousel-inner">
-                                <div class="carousel-item active">
-                                    <div class="insta-carousel-item">
-                                        <img src="https://picsum.photos/seed/museurj/400/300" class="insta-img-placeholder" alt="Ações SIM-RJ">
-                                        <p class="small text-muted mb-2">Visita técnica na Região Serrana fortalecendo a rede de museus locais. 🏛️✨</p>
-                                        <a href="https://www.instagram.com/sistemademuseusrj/" target="_blank" class="btn btn-sm btn-outline-primary">Ver no Instagram</a>
+                    <div class="col-lg-7">
+                        <div class="insta-carousel-container">
+                            <h4 class="mb-4 text-center" style="color: var(--color-blue);"><i class="bi bi-instagram"></i> Acompanhe o @sistemademuseusrj</h4>
+                            <div id="instaCarousel" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active">
+                                        <img src="Design sem nome (1).png" class="insta-img-placeholder" alt="Identidade SIM-RJ">
+                                        <div class="text-center mt-3">
+                                            <p class="small text-muted fw-bold mb-2">A nova identidade conectando as regiões do nosso estado. 🏛️✨</p>
+                                            <a href="https://www.instagram.com/sistemademuseusrj/" target="_blank" class="btn btn-sm btn-outline-primary px-4">Ver no Instagram</a>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-item">
+                                        <img src="Plano de Comunicação.jpg" class="insta-img-placeholder" alt="Plano de Comunicação">
+                                        <div class="text-center mt-3">
+                                            <p class="small text-muted fw-bold mb-2">Cores e pluralidade na preservação do patrimônio fluminense.</p>
+                                            <a href="https://www.instagram.com/sistemademuseusrj/" target="_blank" class="btn btn-sm btn-outline-primary px-4">Ver no Instagram</a>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-item">
+                                        <img src="Design sem nome.png" class="insta-img-placeholder" alt="Cadastro Fluminense">
+                                        <div class="text-center mt-3">
+                                            <p class="small text-muted fw-bold mb-2">Conheça o novo portal do Cadastro Fluminense de Museus!</p>
+                                            <a href="https://www.instagram.com/sistemademuseusrj/" target="_blank" class="btn btn-sm btn-outline-primary px-4">Ver no Instagram</a>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="carousel-item">
-                                    <div class="insta-carousel-item">
-                                        <img src="https://picsum.photos/seed/cultura/400/300" class="insta-img-placeholder" alt="Encontro Regional">
-                                        <p class="small text-muted mb-2">Encontro de gestores: discutindo o futuro do patrimônio cultural fluminense.</p>
-                                        <a href="https://www.instagram.com/sistemademuseusrj/" target="_blank" class="btn btn-sm btn-outline-primary">Ver no Instagram</a>
-                                    </div>
-                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#instaCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon bg-dark rounded-circle p-3" aria-hidden="true"></span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#instaCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon bg-dark rounded-circle p-3" aria-hidden="true"></span>
+                                </button>
                             </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#instaCarousel" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(100%);"></span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#instaCarousel" data-bs-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true" style="filter: invert(100%);"></span>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -162,7 +190,6 @@
     </div>
 
     <div id="view-cfm" style="display: none;">
-        
         <section class="hero-cfm">
             <div class="container text-center text-lg-start">
                 <div class="row align-items-center">
@@ -186,6 +213,15 @@
                         <div class="mb-3">
                             <label class="filter-label">Nome da Instituição</label>
                             <input type="text" id="searchName" class="form-control form-control-sm" placeholder="Digite o nome...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="filter-label text-warning"><i class="bi bi-geo-alt-fill"></i> Status no Mapa</label>
+                            <select id="filterHasMap" class="form-select form-select-sm border-warning">
+                                <option value="">Exibir Todos</option>
+                                <option value="sim">Com Localização Exata (Pin)</option>
+                                <option value="nao">Aguardando Mapeamento</option>
+                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -273,7 +309,7 @@
                                     </div>
                                     <div class="form-check mb-1">
                                         <input class="form-check-input" type="checkbox" id="checkEdu">
-                                        <label class="form-check-label small" for="checkEdu">Setor Educativo</label>
+                                        <label class="form-check-label small" for="checkEdu">Possui Setor Educativo</label>
                                     </div>
                                     
                                     <label class="filter-label mt-3">Valor Ingresso</label>
@@ -314,6 +350,8 @@
                     <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <div id="modalAlertPin" class="alert alert-warning small d-none py-2 mb-3"><i class="bi bi-exclamation-triangle-fill"></i> Esta instituição ainda não possui uma localização exata cadastrada no mapa.</div>
+
                     <div class="row mb-3">
                         <div class="col-md-8">
                             <p class="mb-1 text-primary"><i class="bi bi-geo-alt-fill"></i> <span id="modalEndereco"></span></p>
@@ -344,6 +382,27 @@
 
                     <h6 class="modal-subtitle">Histórico</h6>
                     <p class="small text-muted" id="modalHistorico" style="text-align: justify;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminMapModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark">
+                    <h5 class="modal-title text-white">Mapeamento Manual: <span id="adminMapTitle" class="text-warning"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="p-3 bg-light border-bottom small text-muted">
+                        Navegue pelo mapa e <strong>clique no local exato</strong> onde o museu está localizado.
+                    </div>
+                    <div id="adminLeafletMap" style="height: 450px; width: 100%;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveAdminPin()">Salvar Localização</button>
                 </div>
             </div>
         </div>

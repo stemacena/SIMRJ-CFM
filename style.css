@@ -30,17 +30,14 @@ section { scroll-margin-top: 110px; }
     border-bottom: 3px solid var(--color-green-olive);
 }
 
-/* Logos muito maiores e clicáveis */
 .header-logo {
-    max-height: 95px; /* Aumentado consideravelmente */
+    max-height: 95px;
     width: auto;
     object-fit: contain;
     cursor: pointer;
     transition: transform 0.2s;
 }
-.header-logo:hover {
-    transform: scale(1.02);
-}
+.header-logo:hover { transform: scale(1.02); }
 
 .nav-link {
     font-weight: 600;
@@ -50,10 +47,7 @@ section { scroll-margin-top: 110px; }
     margin: 0 5px;
     transition: color 0.2s;
 }
-
-.nav-link:hover, .nav-link.active {
-    color: var(--color-blue) !important;
-}
+.nav-link:hover, .nav-link.active { color: var(--color-blue) !important; }
 
 .btn-custom {
     background-color: var(--color-cfm-teal);
@@ -63,22 +57,17 @@ section { scroll-margin-top: 110px; }
 }
 .btn-custom:hover { background-color: #004d4d; }
 
-/* --- SEÇÕES --- */
+/* --- SEÇÕES E BANNERS --- */
 .section-title {
     color: var(--color-purple);
     font-weight: 700;
     margin-bottom: 1.5rem;
 }
 .section-title::after {
-    content: '';
-    display: block;
-    width: 60px;
-    height: 4px;
-    background-color: var(--color-yellow);
-    margin-top: 8px;
+    content: ''; display: block; width: 60px; height: 4px;
+    background-color: var(--color-yellow); margin-top: 8px;
 }
 
-/* Banners */
 .hero-home {
     background: linear-gradient(rgba(107, 78, 126, 0.85), rgba(0, 52, 187, 0.85)), url('logo-plano.jpg');
     background-size: cover; background-position: center; padding: 100px 0; color: white;
@@ -88,13 +77,24 @@ section { scroll-margin-top: 110px; }
     background-size: cover; background-position: center; padding: 60px 0; color: white;
 }
 
-/* --- CARROSSEL INSTAGRAM --- */
-.insta-carousel-item {
-    background-color: white; border-radius: 8px; padding: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; border: 1px solid #e1e1e1;
+/* --- CARROSSEL INSTAGRAM (MELHORADO) --- */
+.insta-carousel-container {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border: 1px solid #e1e1e1;
 }
 .insta-img-placeholder {
-    width: 100%; height: 250px; object-fit: cover; border-radius: 4px; margin-bottom: 15px;
+    width: 100%;
+    height: 400px; /* Bem maior */
+    object-fit: contain; /* Para não cortar as suas imagens */
+    background-color: #fafafa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+.carousel-control-prev-icon, .carousel-control-next-icon {
+    filter: invert(100%); /* Setas pretas para aparecer no fundo branco */
 }
 
 /* --- FILTROS E CARDS --- */
@@ -131,6 +131,11 @@ section { scroll-margin-top: 110px; }
     margin-top: 1rem; margin-bottom: 0.5rem; display: inline-block;
 }
 
+/* Fila de Mapeamento (Admin) */
+.pending-list { max-height: 300px; overflow-y: auto; }
+.pending-item { border-bottom: 1px solid #555; padding-bottom: 10px; margin-bottom: 10px; }
+
 @media (max-width: 768px) {
     .header-logo { max-height: 60px; }
+    .insta-img-placeholder { height: 250px; }
 }
