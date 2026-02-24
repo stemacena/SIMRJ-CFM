@@ -77,24 +77,25 @@ section { scroll-margin-top: 110px; }
     background-size: cover; background-position: center; padding: 60px 0; color: white;
 }
 
-/* --- CARROSSEL INSTAGRAM (MELHORADO) --- */
+/* --- CARROSSEL INSTAGRAM REAL --- */
 .insta-carousel-container {
     background-color: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: 20px 40px; /* Mais espaço lateral para as setas */
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     border: 1px solid #e1e1e1;
 }
-.insta-img-placeholder {
-    width: 100%;
-    height: 400px; /* Bem maior */
-    object-fit: contain; /* Para não cortar as suas imagens */
-    background-color: #fafafa;
-    border-radius: 8px;
-    margin-bottom: 15px;
+.insta-carousel-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 450px;
 }
+/* Estilo das setas do carrossel para não ficarem em cima do post */
+.carousel-control-prev { left: -30px; }
+.carousel-control-next { right: -30px; }
 .carousel-control-prev-icon, .carousel-control-next-icon {
-    filter: invert(100%); /* Setas pretas para aparecer no fundo branco */
+    filter: invert(100%);
 }
 
 /* --- FILTROS E CARDS --- */
@@ -131,11 +132,9 @@ section { scroll-margin-top: 110px; }
     margin-top: 1rem; margin-bottom: 0.5rem; display: inline-block;
 }
 
-/* Fila de Mapeamento (Admin) */
 .pending-list { max-height: 300px; overflow-y: auto; }
 .pending-item { border-bottom: 1px solid #555; padding-bottom: 10px; margin-bottom: 10px; }
 
 @media (max-width: 768px) {
     .header-logo { max-height: 60px; }
-    .insta-img-placeholder { height: 250px; }
 }

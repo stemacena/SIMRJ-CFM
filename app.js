@@ -16,7 +16,12 @@ const allMunicipalitiesRJ = [
     "Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo", "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana", "Cabo Frio", "Cachoeiras de Macacu", "Cambuci", "Campos dos Goytacazes", "Cantagalo", "Carapebus", "Cardoso Moreira", "Carmo", "Casimiro de Abreu", "Comendador Levy Gasparian", "Conceição de Macabu", "Cordeiro", "Duas Barras", "Duque de Caxias", "Engenheiro Paulo de Frontin", "Guapimirim", "Iguaba Grande", "Itaboraí", "Itaguaí", "Italva", "Itaocara", "Itaperuna", "Itatiaia", "Japeri", "Laje do Muriaé", "Macaé", "Macuco", "Magé", "Mangaratiba", "Maricá", "Mendes", "Mesquita", "Miguel Pereira", "Miracema", "Natividade", "Nilópolis", "Niterói", "Nova Friburgo", "Nova Iguaçu", "Paracambi", "Paraíba do Sul", "Paraty", "Paty do Alferes", "Petrópolis", "Pinheiral", "Piraí", "Porciúncula", "Porto Real", "Quatis", "Queimados", "Quissamã", "Resende", "Rio Bonito", "Rio das Flores", "Rio das Ostras", "Rio de Janeiro", "Rio Claro", "Santa Maria Madalena", "Santo Antônio de Pádua", "São Fidélis", "São Francisco de Itabapoana", "São Gonçalo", "São João da Barra", "São João de Meriti", "São José de Ubá", "São José do Vale do Rio Preto", "São Pedro da Aldeia", "São Sebastião do Alto", "Sapucaia", "Saquarema", "Seropédica", "Silva Jardim", "Sumidouro", "Tanguá", "Teresópolis", "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", "Vassouras", "Volta Redonda"
 ];
 
-// Utilitário para pausa (Evita bloqueio da API Nominatim)
+// Fallback de Coordenadas de Municípios
+const cityCoordsRJ = {
+    "angra dos reis":[-23.0067,-44.3181],"aperibe":[-21.6225,-42.0722],"araruama":[-22.8728,-42.3397],"areal":[-22.2289,-43.1069],"armacao dos buzios":[-22.7525,-41.8906],"arraial do cabo":[-22.9644,-42.0278],"barra do pirai":[-22.4678,-43.8267],"barra mansa":[-22.5442,-44.1714],"belford roxo":[-22.7642,-43.3994],"bom jardim":[-22.155,-42.4239],"bom jesus do itabapoana":[-21.1333,-41.6792],"cabo frio":[-22.8869,-42.0266],"cachoeiras de macacu":[-22.4642,-42.6536],"cambuci":[-21.5756,-41.9161],"campos dos goytacazes":[-21.7618,-41.3239],"cantagalo":[-21.9806,-42.3683],"carapebus":[-22.1856,-41.6622],"cardoso moreira":[-21.4828,-41.6164],"carmo":[-21.9328,-42.6086],"casimiro de abreu":[-22.4808,-42.2047],"comendador levy gasparian":[-22.0286,-43.2086],"conceicao de macabu":[-22.0833,-41.8683],"cordeiro":[-22.0289,-42.3606],"duas barras":[-22.0506,-42.5256],"duque de caxias":[-22.7915,-43.3005],"engenheiro paulo de frontin":[-22.5519,-43.6828],"guapimirim":[-22.5361,-42.9819],"iguaba grande":[-22.8369,-42.2269],"itaborai":[-22.7483,-42.8586],"itaguai":[-22.8522,-43.7753],"italva":[-21.425,-41.6842],"itaocara":[-21.6744,-42.0761],"itaperuna":[-21.2057,-41.8888],"itatiaia":[-22.4961,-44.5606],"japeri":[-22.645,-43.6517],"laje do muriae":[-21.2036,-42.1286],"macae":[-22.3708,-41.7869],"macuco":[-21.9842,-42.2514],"mage":[-22.6528,-43.0422],"mangaratiba":[-22.9597,-44.0406],"marica":[-22.9194,-42.8186],"mendes":[-22.5264,-43.7331],"mesquita":[-22.7831,-43.4286],"miguel pereira":[-22.4572,-43.4803],"miracema":[-21.4131,-42.1961],"natividade":[-21.0425,-41.9867],"nilopolis":[-22.8089,-43.4147],"niteroi":[-22.8859,-43.1152],"nova friburgo":[-22.2887,-42.5341],"nova iguacu":[-22.7561,-43.4608],"paracambi":[-22.6033,-43.7083],"paraiba do sul":[-22.1625,-43.2889],"paraty":[-23.2198,-44.7175],"paty do alferes":[-22.4281,-43.4175],"petropolis":[-22.5050,-43.1788],"pinheiral":[-22.5133,-44.0011],"pirai":[-22.6289,-43.8986],"porciuncula":[-20.9631,-42.0408],"porto real":[-22.4133,-44.2886],"quatis":[-22.4086,-44.2586],"queimados":[-22.7161,-43.5558],"quissama":[-22.1022,-41.4725],"resende":[-22.4689,-44.4486],"rio bonito":[-22.7031,-42.6253],"rio das flores":[-22.1644,-43.585],"rio das ostras":[-22.5269,-41.945],"rio de janeiro":[-22.9068,-43.1729],"rio claro":[-22.7214,-44.0253],"santa maria madalena":[-21.9542,-42.0083],"santo antonio de padua":[-21.5383,-42.1814],"sao fidelis":[-21.6461,-41.7469],"sao francisco de itabapoana":[-21.2981,-41.1408],"sao goncalo":[-22.8269,-43.0539],"sao joao da barra":[-21.6381,-41.0506],"sao joao de meriti":[-22.8017,-43.3736],"sao jose de uba":[-21.3586,-41.9431],"sao jose do vale do rio preto":[-22.1522,-42.9231],"sao pedro da aldeia":[-22.8392,-42.1028],"sao sebastiao do alto":[-21.9567,-42.1342],"sapucaia":[-21.9933,-42.915],"saquarema":[-22.9272,-42.5103],"seropedica":[-22.7483,-43.7036],"silva jardim":[-22.6517,-42.3931],"sumidouro":[-22.0511,-42.6739],"tangua":[-22.7303,-42.7144],"teresopolis":[-22.4123,-42.9664],"trajano de moraes":[-22.0628,-42.0658],"tres rios":[-22.1167,-43.2083],"valenca":[-22.2458,-43.7031],"varre-sai":[-20.9292,-41.8672],"vassouras":[-22.4042,-43.6631],"volta redonda":[-22.5202,-44.1033]
+};
+const defaultRjCenter = [-22.9, -43.2]; 
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function geocodeAddress(endereco, municipio) {
@@ -28,14 +33,21 @@ async function geocodeAddress(endereco, municipio) {
         if (data && data.length > 0) {
             return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
         }
-    } catch (e) { console.error("Erro na geolocalização", e); }
-    return null; // Retorna null se falhar! O gestor mapeará depois.
+    } catch (e) { console.error(e); }
+    return null;
 }
+
+const normalizeString = (str) => {
+    if(!str) return "";
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+};
 
 // --- 2. NAVEGAÇÃO DE TELAS ---
 function switchView(view) {
     document.getElementById('view-home').style.display = view === 'home' ? 'block' : 'none';
     document.getElementById('view-cfm').style.display = view === 'cfm' ? 'block' : 'none';
+    
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
     if(view === 'cfm') setTimeout(() => { map.invalidateSize(); }, 200);
 }
 
@@ -71,7 +83,7 @@ function populateCitySelects() {
     });
 }
 
-// --- 4. RENDERIZAÇÃO E MAPA PÚBLICO ---
+// --- 4. RENDERIZAÇÃO E MAPA ---
 function renderMuseums(data) {
     const listContainer = document.getElementById('museum-list');
     listContainer.innerHTML = '';
@@ -81,11 +93,10 @@ function renderMuseums(data) {
 
     data.forEach(museum => {
         const hasMus = museum.museologo === "Sim";
-        const hasPin = museum.lat && museum.lng; // Checa se a API conseguiu o Pin
+        const hasPin = museum.lat && museum.lng; 
 
         const card = document.createElement('div');
         card.className = 'col-md-6 mb-3';
-        
         card.innerHTML = `
             <div class="card h-100 museum-card bg-white">
                 <div class="card-body">
@@ -104,7 +115,6 @@ function renderMuseums(data) {
             </div>`;
         listContainer.appendChild(card);
 
-        // Só põe no mapa se tiver coordenada exata
         if (hasPin) {
             L.marker([museum.lat, museum.lng], {icon: museumIcon})
                 .bindPopup(`<b>${museum.nome}</b><br><small>${museum.endereco}</small><br><a href="#" onclick="openProfile(${museum.id})">Abrir Ficha</a>`)
@@ -112,18 +122,17 @@ function renderMuseums(data) {
         }
     });
 
-    // Atualiza aba do gestor sempre que renderiza
     updatePendingList();
 }
 
-// --- 5. FILTROS (MANTIDOS E ACRESCENTADO STATUS NO MAPA) ---
+// --- 5. FILTROS ---
 function getCheckedValues(className) {
     return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => cb.value);
 }
 
 function applyFilters() {
     const term = document.getElementById('searchName').value.toLowerCase();
-    const filterHasMap = document.getElementById('filterHasMap').value; // Novo Filtro
+    const filterHasMap = document.getElementById('filterHasMap').value;
     const selectedMuni = document.getElementById('filterMunicipio').value;
     const regions = getCheckedValues('filter-region');
     const natures = getCheckedValues('filter-nature');
@@ -139,12 +148,10 @@ function applyFilters() {
 
     const filtered = museumsData.filter(m => {
         if (!m.nome.toLowerCase().includes(term)) return false;
-        
-        // NOVO FILTRO DE MAPA
         if (filterHasMap === 'sim' && (!m.lat || !m.lng)) return false;
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
-
         if (selectedMuni && m.municipio !== selectedMuni) return false;
+        
         if (regions.length > 0 && !regions.includes(m.regiao)) return false;
         if (natures.length > 0 && !natures.includes(m.natureza)) return false;
         if (acervos.length > 0 && !acervos.includes(m.acervo)) return false;
@@ -186,7 +193,6 @@ function openProfile(id) {
 
     document.getElementById('modalTitle').innerText = m.nome;
     
-    // SELOS
     const badge = document.getElementById('modalBadgeMuseologo');
     if (m.museologo === "Sim") { badge.classList.remove('d-none'); } else { badge.classList.add('d-none'); }
 
@@ -226,7 +232,6 @@ function checkAdminPassword() {
 }
 function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
 
-// PROCESSAMENTO DA PLANILHA (COM PROTEÇÃO DE API)
 document.getElementById('csvFile').addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -255,11 +260,9 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                 let endereco = row["Endereço"] || "";
                 let municipio = row["Município"] || "Rio de Janeiro";
                 
-                // Feedback visual de progresso para o usuário não achar que travou
                 statusBox.innerText = `Buscando coordenadas (API): Processando ${i+1} de ${total}...`;
                 pBar.style.width = `${((i+1)/total)*100}%`;
 
-                // Busca a coordenada e dá uma pausa de 600ms para a API gratuita não bloquear!
                 let coords = await geocodeAddress(endereco, municipio);
                 await sleep(600); 
 
@@ -288,7 +291,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
             renderMuseums(museumsData);
             
             statusBox.className = 'alert alert-success small p-2 d-block mt-2';
-            statusBox.innerText = `Concluído! ${cleanData.length} lidos. Vá na aba "Museus sem Pin" para ajustar os que a API não encontrou.`;
+            statusBox.innerText = `Concluído! ${cleanData.length} lidos. Verifique a aba "Museus sem Pin".`;
             pContainer.classList.add('d-none');
         }
     });
@@ -323,11 +326,11 @@ async function addManualMuseum(e) {
     
     museumsData.push(novo);
     renderMuseums(museumsData);
-    alert(coords ? 'Cadastrado com sucesso no mapa!' : 'Cadastrado! Mas a rua não foi achada. Use a aba "Museus sem Pin" para fixar no mapa.');
+    alert(coords ? 'Cadastrado com sucesso no mapa!' : 'Cadastrado! Mas a rua não foi achada. Use a aba "Museus sem Pin".');
     document.getElementById('manualForm').reset();
 }
 
-// --- 8. SISTEMA DE MAPEAMENTO MANUAL DO GESTOR ---
+// --- 8. SISTEMA DE MAPEAMENTO MANUAL DO GESTOR COM BARRA DE BUSCA ---
 let adminMapInstance = null;
 let adminTempMarker = null;
 let currentMappingId = null;
@@ -339,7 +342,7 @@ function updatePendingList() {
     document.getElementById('pendingCount').innerText = pendings.length;
 
     if(pendings.length === 0) {
-        list.innerHTML = '<div class="alert alert-success small">Nenhuma pendência! Todos os museus possuem localização exata no mapa.</div>';
+        list.innerHTML = '<div class="alert alert-success small">Todos os museus possuem localização exata no mapa.</div>';
         return;
     }
 
@@ -363,10 +366,12 @@ function openAdminMapPicker(id) {
     currentMappingId = id;
     document.getElementById('adminMapTitle').innerText = m.nome;
     
+    // Auto-preenche a barra de busca com o endereço da planilha para facilitar pro Gestor!
+    document.getElementById('adminMapSearchInput').value = `${m.endereco}, ${m.municipio}, RJ`;
+
     const adminMapModal = new bootstrap.Modal(document.getElementById('adminMapModal'));
     adminMapModal.show();
 
-    // Leaflet precisa desse delay para renderizar dentro do modal
     setTimeout(() => {
         if (!adminMapInstance) {
             adminMapInstance = L.map('adminLeafletMap').setView([-22.9068, -43.1729], 8);
@@ -378,14 +383,38 @@ function openAdminMapPicker(id) {
             });
         }
         adminMapInstance.invalidateSize();
-        // Se houver pin antigo, remove
         if (adminTempMarker) { adminMapInstance.removeLayer(adminTempMarker); adminTempMarker = null; }
         
-        // Joga a câmera pro município dele para ajudar
-        let startCoords = [-22.9, -43.2];
-        adminMapInstance.setView(startCoords, 12);
+        let normCity = normalizeString(m.municipio);
+        let startCoords = cityCoordsRJ[normCity] || defaultRjCenter;
+        adminMapInstance.setView(startCoords, 13); // Zoom na cidade dele
         
+        // Clica na busca automaticamente para dar uma chance do pin cair no lugar certo
+        searchAddressOnAdminMap(); 
+
     }, 300);
+}
+
+// NOVA FUNÇÃO: BUSCA DE RUA DENTRO DO MAPA MANUAL
+async function searchAddressOnAdminMap() {
+    const query = document.getElementById('adminMapSearchInput').value;
+    if(!query) return;
+    
+    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+    try {
+        let res = await fetch(url);
+        let data = await res.json();
+        if(data && data.length > 0) {
+            let lat = parseFloat(data[0].lat);
+            let lon = parseFloat(data[0].lon);
+            
+            adminMapInstance.setView([lat, lon], 17); // Zoom bem perto da rua!
+            
+            if (adminTempMarker) adminMapInstance.removeLayer(adminTempMarker);
+            adminTempMarker = L.marker([lat, lon]).addTo(adminMapInstance);
+        }
+        // Se não achar, ele não dá erro, deixa o gestor clicar.
+    } catch(e) { console.error(e); }
 }
 
 function saveAdminPin() {
@@ -398,7 +427,7 @@ function saveAdminPin() {
     if(m) {
         m.lat = coords.lat;
         m.lng = coords.lng;
-        renderMuseums(museumsData); // Isso já atualiza o mapa público e a lista de pendências
+        renderMuseums(museumsData); 
         
         const myModalEl = document.getElementById('adminMapModal');
         const modal = bootstrap.Modal.getInstance(myModalEl);
