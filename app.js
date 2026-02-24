@@ -11,12 +11,10 @@ let markersLayer = L.layerGroup().addTo(map);
 let museumsData = [];
 let profileModal;
 
-// LISTA DOS 92 MUNICÍPIOS
 const allMunicipalitiesRJ = [
     "Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo", "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana", "Cabo Frio", "Cachoeiras de Macacu", "Cambuci", "Campos dos Goytacazes", "Cantagalo", "Carapebus", "Cardoso Moreira", "Carmo", "Casimiro de Abreu", "Comendador Levy Gasparian", "Conceição de Macabu", "Cordeiro", "Duas Barras", "Duque de Caxias", "Engenheiro Paulo de Frontin", "Guapimirim", "Iguaba Grande", "Itaboraí", "Itaguaí", "Italva", "Itaocara", "Itaperuna", "Itatiaia", "Japeri", "Laje do Muriaé", "Macaé", "Macuco", "Magé", "Mangaratiba", "Maricá", "Mendes", "Mesquita", "Miguel Pereira", "Miracema", "Natividade", "Nilópolis", "Niterói", "Nova Friburgo", "Nova Iguaçu", "Paracambi", "Paraíba do Sul", "Paraty", "Paty do Alferes", "Petrópolis", "Pinheiral", "Piraí", "Porciúncula", "Porto Real", "Quatis", "Queimados", "Quissamã", "Resende", "Rio Bonito", "Rio das Flores", "Rio das Ostras", "Rio de Janeiro", "Rio Claro", "Santa Maria Madalena", "Santo Antônio de Pádua", "São Fidélis", "São Francisco de Itabapoana", "São Gonçalo", "São João da Barra", "São João de Meriti", "São José de Ubá", "São José do Vale do Rio Preto", "São Pedro da Aldeia", "São Sebastião do Alto", "Sapucaia", "Saquarema", "Seropédica", "Silva Jardim", "Sumidouro", "Tanguá", "Teresópolis", "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", "Vassouras", "Volta Redonda"
 ];
 
-// Fallback de Coordenadas de Municípios
 const cityCoordsRJ = {
     "angra dos reis":[-23.0067,-44.3181],"aperibe":[-21.6225,-42.0722],"araruama":[-22.8728,-42.3397],"areal":[-22.2289,-43.1069],"armacao dos buzios":[-22.7525,-41.8906],"arraial do cabo":[-22.9644,-42.0278],"barra do pirai":[-22.4678,-43.8267],"barra mansa":[-22.5442,-44.1714],"belford roxo":[-22.7642,-43.3994],"bom jardim":[-22.155,-42.4239],"bom jesus do itabapoana":[-21.1333,-41.6792],"cabo frio":[-22.8869,-42.0266],"cachoeiras de macacu":[-22.4642,-42.6536],"cambuci":[-21.5756,-41.9161],"campos dos goytacazes":[-21.7618,-41.3239],"cantagalo":[-21.9806,-42.3683],"carapebus":[-22.1856,-41.6622],"cardoso moreira":[-21.4828,-41.6164],"carmo":[-21.9328,-42.6086],"casimiro de abreu":[-22.4808,-42.2047],"comendador levy gasparian":[-22.0286,-43.2086],"conceicao de macabu":[-22.0833,-41.8683],"cordeiro":[-22.0289,-42.3606],"duas barras":[-22.0506,-42.5256],"duque de caxias":[-22.7915,-43.3005],"engenheiro paulo de frontin":[-22.5519,-43.6828],"guapimirim":[-22.5361,-42.9819],"iguaba grande":[-22.8369,-42.2269],"itaborai":[-22.7483,-42.8586],"itaguai":[-22.8522,-43.7753],"italva":[-21.425,-41.6842],"itaocara":[-21.6744,-42.0761],"itaperuna":[-21.2057,-41.8888],"itatiaia":[-22.4961,-44.5606],"japeri":[-22.645,-43.6517],"laje do muriae":[-21.2036,-42.1286],"macae":[-22.3708,-41.7869],"macuco":[-21.9842,-42.2514],"mage":[-22.6528,-43.0422],"mangaratiba":[-22.9597,-44.0406],"marica":[-22.9194,-42.8186],"mendes":[-22.5264,-43.7331],"mesquita":[-22.7831,-43.4286],"miguel pereira":[-22.4572,-43.4803],"miracema":[-21.4131,-42.1961],"natividade":[-21.0425,-41.9867],"nilopolis":[-22.8089,-43.4147],"niteroi":[-22.8859,-43.1152],"nova friburgo":[-22.2887,-42.5341],"nova iguacu":[-22.7561,-43.4608],"paracambi":[-22.6033,-43.7083],"paraiba do sul":[-22.1625,-43.2889],"paraty":[-23.2198,-44.7175],"paty do alferes":[-22.4281,-43.4175],"petropolis":[-22.5050,-43.1788],"pinheiral":[-22.5133,-44.0011],"pirai":[-22.6289,-43.8986],"porciuncula":[-20.9631,-42.0408],"porto real":[-22.4133,-44.2886],"quatis":[-22.4086,-44.2586],"queimados":[-22.7161,-43.5558],"quissama":[-22.1022,-41.4725],"resende":[-22.4689,-44.4486],"rio bonito":[-22.7031,-42.6253],"rio das flores":[-22.1644,-43.585],"rio das ostras":[-22.5269,-41.945],"rio de janeiro":[-22.9068,-43.1729],"rio claro":[-22.7214,-44.0253],"santa maria madalena":[-21.9542,-42.0083],"santo antonio de padua":[-21.5383,-42.1814],"sao fidelis":[-21.6461,-41.7469],"sao francisco de itabapoana":[-21.2981,-41.1408],"sao goncalo":[-22.8269,-43.0539],"sao joao da barra":[-21.6381,-41.0506],"sao joao de meriti":[-22.8017,-43.3736],"sao jose de uba":[-21.3586,-41.9431],"sao jose do vale do rio preto":[-22.1522,-42.9231],"sao pedro da aldeia":[-22.8392,-42.1028],"sao sebastiao do alto":[-21.9567,-42.1342],"sapucaia":[-21.9933,-42.915],"saquarema":[-22.9272,-42.5103],"seropedica":[-22.7483,-43.7036],"silva jardim":[-22.6517,-42.3931],"sumidouro":[-22.0511,-42.6739],"tangua":[-22.7303,-42.7144],"teresopolis":[-22.4123,-42.9664],"trajano de moraes":[-22.0628,-42.0658],"tres rios":[-22.1167,-43.2083],"valenca":[-22.2458,-43.7031],"varre-sai":[-20.9292,-41.8672],"vassouras":[-22.4042,-43.6631],"volta redonda":[-22.5202,-44.1033]
 };
@@ -330,7 +328,7 @@ async function addManualMuseum(e) {
     document.getElementById('manualForm').reset();
 }
 
-// --- 8. SISTEMA DE MAPEAMENTO MANUAL DO GESTOR COM BARRA DE BUSCA ---
+// --- 8. SISTEMA DE MAPEAMENTO MANUAL COM FEEDBACK DE BUSCA ---
 let adminMapInstance = null;
 let adminTempMarker = null;
 let currentMappingId = null;
@@ -366,7 +364,7 @@ function openAdminMapPicker(id) {
     currentMappingId = id;
     document.getElementById('adminMapTitle').innerText = m.nome;
     
-    // Auto-preenche a barra de busca com o endereço da planilha para facilitar pro Gestor!
+    // Auto-preenche a busca
     document.getElementById('adminMapSearchInput').value = `${m.endereco}, ${m.municipio}, RJ`;
 
     const adminMapModal = new bootstrap.Modal(document.getElementById('adminMapModal'));
@@ -387,19 +385,23 @@ function openAdminMapPicker(id) {
         
         let normCity = normalizeString(m.municipio);
         let startCoords = cityCoordsRJ[normCity] || defaultRjCenter;
-        adminMapInstance.setView(startCoords, 13); // Zoom na cidade dele
+        adminMapInstance.setView(startCoords, 13);
         
-        // Clica na busca automaticamente para dar uma chance do pin cair no lugar certo
-        searchAddressOnAdminMap(); 
-
     }, 300);
 }
 
-// NOVA FUNÇÃO: BUSCA DE RUA DENTRO DO MAPA MANUAL
+// BUSCA NO MAPA DO GESTOR (COM FEEDBACK E ALERTA)
 async function searchAddressOnAdminMap() {
     const query = document.getElementById('adminMapSearchInput').value;
     if(!query) return;
     
+    const btn = document.getElementById('btnSearchAdminMap');
+    const originalText = btn.innerHTML;
+    
+    // Mostra o spinner de carregando para não parecer que está travado
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Buscando...';
+    btn.disabled = true;
+
     let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
     try {
         let res = await fetch(url);
@@ -408,13 +410,22 @@ async function searchAddressOnAdminMap() {
             let lat = parseFloat(data[0].lat);
             let lon = parseFloat(data[0].lon);
             
-            adminMapInstance.setView([lat, lon], 17); // Zoom bem perto da rua!
+            adminMapInstance.setView([lat, lon], 17); // Zoom exato!
             
             if (adminTempMarker) adminMapInstance.removeLayer(adminTempMarker);
             adminTempMarker = L.marker([lat, lon]).addTo(adminMapInstance);
+        } else {
+            // Alerta amigável se a API do mapa não achar aquela rua específica
+            alert("A busca automática não encontrou esse endereço exato.\n\nDica: Tente remover números, CEP ou o bairro, e pesquise apenas o nome da rua e a cidade.\nEx: 'Avenida Marechal Ancora, Rio de Janeiro'.\n\nOu navegue no mapa com o mouse e clique no local correto.");
         }
-        // Se não achar, ele não dá erro, deixa o gestor clicar.
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+        console.error(e); 
+        alert("Erro de conexão ao buscar o endereço.");
+    } finally {
+        // Devolve o botão ao normal
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 }
 
 function saveAdminPin() {

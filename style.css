@@ -77,11 +77,11 @@ section { scroll-margin-top: 110px; }
     background-size: cover; background-position: center; padding: 60px 0; color: white;
 }
 
-/* --- CARROSSEL INSTAGRAM REAL --- */
+/* --- CARROSSEL INSTAGRAM --- */
 .insta-carousel-container {
     background-color: white;
     border-radius: 12px;
-    padding: 20px 40px; /* Mais espaço lateral para as setas */
+    padding: 20px 40px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     border: 1px solid #e1e1e1;
 }
@@ -91,7 +91,6 @@ section { scroll-margin-top: 110px; }
     align-items: center;
     min-height: 450px;
 }
-/* Estilo das setas do carrossel para não ficarem em cima do post */
 .carousel-control-prev { left: -30px; }
 .carousel-control-next { right: -30px; }
 .carousel-control-prev-icon, .carousel-control-next-icon {

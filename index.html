@@ -151,7 +151,7 @@
                         <div class="insta-carousel-container">
                             <h4 class="mb-4 text-center" style="color: var(--color-blue);"><i class="bi bi-instagram"></i> Acompanhe o @sistemademuseusrj</h4>
                             
-                            <div id="instaCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
+                            <div id="instaCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="12000">
                                 <div class="carousel-inner">
                                     <div class="carousel-item active">
                                         <div class="insta-carousel-item">
@@ -391,9 +391,11 @@
                     <div class="p-3 bg-light border-bottom">
                         <div class="input-group">
                             <input type="text" id="adminMapSearchInput" class="form-control form-control-sm" placeholder="Digite o endereço, rua e cidade para buscar o local...">
-                            <button class="btn btn-primary btn-sm" type="button" onclick="searchAddressOnAdminMap()"><i class="bi bi-search"></i> Buscar</button>
+                            <button class="btn btn-primary btn-sm" type="button" id="btnSearchAdminMap" onclick="searchAddressOnAdminMap()">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
                         </div>
-                        <small class="text-muted mt-1 d-block">Após buscar, <strong>clique no mapa</strong> no local exato para adicionar o pino.</small>
+                        <small class="text-muted mt-1 d-block">Dica: Se a busca falhar, tente remover o número ou o bairro e buscar apenas a rua e cidade. Em seguida, <strong>clique no mapa</strong> no local exato para adicionar o pino.</small>
                     </div>
                     <div id="adminLeafletMap" style="height: 450px; width: 100%;"></div>
                 </div>
