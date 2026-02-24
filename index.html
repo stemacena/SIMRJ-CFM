@@ -30,11 +30,11 @@
 
     <nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-3" href="#" onclick="switchView('home')">
-                <img src="logo-sim.png" alt="Logo SIM-RJ" class="header-logo">
-                <div class="vr" style="height: 40px; color: #ccc;"></div>
-                <img src="logo-cfm.png" alt="Logo CFM" class="header-logo" style="max-height: 50px;">
-            </a>
+            <div class="d-flex align-items-center gap-3">
+                <img src="logo-sim.png" alt="Logo SIM-RJ" class="header-logo" onclick="switchView('home')" title="Página Inicial SIM-RJ">
+                <div class="vr" style="height: 60px; color: #ccc;"></div>
+                <img src="logo-cfm.png" alt="Logo CFM" class="header-logo" onclick="switchView('cfm')" title="Acessar Cadastro de Museus">
+            </div>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
                 <span class="navbar-toggler-icon"></span>
@@ -42,8 +42,9 @@
             
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="#" onclick="switchView('home')">O Sistema (Início)</a></li>
-                    <li class="nav-item"><a class="nav-link text-primary" href="#" onclick="switchView('cfm')">Cadastro de Museus (CFM)</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="switchView('home')">Sobre</a></li>
+                    <li class="nav-item"><a class="nav-link text-primary" href="#" onclick="switchView('cfm')">Cadastro Fluminense de Museus</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Publicações</a></li>
                     <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
                         <a href="https://docs.google.com/forms/d/e/1FAIpQLSdn3nw0uumL4Aj-MZ_QVQwsVwEE9d1TPacGjK40x-dQ0QGBvw/viewform" target="_blank" class="btn btn-custom btn-sm rounded-pill px-4">Inscreva sua Instituição</a>
                     </li>
@@ -71,105 +72,36 @@
                     <h5>Cadastro Manual de Instituição</h5>
                     <form id="manualForm" onsubmit="addManualMuseum(event)">
                         <div class="row g-2">
-                            <div class="col-md-6">
-                                <label class="form-label-admin">Nome da Instituição</label>
-                                <input type="text" class="form-control form-control-sm" id="mNome" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label-admin">Endereço Completo</label>
-                                <input type="text" class="form-control form-control-sm" id="mEndereco" required>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label-admin">Município</label>
-                                <select id="mMunicipio" class="form-select form-select-sm"></select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label-admin">Região</label>
+                            <div class="col-md-6"><label class="form-label-admin">Nome da Instituição</label><input type="text" class="form-control form-control-sm" id="mNome" required></div>
+                            <div class="col-md-6"><label class="form-label-admin">Endereço Completo</label><input type="text" class="form-control form-control-sm" id="mEndereco" required></div>
+                            <div class="col-md-4"><label class="form-label-admin">Município</label><select id="mMunicipio" class="form-select form-select-sm"></select></div>
+                            <div class="col-md-4"><label class="form-label-admin">Região</label>
                                 <select id="mRegiao" class="form-select form-select-sm">
-                                    <option value="Metropolitana I">Metropolitana I</option>
-                                    <option value="Serrana">Serrana</option>
-                                    <option value="Baixadas Litorâneas">Baixadas Litorâneas</option>
-                                    <option value="Norte Fluminense">Norte Fluminense</option>
-                                    <option value="Noroeste Fluminense">Noroeste Fluminense</option>
-                                    <option value="Médio Paraíba">Médio Paraíba</option>
-                                    <option value="Centro-Sul">Centro-Sul</option>
-                                    <option value="Costa Verde">Costa Verde</option>
-                                    <option value="Metropolitana II">Metropolitana II</option>
-                                    <option value="Metropolitana III">Metropolitana III</option>
+                                    <option value="Metropolitana I">Metropolitana I</option><option value="Serrana">Serrana</option><option value="Baixadas Litorâneas">Baixadas Litorâneas</option><option value="Norte Fluminense">Norte Fluminense</option><option value="Noroeste Fluminense">Noroeste Fluminense</option><option value="Médio Paraíba">Médio Paraíba</option><option value="Centro-Sul">Centro-Sul</option><option value="Costa Verde">Costa Verde</option><option value="Metropolitana II">Metropolitana II</option><option value="Metropolitana III">Metropolitana III</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label-admin">Natureza Adm.</label>
+                            <div class="col-md-4"><label class="form-label-admin">Natureza Adm.</label>
                                 <select id="mNatureza" class="form-select form-select-sm">
-                                    <option value="Municipal">Municipal</option>
-                                    <option value="Estadual">Estadual</option>
-                                    <option value="Federal">Federal</option>
-                                    <option value="Privada">Privada</option>
-                                    <option value="Público-privada">Público-privada</option>
+                                    <option value="Municipal">Municipal</option><option value="Estadual">Estadual</option><option value="Federal">Federal</option><option value="Privada">Privada</option><option value="Público-privada">Público-privada</option>
                                 </select>
                             </div>
-
-                            <div class="col-md-3">
-                                <label class="form-label-admin">Tipologia do Acervo</label>
+                            <div class="col-md-3"><label class="form-label-admin">Tipologia do Acervo</label>
                                 <select id="mAcervo" class="form-select form-select-sm">
-                                    <option value="Histórico">Histórico</option>
-                                    <option value="Artes Visuais">Artes Visuais</option>
-                                    <option value="Antropologia e Etnografia">Antropologia e Etnografia</option>
-                                    <option value="Arqueologia">Arqueologia</option>
-                                    <option value="Ciência e Tecnologia">Ciência e Tecnologia</option>
-                                    <option value="Imagem e Som">Imagem e Som</option>
-                                    <option value="Patrimônio Científico e Histórico Natural">Patrimônio Científico</option>
-                                    <option value="Virtual">Virtual</option>
-                                    <option value="Outros">Outros</option>
+                                    <option value="Histórico">Histórico</option><option value="Artes Visuais">Artes Visuais</option><option value="Antropologia e Etnografia">Antropologia e Etnografia</option><option value="Arqueologia">Arqueologia</option><option value="Ciência e Tecnologia">Ciência e Tecnologia</option><option value="Imagem e Som">Imagem e Som</option><option value="Patrimônio Científico e Histórico Natural">Patrimônio Científico</option><option value="Virtual">Virtual</option><option value="Outros">Outros</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label-admin">Situação</label>
+                            <div class="col-md-3"><label class="form-label-admin">Situação</label>
                                 <select id="mStatus" class="form-select form-select-sm">
-                                    <option value="Aberto">Aberto</option>
-                                    <option value="Aberto funcionando parcialmente">Aberto Parcial</option>
-                                    <option value="Em implantação">Em implantação</option>
-                                    <option value="Desativado temporariamente">Desativado temp.</option>
+                                    <option value="Aberto">Aberto</option><option value="Aberto funcionando parcialmente">Aberto Parcial</option><option value="Em implantação">Em implantação</option><option value="Desativado temporariamente">Desativado temp.</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label-admin">Museólogo</label>
-                                <select id="mMuseologo" class="form-select form-select-sm">
-                                    <option value="Sim">Sim</option>
-                                    <option value="Não">Não</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label-admin">Setor Educativo</label>
-                                <select id="mEducativo" class="form-select form-select-sm">
-                                    <option value="Sim">Sim</option>
-                                    <option value="Não">Não</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label-admin">Funcionamento</label>
-                                <input type="text" class="form-control form-control-sm" id="mFunc" placeholder="Ex: Terça a Domingo, 10h às 17h">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label-admin">Valor Ingresso</label>
-                                <input type="text" class="form-control form-control-sm" id="mIngresso" placeholder="Ex: R$ 10,00 ou Gratuito">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label-admin">Gratuidades</label>
-                                <input type="text" class="form-control form-control-sm" id="mGratuidade" placeholder="Ex: Estudantes e Idosos">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label-admin">Acessibilidade</label>
-                                <textarea class="form-control form-control-sm" id="mAcessibilidade" rows="2" placeholder="Descreva rampas, libras, etc..."></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label-admin">Histórico / Descrição</label>
-                                <textarea class="form-control form-control-sm" id="mHistorico" rows="2" placeholder="Breve histórico do museu..."></textarea>
-                            </div>
-
+                            <div class="col-md-3"><label class="form-label-admin">Museólogo</label><select id="mMuseologo" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+                            <div class="col-md-3"><label class="form-label-admin">Setor Educativo</label><select id="mEducativo" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+                            <div class="col-md-4"><label class="form-label-admin">Funcionamento</label><input type="text" class="form-control form-control-sm" id="mFunc" placeholder="Ex: Terça a Domingo"></div>
+                            <div class="col-md-4"><label class="form-label-admin">Valor Ingresso</label><input type="text" class="form-control form-control-sm" id="mIngresso" placeholder="Ex: R$ 10,00 ou Gratuito"></div>
+                            <div class="col-md-4"><label class="form-label-admin">Gratuidades</label><input type="text" class="form-control form-control-sm" id="mGratuidade" placeholder="Ex: Estudantes e Idosos"></div>
+                            <div class="col-md-6"><label class="form-label-admin">Acessibilidade</label><textarea class="form-control form-control-sm" id="mAcessibilidade" rows="2"></textarea></div>
+                            <div class="col-md-6"><label class="form-label-admin">Histórico</label><textarea class="form-control form-control-sm" id="mHistorico" rows="2"></textarea></div>
                             <div class="col-12 mt-3"><button type="submit" class="btn btn-success btn-sm w-100">Registrar Instituição no Mapa</button></div>
                         </div>
                     </form>
@@ -193,12 +125,8 @@
                 <div class="row align-items-center g-5">
                     <div class="col-md-6">
                         <h2 class="section-title">Nossa Missão</h2>
-                        <p class="text-justify text-muted">
-                            O SIM-RJ, criado pelo Decreto nº 42.306, tem a finalidade de integrar uma ampla e diversificada rede de instituições de caráter museológico. Ele presta assessoramento aos 92 municípios do Estado, promovendo a valorização, preservação e gerenciamento do patrimônio cultural fluminense.
-                        </p>
-                        <p class="text-justify text-muted">
-                            Através de oficinas, visitas técnicas e encontros regionais, criamos uma rede fluente de diálogos e cooperação para fortalecer a cultura em nosso estado.
-                        </p>
+                        <p class="text-justify text-muted">O SIM-RJ, criado pelo Decreto nº 42.306, tem a finalidade de integrar uma ampla e diversificada rede de instituições de caráter museológico. Ele presta assessoramento aos 92 municípios do Estado, promovendo a valorização, preservação e gerenciamento do patrimônio cultural fluminense.</p>
+                        <p class="text-justify text-muted">Através de oficinas, visitas técnicas e encontros regionais, criamos uma rede fluente de diálogos e cooperação para fortalecer a cultura em nosso estado.</p>
                     </div>
                     
                     <div class="col-md-6">
@@ -207,14 +135,14 @@
                             <div class="carousel-inner">
                                 <div class="carousel-item active">
                                     <div class="insta-carousel-item">
-                                        <img src="https://via.placeholder.com/400x300/6b4e7e/ffffff?text=Ações+SIM-RJ" class="insta-img-placeholder" alt="Post 1">
+                                        <img src="https://picsum.photos/seed/museurj/400/300" class="insta-img-placeholder" alt="Ações SIM-RJ">
                                         <p class="small text-muted mb-2">Visita técnica na Região Serrana fortalecendo a rede de museus locais. 🏛️✨</p>
                                         <a href="https://www.instagram.com/sistemademuseusrj/" target="_blank" class="btn btn-sm btn-outline-primary">Ver no Instagram</a>
                                     </div>
                                 </div>
                                 <div class="carousel-item">
                                     <div class="insta-carousel-item">
-                                        <img src="https://via.placeholder.com/400x300/0034bb/ffffff?text=Encontro+Regional" class="insta-img-placeholder" alt="Post 2">
+                                        <img src="https://picsum.photos/seed/cultura/400/300" class="insta-img-placeholder" alt="Encontro Regional">
                                         <p class="small text-muted mb-2">Encontro de gestores: discutindo o futuro do patrimônio cultural fluminense.</p>
                                         <a href="https://www.instagram.com/sistemademuseusrj/" target="_blank" class="btn btn-sm btn-outline-primary">Ver no Instagram</a>
                                     </div>
@@ -282,6 +210,17 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="filter-label">Natureza Administrativa</label>
+                            <div class="filter-scroll-box" style="max-height: 100px;">
+                                <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Estadual"><label class="form-check-label small">Estadual</label></div>
+                                <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Federal"><label class="form-check-label small">Federal</label></div>
+                                <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Municipal"><label class="form-check-label small">Municipal</label></div>
+                                <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Privada"><label class="form-check-label small">Privada</label></div>
+                                <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Público-privada"><label class="form-check-label small">Público-privada</label></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="filter-label">Acervo Predominante</label>
                             <div class="filter-scroll-box">
                                 <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Antropologia e Etnografia"><label class="form-check-label small">Antropologia/Etnografia</label></div>
@@ -300,7 +239,7 @@
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed py-2 text-primary fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#colAdv">
-                                        Outros Filtros (Avançado)
+                                        Funcionamento e Status
                                     </button>
                                 </h2>
                                 <div id="colAdv" class="accordion-collapse collapse p-2">
@@ -310,23 +249,44 @@
                                         <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Aberto funcionando parcialmente"><label class="form-check-label small">Aberto Parcial</label></div>
                                         <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Em implantação"><label class="form-check-label small">Em implantação</label></div>
                                         <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Desativado temporariamente"><label class="form-check-label small">Desativado Temp.</label></div>
+                                        <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Desativado sem previsão de retorno"><label class="form-check-label small">Desativado Sem Previsão</label></div>
                                     </div>
+                                    <label class="filter-label">Turno (Funcionamento)</label>
+                                    <div class="filter-scroll-box mb-2">
+                                        <div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Manha"><label class="form-check-label small">Manhã</label></div>
+                                        <div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Tarde"><label class="form-check-label small">Tarde</label></div>
+                                        <div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Noite"><label class="form-check-label small">Noite</label></div>
+                                    </div>
+                                </div>
+                            </div>
 
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed py-2 text-primary fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#colTech">
+                                        Técnico e Acessibilidade
+                                    </button>
+                                </h2>
+                                <div id="colTech" class="accordion-collapse collapse p-2">
                                     <div class="form-check mb-1">
                                         <input class="form-check-input" type="checkbox" id="checkMuseologo">
-                                        <label class="form-check-label small" for="checkMuseologo">Possui Museólogo</label>
+                                        <label class="form-check-label small fw-bold" for="checkMuseologo">Possui Museólogo</label>
                                     </div>
                                     <div class="form-check mb-1">
                                         <input class="form-check-input" type="checkbox" id="checkEdu">
-                                        <label class="form-check-label small" for="checkEdu">Possui Setor Educativo</label>
+                                        <label class="form-check-label small" for="checkEdu">Setor Educativo</label>
                                     </div>
                                     
                                     <label class="filter-label mt-3">Valor Ingresso</label>
                                     <div class="filter-scroll-box mb-2">
                                         <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="Gratuito"><label class="form-check-label small">Gratuito</label></div>
-                                        <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="R$1 a R$10"><label class="form-check-label small">R$1 a R$10</label></div>
-                                        <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="R$10 a R$20"><label class="form-check-label small">R$10 a R$20</label></div>
+                                        <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="de R$1 a R$10"><label class="form-check-label small">de R$1 a R$10</label></div>
+                                        <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="de R$10 a R$20"><label class="form-check-label small">de R$10 a R$20</label></div>
+                                        <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="de R$20 a R$30"><label class="form-check-label small">de R$20 a R$30</label></div>
+                                        <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="Acima de R$30"><label class="form-check-label small">Acima de R$30</label></div>
                                     </div>
+                                    <label class="filter-label">Busca Específica</label>
+                                    <input type="text" id="searchGratuidade" class="form-control form-control-sm mb-2" placeholder="Gratuidades (ex: idoso)">
+                                    <input type="text" id="searchAccess" class="form-control form-control-sm" placeholder="Acessibilidade (ex: rampa)">
                                 </div>
                             </div>
                         </div>
@@ -348,9 +308,10 @@
     </div> <div class="modal fade" id="museumModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Nome do Museu</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-header d-flex align-items-center">
+                    <h5 class="modal-title m-0" id="modalTitle">Nome do Museu</h5>
+                    <span id="modalBadgeMuseologo" class="badge bg-info text-dark ms-3 d-none border border-light"><i class="bi bi-person-badge"></i> Possui Museólogo</span>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="row mb-3">
