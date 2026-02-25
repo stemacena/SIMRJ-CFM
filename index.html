@@ -323,7 +323,7 @@
                     </div>
 
                     <div class="col-lg-9">
-                        <div id="map" style="height: 550px; border-radius: 8px; z-index: 1; border: 2px solid #ddd;"></div>
+                        <div id="map" style="height: 550px; border-radius: 8px; z-index: 1; border: 2px solid #ddd; background-color: #e9ecef;"></div>
                         <div class="mt-4">
                             <h4 class="mb-3 text-purple">Resultados (<span id="resultCount">0</span>)</h4>
                             <div class="row" id="museum-list"></div>
@@ -390,14 +390,14 @@
                 <div class="modal-body p-0">
                     <div class="p-3 bg-light border-bottom">
                         <div class="input-group">
-                            <input type="text" id="adminMapSearchInput" class="form-control form-control-sm" placeholder="Digite o endereço, rua e cidade para buscar o local...">
+                            <input type="text" id="adminMapSearchInput" class="form-control form-control-sm" placeholder="Digite a rua e cidade para buscar...">
                             <button class="btn btn-primary btn-sm" type="button" id="btnSearchAdminMap" onclick="searchAddressOnAdminMap()">
                                 <i class="bi bi-search"></i> Buscar
                             </button>
                         </div>
-                        <small class="text-muted mt-1 d-block">Dica: Se a busca falhar, tente remover o número ou o bairro e buscar apenas a rua e cidade. Em seguida, <strong>clique no mapa</strong> no local exato para adicionar o pino.</small>
+                        <small class="text-muted mt-1 d-block">Após buscar, <strong>clique no mapa</strong> no local exato para adicionar ou mover o pino.</small>
                     </div>
-                    <div id="adminLeafletMap" style="height: 450px; width: 100%;"></div>
+                    <div id="adminLeafletMap" style="height: 450px; width: 100%; background-color: #e9ecef;"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -418,5 +418,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="app.js"></script>
+
 </body>
 </html>
