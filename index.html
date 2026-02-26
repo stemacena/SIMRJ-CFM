@@ -6,7 +6,6 @@
     <title>SIM-RJ | Sistema Estadual de Museus</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -323,7 +322,8 @@
                     </div>
 
                     <div class="col-lg-9">
-                        <div id="map" style="height: 550px; border-radius: 8px; z-index: 1; border: 2px solid #ddd;"></div>
+                        <div id="map" style="height: 550px; border-radius: 8px; z-index: 1; border: 2px solid #ddd; background-color: #e9ecef;">
+                            </div>
                         <div class="mt-4">
                             <h4 class="mb-3 text-purple">Resultados (<span id="resultCount">0</span>)</h4>
                             <div class="row" id="museum-list"></div>
@@ -390,14 +390,14 @@
                 <div class="modal-body p-0">
                     <div class="p-3 bg-light border-bottom">
                         <div class="input-group">
-                            <input type="text" id="adminMapSearchInput" class="form-control form-control-sm" placeholder="Digite o endereço, rua e cidade para buscar o local...">
+                            <input type="text" id="adminMapSearchInput" class="form-control form-control-sm" placeholder="Digite o endereço para buscar no Google Maps...">
                             <button class="btn btn-primary btn-sm" type="button" id="btnSearchAdminMap" onclick="searchAddressOnAdminMap()">
                                 <i class="bi bi-search"></i> Buscar
                             </button>
                         </div>
-                        <small class="text-muted mt-1 d-block">Dica: Se a busca falhar, tente remover o número ou o bairro e buscar apenas a rua e cidade. Em seguida, <strong>clique no mapa</strong> no local exato para adicionar o pino.</small>
+                        <small class="text-muted mt-1 d-block">Após buscar, <strong>clique no mapa</strong> no local exato para adicionar ou mover o pino.</small>
                     </div>
-                    <div id="adminLeafletMap" style="height: 450px; width: 100%;"></div>
+                    <div id="adminLeafletMap" style="height: 450px; width: 100%; background-color: #e9ecef;"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -415,8 +415,16 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="app.js"></script>
+
+    <script>
+        function initGoogleMapsAPI() {
+            // Essa função é chamada automaticamente quando o Google Maps carrega
+            initMapSystem();
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBAb8YDTeb7bR_r9MLttmDDE7kGwARuzuw&callback=initGoogleMapsAPI"></script>
+
 </body>
 </html>

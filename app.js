@@ -1,13 +1,9 @@
-// --- 1. CONFIGURAÇÃO DO MAPA PÚBLICO ---
-const map = L.map('map').setView([-22.9068, -43.1729], 8);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+// --- VARIÁVEIS GLOBAIS DO GOOGLE MAPS ---
+let map;
+let markersArray = [];
+let infoWindow;
+let geocoder;
 
-const museumIcon = L.icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-    iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
-});
-
-let markersLayer = L.layerGroup().addTo(map);
 let museumsData = [];
 let profileModal;
 
@@ -20,43 +16,26 @@ const cityCoordsRJ = {
 };
 const defaultRjCenter = [-22.9, -43.2]; 
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-async function geocodeAddress(endereco, municipio) {
-    let query = `${endereco}, ${municipio}, Rio de Janeiro, Brasil`;
-    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-    try {
-        let response = await fetch(url);
-        let data = await response.json();
-        if (data && data.length > 0) {
-            return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-        }
-    } catch (e) { console.error(e); }
-    return null;
-}
-
 const normalizeString = (str) => {
     if(!str) return "";
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 };
 
-// --- 2. NAVEGAÇÃO DE TELAS ---
-function switchView(view) {
-    document.getElementById('view-home').style.display = view === 'home' ? 'block' : 'none';
-    document.getElementById('view-cfm').style.display = view === 'cfm' ? 'block' : 'none';
-    
-    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    if(view === 'cfm') setTimeout(() => { map.invalidateSize(); }, 200);
-}
+// --- FUNÇÃO INICIAL DO GOOGLE MAPS (Chamada pelo script na HTML) ---
+function initMapSystem() {
+    geocoder = new google.maps.Geocoder();
+    infoWindow = new google.maps.InfoWindow();
 
-// --- 3. INICIALIZAÇÃO ---
-document.addEventListener('DOMContentLoaded', function() {
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: -22.9068, lng: -43.1729 },
+        zoom: 8,
+        mapTypeControl: false,
+        streetViewControl: false
+    });
+
     profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
     populateCitySelects();
-    init();
-});
 
-function init() {
     if(museumsData.length === 0) {
         museumsData = [{
             id: 0, nome: "Museu de Exemplo", municipio: "Rio de Janeiro",
@@ -64,10 +43,27 @@ function init() {
             endereco: "Faça upload do CSV no Painel do Gestor para ver os dados reais.", funcionamento: "Terça a Domingo",
             ingresso: "Gratuito", gratuidades: "Todas", educativo: "Sim",
             acervo: "Histórico", museologo: "Sim", acessibilidade: "Rampas", historico: "",
-            lat: -22.9, lng: -43.2
+            lat: -22.9068, lng: -43.1729
         }];
     }
     renderMuseums(museumsData);
+}
+
+// INTEGRAÇÃO DE API GOOGLE MAPS (GEOCODIFICAÇÃO)
+function geocodeAddressGoogle(endereco, municipio) {
+    return new Promise((resolve) => {
+        let addressStr = `${endereco}, ${municipio}, RJ, Brasil`;
+        geocoder.geocode({ address: addressStr }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+                resolve({
+                    lat: results[0].geometry.location.lat(),
+                    lng: results[0].geometry.location.lng()
+                });
+            } else {
+                resolve(null);
+            }
+        });
+    });
 }
 
 function populateCitySelects() {
@@ -81,11 +77,28 @@ function populateCitySelects() {
     });
 }
 
-// --- 4. RENDERIZAÇÃO E MAPA ---
+// --- NAVEGAÇÃO DE TELAS ---
+function switchView(view) {
+    document.getElementById('view-home').style.display = view === 'home' ? 'block' : 'none';
+    document.getElementById('view-cfm').style.display = view === 'cfm' ? 'block' : 'none';
+    
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    
+    // Força o mapa a recalcular tamanho quando sai do display:none
+    if(view === 'cfm' && map) {
+        setTimeout(() => { google.maps.event.trigger(map, 'resize'); map.setCenter({ lat: -22.9068, lng: -43.1729 }); }, 200);
+    }
+}
+
+// --- RENDERIZAÇÃO E MAPA PÚBLICO (GOOGLE MAPS) ---
 function renderMuseums(data) {
     const listContainer = document.getElementById('museum-list');
     listContainer.innerHTML = '';
-    markersLayer.clearLayers();
+    
+    // Limpa os pins anteriores do Google Maps
+    markersArray.forEach(m => m.setMap(null));
+    markersArray = [];
+
     document.getElementById('resultCount').innerText = data.length;
     document.getElementById('count-total').innerText = museumsData.length;
 
@@ -93,6 +106,7 @@ function renderMuseums(data) {
         const hasMus = museum.museologo === "Sim";
         const hasPin = museum.lat && museum.lng; 
 
+        // Renderiza o Card na tela
         const card = document.createElement('div');
         card.className = 'col-md-6 mb-3';
         card.innerHTML = `
@@ -113,17 +127,42 @@ function renderMuseums(data) {
             </div>`;
         listContainer.appendChild(card);
 
-        if (hasPin) {
-            L.marker([museum.lat, museum.lng], {icon: museumIcon})
-                .bindPopup(`<b>${museum.nome}</b><br><small>${museum.endereco}</small><br><a href="#" onclick="openProfile(${museum.id})">Abrir Ficha</a>`)
-                .addTo(markersLayer);
+        // Adiciona pino no Google Maps
+        let lat = museum.lat;
+        let lng = museum.lng;
+
+        if (!lat) {
+            let normCity = normalizeString(museum.municipio);
+            let coords = cityCoordsRJ[normCity] || defaultRjCenter;
+            lat = coords[0] + (Math.random() - 0.5) * 0.015;
+            lng = coords[1] + (Math.random() - 0.5) * 0.015;
         }
+
+        const marker = new google.maps.Marker({
+            position: { lat: lat, lng: lng },
+            map: map,
+            title: museum.nome
+        });
+
+        // Adiciona janela flutuante no pin
+        marker.addListener("click", () => {
+            infoWindow.setContent(`
+                <div style="padding: 5px;">
+                    <h6 class="mb-1 text-primary fw-bold">${museum.nome}</h6>
+                    <p class="small text-muted mb-2">${museum.endereco}</p>
+                    <button class="btn btn-sm btn-warning fw-bold w-100" onclick="openProfile(${museum.id})">Ver Ficha Completa</button>
+                </div>
+            `);
+            infoWindow.open(map, marker);
+        });
+
+        markersArray.push(marker);
     });
 
     updatePendingList();
 }
 
-// --- 5. FILTROS ---
+// --- FILTROS (MANTIDOS E INTACTOS) ---
 function getCheckedValues(className) {
     return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => cb.value);
 }
@@ -183,8 +222,8 @@ function resetFilters() {
     renderMuseums(museumsData);
 }
 
-// --- 6. PERFIL COMPLETO ---
-function openProfile(id) {
+// --- PERFIL COMPLETO (MODAL) ---
+window.openProfile = function(id) {
     const m = museumsData.find(x => x.id === id);
     if(!m) return;
     const val = (v) => v ? v : '<span class="text-muted fst-italic">Não informado</span>';
@@ -213,7 +252,7 @@ function openProfile(id) {
     profileModal.show();
 }
 
-// --- 7. ADMINISTRAÇÃO E UPLOAD ---
+// --- ADMINISTRAÇÃO E UPLOAD ---
 function openLogin() {
     document.getElementById('login-overlay').style.display = 'flex';
     document.getElementById('adminPassword').value = '';
@@ -229,6 +268,9 @@ function checkAdminPassword() {
     } else { alert('Senha incorreta.'); }
 }
 function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
+
+// Sleep não é mais tão necessário porque o Google permite muitas requisições, mas manter 200ms é uma boa prática
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 document.getElementById('csvFile').addEventListener('change', async function(e) {
     const file = e.target.files[0];
@@ -258,11 +300,12 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                 let endereco = row["Endereço"] || "";
                 let municipio = row["Município"] || "Rio de Janeiro";
                 
-                statusBox.innerText = `Buscando coordenadas (API): Processando ${i+1} de ${total}...`;
+                statusBox.innerText = `Google Maps: Buscando ${i+1} de ${total}...`;
                 pBar.style.width = `${((i+1)/total)*100}%`;
 
-                let coords = await geocodeAddress(endereco, municipio);
-                await sleep(600); 
+                // Busca a coordenada usando a inteligência do Google Maps
+                let coords = await geocodeAddressGoogle(endereco, municipio);
+                await sleep(200); // 200ms já é o suficiente para o Google
 
                 cleanData.push({
                     id: i + 2000,
@@ -289,7 +332,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
             renderMuseums(museumsData);
             
             statusBox.className = 'alert alert-success small p-2 d-block mt-2';
-            statusBox.innerText = `Concluído! ${cleanData.length} lidos. Verifique a aba "Museus sem Pin".`;
+            statusBox.innerText = `Concluído! ${cleanData.length} lidos no Google Maps. Verifique a aba "Museus sem Pin".`;
             pContainer.classList.add('d-none');
         }
     });
@@ -300,7 +343,7 @@ async function addManualMuseum(e) {
     const endereco = document.getElementById('mEndereco').value;
     const municipio = document.getElementById('mMunicipio').value;
     
-    let coords = await geocodeAddress(endereco, municipio);
+    let coords = await geocodeAddressGoogle(endereco, municipio);
 
     const novo = {
         id: Date.now(),
@@ -328,7 +371,7 @@ async function addManualMuseum(e) {
     document.getElementById('manualForm').reset();
 }
 
-// --- 8. SISTEMA DE MAPEAMENTO MANUAL COM FEEDBACK DE BUSCA ---
+// --- 8. SISTEMA DE MAPEAMENTO MANUAL DO GESTOR COM GOOGLE MAPS ---
 let adminMapInstance = null;
 let adminTempMarker = null;
 let currentMappingId = null;
@@ -358,7 +401,7 @@ function updatePendingList() {
     });
 }
 
-function openAdminMapPicker(id) {
+window.openAdminMapPicker = function(id) {
     const m = museumsData.find(x => x.id === id);
     if(!m) return;
     currentMappingId = id;
@@ -370,74 +413,79 @@ function openAdminMapPicker(id) {
     const adminMapModal = new bootstrap.Modal(document.getElementById('adminMapModal'));
     adminMapModal.show();
 
-    setTimeout(() => {
+    // Evento quando o Modal do Bootstrap termina de abrir, para não bugar o mapa do Google
+    document.getElementById('adminMapModal').addEventListener('shown.bs.modal', function () {
         if (!adminMapInstance) {
-            adminMapInstance = L.map('adminLeafletMap').setView([-22.9068, -43.1729], 8);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMapInstance);
+            adminMapInstance = new google.maps.Map(document.getElementById('adminLeafletMap'), {
+                center: { lat: -22.9068, lng: -43.1729 },
+                zoom: 8, mapTypeControl: false, streetViewControl: false
+            });
             
-            adminMapInstance.on('click', function(e) {
-                if (adminTempMarker) { adminMapInstance.removeLayer(adminTempMarker); }
-                adminTempMarker = L.marker(e.latlng).addTo(adminMapInstance);
+            adminMapInstance.addListener('click', function(e) {
+                if (adminTempMarker) adminTempMarker.setMap(null);
+                adminTempMarker = new google.maps.Marker({
+                    position: e.latLng,
+                    map: adminMapInstance,
+                    animation: google.maps.Animation.DROP
+                });
             });
         }
-        adminMapInstance.invalidateSize();
-        if (adminTempMarker) { adminMapInstance.removeLayer(adminTempMarker); adminTempMarker = null; }
+
+        // Força redimensionamento para evitar área cinza
+        google.maps.event.trigger(adminMapInstance, 'resize');
+        if (adminTempMarker) adminTempMarker.setMap(null);
         
         let normCity = normalizeString(m.municipio);
-        let startCoords = cityCoordsRJ[normCity] || defaultRjCenter;
-        adminMapInstance.setView(startCoords, 13);
-        
-    }, 300);
+        let startCoords = cityCoordsRJ[normCity];
+        if(startCoords) {
+             adminMapInstance.setCenter({ lat: startCoords[0], lng: startCoords[1] });
+             adminMapInstance.setZoom(12);
+        }
+    }, { once: true });
 }
 
-// BUSCA NO MAPA DO GESTOR (COM FEEDBACK E ALERTA)
-async function searchAddressOnAdminMap() {
+// BUSCA COM A INTELIGÊNCIA DO GOOGLE MAPS NO MODAL ADMIN
+window.searchAddressOnAdminMap = function() {
     const query = document.getElementById('adminMapSearchInput').value;
     if(!query) return;
     
     const btn = document.getElementById('btnSearchAdminMap');
     const originalText = btn.innerHTML;
     
-    // Mostra o spinner de carregando para não parecer que está travado
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Buscando...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Buscando...';
     btn.disabled = true;
 
-    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-    try {
-        let res = await fetch(url);
-        let data = await res.json();
-        if(data && data.length > 0) {
-            let lat = parseFloat(data[0].lat);
-            let lon = parseFloat(data[0].lon);
-            
-            adminMapInstance.setView([lat, lon], 17); // Zoom exato!
-            
-            if (adminTempMarker) adminMapInstance.removeLayer(adminTempMarker);
-            adminTempMarker = L.marker([lat, lon]).addTo(adminMapInstance);
-        } else {
-            // Alerta amigável se a API do mapa não achar aquela rua específica
-            alert("A busca automática não encontrou esse endereço exato.\n\nDica: Tente remover números, CEP ou o bairro, e pesquise apenas o nome da rua e a cidade.\nEx: 'Avenida Marechal Ancora, Rio de Janeiro'.\n\nOu navegue no mapa com o mouse e clique no local correto.");
-        }
-    } catch(e) { 
-        console.error(e); 
-        alert("Erro de conexão ao buscar o endereço.");
-    } finally {
-        // Devolve o botão ao normal
+    geocoder.geocode({ address: query }, (results, status) => {
         btn.innerHTML = originalText;
         btn.disabled = false;
-    }
+
+        if (status === 'OK' && results[0]) {
+            const loc = results[0].geometry.location;
+            adminMapInstance.setCenter(loc);
+            adminMapInstance.setZoom(17);
+            
+            if (adminTempMarker) adminTempMarker.setMap(null);
+            adminTempMarker = new google.maps.Marker({
+                position: loc,
+                map: adminMapInstance,
+                animation: google.maps.Animation.DROP
+            });
+        } else {
+            alert("O Google Maps não encontrou esse endereço exato.\n\nTente escrever de outra forma ou navegar manualmente pelo mapa e clicar para soltar o pino.");
+        }
+    });
 }
 
-function saveAdminPin() {
+window.saveAdminPin = function() {
     if (!adminTempMarker) {
         alert("Por favor, clique no mapa para colocar o pin antes de salvar.");
         return;
     }
-    const coords = adminTempMarker.getLatLng();
+    const loc = adminTempMarker.getPosition();
     const m = museumsData.find(x => x.id === currentMappingId);
     if(m) {
-        m.lat = coords.lat;
-        m.lng = coords.lng;
+        m.lat = loc.lat();
+        m.lng = loc.lng();
         renderMuseums(museumsData); 
         
         const myModalEl = document.getElementById('adminMapModal');
