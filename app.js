@@ -305,7 +305,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
 
                 // Busca a coordenada usando a inteligência do Google Maps
                 let coords = await geocodeAddressGoogle(endereco, municipio);
-                await sleep(200); // 200ms já é o suficiente para o Google
+                await sleep(50); // reduzido de 200 para 50
 
                 cleanData.push({
                     id: i + 2000,
