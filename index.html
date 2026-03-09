@@ -101,6 +101,7 @@
             <ul class="nav nav-tabs mb-3" id="adminTabs">
                 <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-import">Importar Planilha</a></li>
                 <li class="nav-item"><a class="nav-link text-warning fw-bold" data-bs-toggle="tab" href="#tab-pending">Museus sem Pin (<span id="pendingCount">0</span>)</a></li>
+                <li class="nav-item"><a class="nav-link text-info fw-bold" data-bs-toggle="tab" href="#tab-requests">Requisições (<span id="reqCount">0</span>)</a></li>
             </ul>
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="tab-import">
@@ -113,6 +114,10 @@
                 <div class="tab-pane fade" id="tab-pending">
                     <p class="text-muted small">Clique em "Mapear" para buscar o local exato.</p>
                     <div id="pending-list" class="pending-list pe-2"></div>
+                </div>
+                <div class="tab-pane fade" id="tab-requests">
+                    <p class="text-muted small">Cadastros novos e alterações aguardando aprovação para entrarem no mapa público.</p>
+                    <div id="requests-list" class="pending-list pe-2"></div>
                 </div>
             </div>
         </div>
@@ -129,8 +134,7 @@
                 </div>
             </div>
             <div class="hero-overlay">
-                <img src="logo-sim.png" alt="Logo Grande SIM-RJ" class="hero-logo-large mb-4 bg-white p-3 rounded-circle shadow">
-                <h2 class="text-white text-center fw-bold shadow-sm px-3 py-1 rounded" style="background: rgba(0,0,0,0.5);">Sistema Estadual de Museus</h2>
+                <img src="logo-sim.png" alt="Logo Grande SIM-RJ" class="hero-logo-large bg-white p-3 rounded-circle shadow">
             </div>
         </div>
 
@@ -139,12 +143,12 @@
                 <h2 class="section-title">Atividades SIM-RJ</h2>
                 <div class="row g-4 mt-2 justify-content-center">
                     <div class="col-md-5">
-                        <div class="p-5 rounded" style="background-color: #e5cfb5;">
+                        <div class="p-5 rounded shadow-sm" style="background-color: #e5cfb5;">
                             <h4>Fóruns e Oficinas</h4>
                         </div>
                     </div>
                     <div class="col-md-5">
-                        <div class="p-5 rounded text-white" style="background-color: #d172a8;">
+                        <div class="p-5 rounded shadow-sm text-white" style="background-color: #d172a8;">
                             <h4>Notícias Recentes</h4>
                         </div>
                     </div>
@@ -153,8 +157,8 @@
         </section>
     </div>
 
-    <div id="view-cfm-map" class="view-section" style="display: none;">
-        <div class="bg-primary text-white py-4 text-center">
+    <div id="view-cfm-mapa" class="view-section" style="display: none;">
+        <div class="bg-primary text-white py-4 text-center shadow-sm">
             <h1 class="fw-bold">Cadastro Fluminense de Museus</h1>
             <h4 class="text-warning"><span id="count-total">0</span> Instituições Mapeadas</h4>
         </div>
@@ -282,26 +286,36 @@
 
                     <div id="step1" class="wizard-step active text-center">
                         <h5 class="mb-4">Autenticação do Responsável</h5>
-                        <p class="small text-muted">Para garantir a segurança dos dados, faça login.</p>
-                        <button class="btn google-btn w-75 mx-auto mb-3 py-2" type="button">
-                            <i class="bi bi-google text-danger"></i> Entrar com conta do Google
-                        </button>
-                        <hr class="w-75 mx-auto">
-                        <div class="text-start w-75 mx-auto">
-                            <input type="email" class="form-control mb-2" placeholder="Ou digite seu E-mail institucional">
-                            <input type="password" class="form-control mb-3" placeholder="Senha">
+                        <p class="small text-muted mb-4">Para garantir a segurança e veracidade dos dados, faça login com sua conta institucional.</p>
+                        
+                        <div id="google-login-area">
+                            <button class="btn google-btn w-75 mx-auto py-2 mb-3 fs-5" type="button" onclick="simulateGoogleLogin()">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" class="me-2"> 
+                                Entrar com Google
+                            </button>
+                            <p class="small text-muted">Acesso integrado via Google Cloud Platform</p>
                         </div>
-                        <button class="btn btn-primary" onclick="nextStep(2)">Continuar <i class="bi bi-arrow-right"></i></button>
+                        
+                        <div id="logged-in-area" class="d-none">
+                            <div class="alert alert-success d-inline-block text-start mb-4">
+                                <i class="bi bi-person-check-fill fs-4 align-middle me-2"></i>
+                                <div class="d-inline-block align-middle">
+                                    <strong>Logado com sucesso</strong><br>
+                                    <span class="small" id="userEmailDisplay">usuario@museu.gov.br</span>
+                                </div>
+                            </div><br>
+                            <button class="btn btn-primary px-4" onclick="nextStep(2)">Avançar para o Cadastro <i class="bi bi-arrow-right"></i></button>
+                        </div>
                     </div>
 
                     <div id="step2" class="wizard-step">
                         <h5 class="mb-4 text-center">Informações Básicas</h5>
                         <div class="row g-3">
-                            <div class="col-md-12"><label>Nome da Instituição</label><input type="text" class="form-control"></div>
-                            <div class="col-md-8"><label>Endereço Completo</label><input type="text" class="form-control"></div>
-                            <div class="col-md-4"><label>Município</label><input type="text" class="form-control"></div>
-                            <div class="col-md-6"><label>Natureza Administrativa</label><select class="form-select"><option>Pública</option><option>Privada</option></select></div>
-                            <div class="col-md-6"><label>Ano de Fundação</label><input type="number" class="form-control"></div>
+                            <div class="col-md-12"><label>Nome da Instituição</label><input type="text" id="regNome" class="form-control" required></div>
+                            <div class="col-md-8"><label>Endereço Completo</label><input type="text" id="regEndereco" class="form-control" required></div>
+                            <div class="col-md-4"><label>Município</label><input type="text" id="regMuni" class="form-control" required></div>
+                            <div class="col-md-6"><label>Natureza Administrativa</label><select id="regNatureza" class="form-select"><option>Pública</option><option>Privada</option></select></div>
+                            <div class="col-md-6"><label>Região</label><input type="text" id="regRegiao" class="form-control" placeholder="Ex: Metropolitana I"></div>
                         </div>
                         <div class="d-flex justify-content-between mt-4">
                             <button class="btn btn-secondary" onclick="prevStep(1)">Voltar</button>
@@ -312,13 +326,13 @@
                     <div id="step3" class="wizard-step">
                         <h5 class="mb-4 text-center">Estrutura e Acervo</h5>
                         <div class="row g-3">
-                            <div class="col-md-6"><label>Tipologia do Acervo</label><select class="form-select"><option>Histórico</option><option>Artes Visuais</option></select></div>
-                            <div class="col-md-6"><label>Possui Museólogo?</label><select class="form-select"><option>Sim</option><option>Não</option></select></div>
-                            <div class="col-md-12"><label>Acessibilidade e Gratuidades</label><textarea class="form-control" rows="2"></textarea></div>
+                            <div class="col-md-6"><label>Tipologia do Acervo</label><select id="regAcervo" class="form-select"><option>Histórico</option><option>Artes Visuais</option><option>Ciência e Tecnologia</option></select></div>
+                            <div class="col-md-6"><label>Possui Museólogo?</label><select id="regMus" class="form-select"><option>Sim</option><option>Não</option></select></div>
+                            <div class="col-md-12"><label>Acessibilidade e Gratuidades</label><textarea id="regAccess" class="form-control" rows="2"></textarea></div>
                         </div>
                         <div class="d-flex justify-content-between mt-4">
                             <button class="btn btn-secondary" onclick="prevStep(2)">Voltar</button>
-                            <button class="btn btn-success" onclick="alert('Cadastro finalizado com sucesso! (Demonstração)')">Concluir Cadastro</button>
+                            <button class="btn btn-success" onclick="submitMuseumRegistration()">Enviar para Aprovação SIM-RJ</button>
                         </div>
                     </div>
 
@@ -328,9 +342,20 @@
     </div>
 
     <div id="view-sobre" class="view-section" style="display: none;">
-        <div class="container py-5 text-center">
-            <h2 class="section-title">Página em Construção</h2>
-            <p class="text-muted">O conteúdo de texto institucional e documentos será inserido aqui.</p>
+        <div class="container py-5">
+            <div class="row g-5 justify-content-center">
+                <div class="col-md-5">
+                    <h2 class="section-title text-start">O que é o CFM?</h2>
+                    <p class="text-justify text-muted" style="text-align: justify;">O Cadastro Fluminense de Museus (CFM) é um instrumento fundamental do Sistema Estadual de Museus. O cadastro autodeclarado é o primeiro passo, onde o museu fornece suas informações básicas para integrar o sistema.</p>
+                    <p class="text-justify text-muted" style="text-align: justify;">Responsável por produzir informações sistematizadas que possam ser geradas com periodicidade, aberta ao público, que sirva de base para elaboração de diagnósticos, para orientação de tomada de decisões e avaliação das políticas do setor.</p>
+                </div>
+                <div class="col-md-5">
+                    <h2 class="section-title text-start">Sobre o SIM-RJ</h2>
+                    <p class="small text-primary fw-bold mb-2">Vinculado à Superintendência de Museus da Secretaria de Estado de Cultura e Economia Criativa.</p>
+                    <p class="text-justify text-muted" style="text-align: justify;">O SIM-RJ, criado pelo Decreto nº 42.306 de 22/02/2010 e alterado pelo Decreto nº 46.332 de 06/06/2018, mas com atuação desde 2009, tem a finalidade de integrar uma ampla e diversificada rede de instituições de caráter museológico.</p>
+                    <p class="text-justify text-muted small" style="text-align: justify;">Nesses anos de atuação, o SIM-RJ prestou assessoramento e apoio técnico e institucional a todos os 92 municípios do Estado do RJ, promovendo a inserção e a participação da Superintendência de Museus, permitindo a criação de uma rede fluente de diálogos e cooperação para preservação do nosso patrimônio.</p>
+                </div>
+            </div>
         </div>
     </div>
 
