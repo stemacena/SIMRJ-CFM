@@ -3,8 +3,19 @@ let markersArray = [];
 let infoWindow;
 let geocoder;
 let museumsData = [];
-let pendingApprovals = []; // BANCO DE DADOS DE REQUISIÇÕES (Fila de Aprovação)
+let pendingApprovals = []; // Fila de Aprovação
 let profileModal;
+
+// Configuração do Firebase para Auth (O Gestor precisa colar os dados reais aqui depois)
+const firebaseConfig = {
+    apiKey: "SUA_API_KEY_DO_FIREBASE",
+    authDomain: "seu-projeto.firebaseapp.com",
+    projectId: "seu-projeto",
+};
+// Inicializa o Firebase (Se a config estiver vazia no teste, ele vai dar log mas o app não quebra)
+if (firebaseConfig.apiKey !== "SUA_API_KEY_DO_FIREBASE") {
+    firebase.initializeApp(firebaseConfig);
+}
 
 // Restrição exata do Google Maps para o estado do Rio de Janeiro
 const RJ_BOUNDS = { north: -20.76, south: -23.39, west: -44.89, east: -40.96 };
@@ -66,16 +77,33 @@ window.switchView = function(viewId) {
     const target = document.getElementById('view-' + viewId);
     if(target) target.style.display = 'block';
 
-    // Corrigido ID de cfm-map para cfm-mapa
     if(viewId === 'cfm-mapa' && map) {
         setTimeout(() => { google.maps.event.trigger(map, 'resize'); map.setCenter({ lat: -22.9068, lng: -43.1729 }); }, 200);
     }
 }
 
-// --- WIZARD FORM LOGIC ---
-window.simulateGoogleLogin = function() {
-    document.getElementById('google-login-area').classList.add('d-none');
-    document.getElementById('logged-in-area').classList.remove('d-none');
+// --- INTEGRAÇÃO REAL COM LOGIN DO GOOGLE (FIREBASE) ---
+window.signInWithGoogle = function() {
+    if (typeof firebase === 'undefined' || firebaseConfig.apiKey === "SUA_API_KEY_DO_FIREBASE") {
+        // Se o dev ainda não configurou a chave, faz o login fake só pra não travar o teste
+        alert("Alerta de Dev: Conecte as credenciais do Firebase no app.js. Simulando login para teste visual.");
+        document.getElementById('google-login-area').classList.add('d-none');
+        document.getElementById('logged-in-area').classList.remove('d-none');
+        document.getElementById('userEmailDisplay').innerText = "teste@museus.rj.gov.br";
+        return;
+    }
+
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+            const user = result.user;
+            document.getElementById('google-login-area').classList.add('d-none');
+            document.getElementById('logged-in-area').classList.remove('d-none');
+            document.getElementById('userEmailDisplay').innerText = user.email;
+        }).catch((error) => {
+            console.error("Erro no login:", error);
+            document.getElementById('loginErrorMsg').innerText = "Erro ao tentar conectar. Tente novamente.";
+        });
 }
 
 window.nextStep = function(step) {
@@ -102,23 +130,23 @@ window.submitMuseumRegistration = function() {
         acervo: document.getElementById('regAcervo').value || "",
         museologo: document.getElementById('regMus').value || "",
         acessibilidade: document.getElementById('regAccess').value || "",
-        situacao: "Aberto", funcionamento: "Não informado", ingresso: "Não informado", gratuidades: "", educativo: "Não",
+        gratuidades: document.getElementById('regGrat').value || "",
+        situacao: "Aberto", funcionamento: "Não informado", ingresso: "Não informado", educativo: "Não",
         lat: null, lng: null
     };
 
     pendingApprovals.push(req);
     alert("Dados registrados com sucesso!\nSua requisição foi enviada para a análise da equipe do SIM-RJ e, se aprovada, entrará no mapa público em breve.");
     
-    // Reseta form e volta pra home
     document.getElementById('regNome').value = '';
     document.getElementById('regEndereco').value = '';
     document.getElementById('regMuni').value = '';
     nextStep(1);
     switchView('home');
-    renderApprovalsList(); // Atualiza painel do gestor
+    renderApprovalsList(); 
 }
 
-// --- RENDERIZAR MAPA ---
+// --- RENDERIZAR MAPA PÚBLICO ---
 function renderMuseums(data) {
     const listContainer = document.getElementById('museum-list');
     if(!listContainer) return;
@@ -164,7 +192,7 @@ function renderMuseums(data) {
     updatePendingList();
 }
 
-// --- FILTROS ---
+// --- FILTROS (LÓGICA SEPARADA RESTAURADA) ---
 function getCheckedValues(className) {
     return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => cb.value.toLowerCase().trim());
 }
@@ -183,6 +211,9 @@ window.applyFilters = function() {
     
     const reqMuseologo = document.getElementById('checkMuseologo').checked;
     const reqEdu = document.getElementById('checkEdu').checked;
+
+    // Lógica separada das buscas específicas
+    const textGratuidade = normalizeString(document.getElementById('searchGratuidade').value);
     const textAccess = normalizeString(document.getElementById('searchAccess').value);
 
     const filtered = museumsData.filter(m => {
@@ -193,7 +224,9 @@ window.applyFilters = function() {
         const mAcervo = normalizeString(m.acervo);
         const mStatus = normalizeString(m.situacao);
         const mCost = normalizeString(m.ingresso);
-        const mAccess = normalizeString(m.acessibilidade) + " " + normalizeString(m.gratuidades);
+        
+        const mGrat = normalizeString(m.gratuidades);
+        const mAcc = normalizeString(m.acessibilidade);
 
         if (term && !mNome.includes(term)) return false;
         if (filterHasMap === 'sim' && (!m.lat || !m.lng)) return false;
@@ -213,7 +246,10 @@ window.applyFilters = function() {
 
         if (reqMuseologo && normalizeString(m.museologo) !== "sim") return false;
         if (reqEdu && normalizeString(m.educativo) !== "sim") return false;
-        if (textAccess && !mAccess.includes(textAccess)) return false;
+        
+        // Verifica as específicas de forma independente
+        if (textGratuidade && !mGrat.includes(textGratuidade)) return false;
+        if (textAccess && !mAcc.includes(textAccess)) return false;
 
         return true;
     });
@@ -238,7 +274,6 @@ window.checkAdminPassword = function() {
 }
 window.closeAdmin = function() { document.getElementById('admin-panel').style.display = 'none'; }
 
-// RENDERIZA A LISTA DE APROVAÇÕES PENDENTES NO GESTOR
 function renderApprovalsList() {
     const list = document.getElementById('requests-list');
     document.getElementById('reqCount').innerText = pendingApprovals.length;
@@ -266,18 +301,15 @@ function renderApprovalsList() {
     });
 }
 
-// APROVAR UM MUSEU
 window.approveRequest = async function(id) {
     const reqIndex = pendingApprovals.findIndex(r => r.id === id);
     if(reqIndex === -1) return;
     
     const approvedMuseum = pendingApprovals[reqIndex];
-    // Ao aprovar, tenta buscar as coordenadas
     let coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio);
     approvedMuseum.lat = coords ? coords.lat : null;
     approvedMuseum.lng = coords ? coords.lng : null;
 
-    // Remove da fila e bota no mapa
     pendingApprovals.splice(reqIndex, 1);
     museumsData.push(approvedMuseum);
     
@@ -286,7 +318,6 @@ window.approveRequest = async function(id) {
     alert(`${approvedMuseum.nome} foi aprovado e integrado ao sistema público!`);
 }
 
-// REJEITAR UM MUSEU
 window.rejectRequest = function(id) {
     if(confirm("Deseja realmente rejeitar e apagar esta requisição?")) {
         pendingApprovals = pendingApprovals.filter(r => r.id !== id);
@@ -294,7 +325,6 @@ window.rejectRequest = function(id) {
     }
 }
 
-// IMPORTAÇÃO CSV
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 document.getElementById('csvFile').addEventListener('change', async function(e) {
     const file = e.target.files[0];
@@ -328,7 +358,6 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
     });
 });
 
-// LISTA DE MUSEUS SEM PIN
 function updatePendingList() {
     const list = document.getElementById('pending-list'); 
     if(!list) return;
@@ -340,7 +369,6 @@ function updatePendingList() {
     });
 }
 
-// MAPA DO GESTOR MANUAL
 let adminMapInstance, adminTempMarker, currentMappingId;
 window.openAdminMapPicker = function(id) {
     const m = museumsData.find(x => x.id === id); if(!m) return;

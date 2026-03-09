@@ -8,6 +8,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 </head>
 <body>
 
@@ -54,12 +57,12 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-primary" href="#" role="button" data-bs-toggle="dropdown">CFM</a>
                         <ul class="dropdown-menu border-0 shadow">
-                            <li><a class="dropdown-item" href="#" onclick="switchView('sobre')">O que é?</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchView('cfm-sobre')">O que é?</a></li>
                             <li><a class="dropdown-item fw-bold text-success" href="#" onclick="switchView('cadastro')">Cadastre-se</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="#" onclick="switchView('cfm-mapa')">Mapa & Filtros</a></li>
                             <li><a class="dropdown-item" href="#" onclick="switchView('cfm-lista')">Instituições Cadastradas (Lista)</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="switchView('sobre')">Dados e Gráficos</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchView('dados')">Dados e Gráficos</a></li>
                         </ul>
                     </li>
 
@@ -249,8 +252,10 @@
                                         <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="de R$20 a R$30"><label class="form-check-label small">de R$20 a R$30</label></div>
                                         <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="Acima de R$30"><label class="form-check-label small">Acima de R$30</label></div>
                                     </div>
-                                    <label class="filter-label">Busca Específica (Termos)</label>
-                                    <input type="text" id="searchAccess" class="form-control form-control-sm" placeholder="Ex: Rampa, Idoso, Braile...">
+                                    
+                                    <label class="filter-label mt-2">Busca Específica</label>
+                                    <input type="text" id="searchGratuidade" class="form-control form-control-sm mb-2" placeholder="Gratuidades (ex: idoso)">
+                                    <input type="text" id="searchAccess" class="form-control form-control-sm" placeholder="Acessibilidade (ex: rampa)">
                                 </div>
                             </div>
                         </div>
@@ -286,14 +291,14 @@
 
                     <div id="step1" class="wizard-step active text-center">
                         <h5 class="mb-4">Autenticação do Responsável</h5>
-                        <p class="small text-muted mb-4">Para garantir a segurança e veracidade dos dados, faça login com sua conta institucional.</p>
+                        <p class="small text-muted mb-4">Para garantir a segurança e veracidade dos dados, faça login com sua conta do Google institucional.</p>
                         
                         <div id="google-login-area">
-                            <button class="btn google-btn w-75 mx-auto py-2 mb-3 fs-5" type="button" onclick="simulateGoogleLogin()">
+                            <button class="btn google-btn w-75 mx-auto py-2 mb-3 fs-5" type="button" onclick="signInWithGoogle()">
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" class="me-2"> 
                                 Entrar com Google
                             </button>
-                            <p class="small text-muted">Acesso integrado via Google Cloud Platform</p>
+                            <p class="small text-danger" id="loginErrorMsg"></p>
                         </div>
                         
                         <div id="logged-in-area" class="d-none">
@@ -301,7 +306,7 @@
                                 <i class="bi bi-person-check-fill fs-4 align-middle me-2"></i>
                                 <div class="d-inline-block align-middle">
                                     <strong>Logado com sucesso</strong><br>
-                                    <span class="small" id="userEmailDisplay">usuario@museu.gov.br</span>
+                                    <span class="small" id="userEmailDisplay"></span>
                                 </div>
                             </div><br>
                             <button class="btn btn-primary px-4" onclick="nextStep(2)">Avançar para o Cadastro <i class="bi bi-arrow-right"></i></button>
@@ -328,7 +333,8 @@
                         <div class="row g-3">
                             <div class="col-md-6"><label>Tipologia do Acervo</label><select id="regAcervo" class="form-select"><option>Histórico</option><option>Artes Visuais</option><option>Ciência e Tecnologia</option></select></div>
                             <div class="col-md-6"><label>Possui Museólogo?</label><select id="regMus" class="form-select"><option>Sim</option><option>Não</option></select></div>
-                            <div class="col-md-12"><label>Acessibilidade e Gratuidades</label><textarea id="regAccess" class="form-control" rows="2"></textarea></div>
+                            <div class="col-md-12"><label>Acessibilidade</label><textarea id="regAccess" class="form-control" rows="2"></textarea></div>
+                            <div class="col-md-12"><label>Gratuidades</label><input type="text" id="regGrat" class="form-control" placeholder="Ex: Estudantes e Idosos"></div>
                         </div>
                         <div class="d-flex justify-content-between mt-4">
                             <button class="btn btn-secondary" onclick="prevStep(2)">Voltar</button>
@@ -342,20 +348,34 @@
     </div>
 
     <div id="view-sobre" class="view-section" style="display: none;">
-        <div class="container py-5">
-            <div class="row g-5 justify-content-center">
-                <div class="col-md-5">
-                    <h2 class="section-title text-start">O que é o CFM?</h2>
-                    <p class="text-justify text-muted" style="text-align: justify;">O Cadastro Fluminense de Museus (CFM) é um instrumento fundamental do Sistema Estadual de Museus. O cadastro autodeclarado é o primeiro passo, onde o museu fornece suas informações básicas para integrar o sistema.</p>
-                    <p class="text-justify text-muted" style="text-align: justify;">Responsável por produzir informações sistematizadas que possam ser geradas com periodicidade, aberta ao público, que sirva de base para elaboração de diagnósticos, para orientação de tomada de decisões e avaliação das políticas do setor.</p>
-                </div>
-                <div class="col-md-5">
-                    <h2 class="section-title text-start">Sobre o SIM-RJ</h2>
-                    <p class="small text-primary fw-bold mb-2">Vinculado à Superintendência de Museus da Secretaria de Estado de Cultura e Economia Criativa.</p>
+        <div class="container py-5 text-center">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <h2 class="section-title">Sobre o SIM-RJ</h2>
+                    <p class="small text-primary fw-bold mb-3">Vinculado à Superintendência de Museus da Secretaria de Estado de Cultura e Economia Criativa.</p>
                     <p class="text-justify text-muted" style="text-align: justify;">O SIM-RJ, criado pelo Decreto nº 42.306 de 22/02/2010 e alterado pelo Decreto nº 46.332 de 06/06/2018, mas com atuação desde 2009, tem a finalidade de integrar uma ampla e diversificada rede de instituições de caráter museológico.</p>
                     <p class="text-justify text-muted small" style="text-align: justify;">Nesses anos de atuação, o SIM-RJ prestou assessoramento e apoio técnico e institucional a todos os 92 municípios do Estado do RJ, promovendo a inserção e a participação da Superintendência de Museus, permitindo a criação de uma rede fluente de diálogos e cooperação para preservação do nosso patrimônio.</p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="view-cfm-sobre" class="view-section" style="display: none;">
+        <div class="container py-5 text-center">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <h2 class="section-title">O que é o CFM?</h2>
+                    <p class="text-justify text-muted" style="text-align: justify;">O Cadastro Fluminense de Museus (CFM) é um instrumento fundamental do Sistema Estadual de Museus. O cadastro autodeclarado é o primeiro passo, onde o museu fornece suas informações básicas para integrar o sistema.</p>
+                    <p class="text-justify text-muted" style="text-align: justify;">Responsável por produzir informações sistematizadas que possam ser geradas com periodicidade, aberta ao público, que sirva de base para elaboração de diagnósticos, para orientação de tomada de decisões e avaliação das políticas do setor.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-dados" class="view-section" style="display: none;">
+        <div class="container py-5 text-center">
+            <h2 class="section-title">Dados e Gráficos do Mapeamento</h2>
+            <p class="text-muted">Aba em construção. Os infográficos e análises estatísticas dos museus serão exibidos aqui.</p>
         </div>
     </div>
 
@@ -439,6 +459,6 @@
     <script src="app.js"></script>
 
     <script>function initGoogleMapsAPI() { initMapSystem(); }</script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=COLOQUE_SUA_CHAVE_AQUI&callback=initGoogleMapsAPI"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBAb8YDTeb7bR_r9MLttmDDE7kGwARuzuw&callback=initGoogleMapsAPI"></script>
 </body>
 </html>
