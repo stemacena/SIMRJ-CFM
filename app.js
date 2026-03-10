@@ -9,20 +9,20 @@ let profileModal;
 let approvalModal;
 
 // =====================================================================
-// 1. CONFIGURAÇÃO FIREBASE
-// Substitua APENAS os valores entre as aspas pelas suas chaves.
-// Não cole linhas com "import" ou "initializeApp" aqui.
+// 1. CONFIGURAÇÃO FIREBASE (Apenas valores entre aspas)
 // =====================================================================
 const firebaseConfig = {
     apiKey: "AIzaSyA29Y-lCBjTLe_vhB9B6U-VJZn1ajOXSxw",
     authDomain: "bd-ecoa.firebaseapp.com",
+    databaseURL: "https://bd-ecoa-default-rtdb.firebaseio.com",
     projectId: "bd-ecoa",
     storageBucket: "bd-ecoa.firebasestorage.app",
     messagingSenderId: "65380488244",
-    appId: "1:65380488244:web:647f588e1f2059727c6661"
+    appId: "1:65380488244:web:d038596d88c3133e7c6661",
+    measurementId: "G-1LVLJXDM9W"
 };
 
-// Inicialização segura do Firebase
+// Inicialização segura do Firebase e do Auth Listener
 let db;
 try {
     if (typeof firebase !== 'undefined') {
@@ -30,32 +30,52 @@ try {
             firebase.initializeApp(firebaseConfig);
         }
         db = firebase.firestore();
+
+        // Ouve se o usuário conectou ou desconectou
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // Usuário Logado
+                document.getElementById('nav-meu-perfil').classList.remove('d-none');
+                document.getElementById('btn-nav-entrar').classList.add('d-none');
+                document.getElementById('btn-nav-sair').classList.remove('d-none');
+                
+                if(document.getElementById('userEmailDisplay')) document.getElementById('userEmailDisplay').innerText = user.email;
+                if(document.getElementById('perfil-email')) document.getElementById('perfil-email').innerText = user.email;
+                
+                if(document.getElementById('google-login-area')) document.getElementById('google-login-area').classList.add('d-none');
+                if(document.getElementById('logged-in-area')) document.getElementById('logged-in-area').classList.remove('d-none');
+            } else {
+                // Usuário Deslogado
+                document.getElementById('nav-meu-perfil').classList.add('d-none');
+                document.getElementById('btn-nav-entrar').classList.remove('d-none');
+                document.getElementById('btn-nav-sair').classList.add('d-none');
+                
+                if(document.getElementById('google-login-area')) document.getElementById('google-login-area').classList.remove('d-none');
+                if(document.getElementById('logged-in-area')) document.getElementById('logged-in-area').classList.add('d-none');
+            }
+        });
     }
 } catch (error) {
     console.error("Erro ao conectar com Firebase:", error);
 }
+
 // =====================================================================
-// 2. CONFIGURAÇÃO GOOGLE MAPS E LIMITES
+// 2. CONFIGURAÇÃO GOOGLE MAPS
 // =====================================================================
 const RJ_BOUNDS = { north: -20.76, south: -23.39, west: -44.89, east: -40.96 };
 const defaultRjCenter = [-22.9, -43.2]; 
 
 const allMunicipalitiesRJ = ["Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo", "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana", "Cabo Frio", "Cachoeiras de Macacu", "Cambuci", "Campos dos Goytacazes", "Cantagalo", "Carapebus", "Cardoso Moreira", "Carmo", "Casimiro de Abreu", "Comendador Levy Gasparian", "Conceição de Macabu", "Cordeiro", "Duas Barras", "Duque de Caxias", "Engenheiro Paulo de Frontin", "Guapimirim", "Iguaba Grande", "Itaboraí", "Itaguaí", "Italva", "Itaocara", "Itaperuna", "Itatiaia", "Japeri", "Laje do Muriaé", "Macaé", "Macuco", "Magé", "Mangaratiba", "Maricá", "Mendes", "Mesquita", "Miguel Pereira", "Miracema", "Natividade", "Nilópolis", "Niterói", "Nova Friburgo", "Nova Iguaçu", "Paracambi", "Paraíba do Sul", "Paraty", "Paty do Alferes", "Petrópolis", "Pinheiral", "Piraí", "Porciúncula", "Porto Real", "Quatis", "Queimados", "Quissamã", "Resende", "Rio Bonito", "Rio das Flores", "Rio das Ostras", "Rio de Janeiro", "Rio Claro", "Santa Maria Madalena", "Santo Antônio de Pádua", "São Fidélis", "São Francisco de Itabapoana", "São Gonçalo", "São João da Barra", "São João de Meriti", "São José de Ubá", "São José do Vale do Rio Preto", "São Pedro da Aldeia", "São Sebastião do Alto", "Sapucaia", "Saquarema", "Seropédica", "Silva Jardim", "Sumidouro", "Tanguá", "Teresópolis", "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", "Vassouras", "Volta Redonda"];
 
-const normalizeString = (str) => {
-    if(!str) return "";
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-};
+const normalizeString = (str) => { if(!str) return ""; return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); };
 
 function initMapSystem() {
     geocoder = new google.maps.Geocoder();
     infoWindow = new google.maps.InfoWindow();
-
     map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: -22.9068, lng: -43.1729 }, zoom: 8, mapTypeControl: false, streetViewControl: false,
         restriction: { latLngBounds: RJ_BOUNDS, strictBounds: false }
     });
-
     profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
     approvalModal = new bootstrap.Modal(document.getElementById('approvalModal'));
     
@@ -64,8 +84,7 @@ function initMapSystem() {
     filterSelect.innerHTML = '<option value="">Todos os 92 Municípios</option>';
     formSelect.innerHTML = '<option value="">Selecione...</option>';
     allMunicipalitiesRJ.sort().forEach(city => { 
-        filterSelect.appendChild(new Option(city, city)); 
-        formSelect.appendChild(new Option(city, city)); 
+        filterSelect.appendChild(new Option(city, city)); formSelect.appendChild(new Option(city, city)); 
     });
 
     if(museumsData.length === 0) renderMuseums([]); 
@@ -74,9 +93,7 @@ function initMapSystem() {
 function geocodeAddressGoogle(endereco, municipio) {
     return new Promise((resolve) => {
         let addressStr = `${endereco}, ${municipio}`;
-        geocoder.geocode({ 
-            address: addressStr, componentRestrictions: { country: 'BR', administrativeArea: 'RJ', locality: municipio }
-        }, (results, status) => {
+        geocoder.geocode({ address: addressStr, componentRestrictions: { country: 'BR', administrativeArea: 'RJ', locality: municipio } }, (results, status) => {
             if (status === 'OK' && results[0]) resolve({ lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng() });
             else {
                 geocoder.geocode({ address: addressStr, componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } }, (results2, status2) => {
@@ -93,47 +110,46 @@ window.switchView = function(viewId) {
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
     const target = document.getElementById('view-' + viewId);
     if(target) target.style.display = 'block';
-
     if(viewId === 'cfm-mapa' && map) {
         setTimeout(() => { google.maps.event.trigger(map, 'resize'); map.setCenter({ lat: -22.9068, lng: -43.1729 }); }, 200);
     }
 }
 
-// --- FIREBASE AUTH & LOGIN ---
+// --- FIREBASE AUTHENTICATION REAL ---
 window.signInWithGoogle = function() {
-    if (!db) {
-        alert("A chave do Firebase não foi configurada ou houve erro na conexão. Simulando login para teste visual.");
-        document.getElementById('google-login-area').classList.add('d-none');
-        document.getElementById('logged-in-area').classList.remove('d-none');
-        document.getElementById('userEmailDisplay').innerText = "teste.google@museus.rj.gov.br";
-        return;
-    }
-
+    if(typeof firebase === 'undefined' || !db) return alert("Erro de conexão com o banco de dados.");
     const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider)
-        .then((result) => {
-            document.getElementById('google-login-area').classList.add('d-none');
-            document.getElementById('logged-in-area').classList.remove('d-none');
-            document.getElementById('userEmailDisplay').innerText = result.user.email;
-        }).catch((error) => {
-            console.error("Erro no login:", error);
-            document.getElementById('loginErrorMsg').innerText = `Falha no login: ${error.message}`;
-        });
+    firebase.auth().signInWithPopup(provider).catch((error) => {
+        document.getElementById('loginErrorMsg').innerText = `Falha no login: ${error.message}`;
+    });
 }
 
-window.simulateEmailLogin = function() {
+window.registerWithEmail = function() {
+    const email = document.getElementById('regEmail').value;
+    const pass = document.getElementById('regPassword').value;
+    if(!email || pass.length < 6) return alert("Insira um email válido e uma senha de no mínimo 6 caracteres.");
+    
+    firebase.auth().createUserWithEmailAndPassword(email, pass)
+        .then(() => alert("Conta criada com sucesso! Você já está logado."))
+        .catch(err => document.getElementById('loginErrorMsg').innerText = `Erro: ${err.message}`);
+}
+
+window.loginWithEmail = function() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPassword').value;
-    if(!email || !pass) {
-        document.getElementById('loginErrorMsg').innerText = "Preencha e-mail e senha institucionais.";
-        return;
-    }
+    if(!email || !pass) return document.getElementById('loginErrorMsg').innerText = "Preencha e-mail e senha.";
     
-    document.getElementById('google-login-area').classList.add('d-none');
-    document.getElementById('logged-in-area').classList.remove('d-none');
-    document.getElementById('userEmailDisplay').innerText = email;
+    firebase.auth().signInWithEmailAndPassword(email, pass)
+        .catch(err => document.getElementById('loginErrorMsg').innerText = "Usuário ou senha incorretos.");
 }
 
+window.logoutUser = function() {
+    firebase.auth().signOut().then(() => {
+        switchView('home'); alert("Desconectado com sucesso.");
+    });
+}
+
+// --- WIZARD FORM ---
 window.nextStep = function(step) {
     document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.step-dot').forEach((el, index) => {
@@ -143,15 +159,23 @@ window.nextStep = function(step) {
 }
 window.prevStep = function(step) { nextStep(step); }
 
-// --- FLUXO DE REQUISIÇÃO DE CADASTRO ---
+// --- ENVIAR FICHA DE CADASTRO PARA O GESTOR ---
 window.submitMuseumRegistration = function() {
     const nome = document.getElementById('regNome').value;
     const endereco = document.getElementById('regEndereco').value;
     const municipio = document.getElementById('regMuni').value;
     
-    if(!nome || !endereco || !municipio) return alert("Preencha Nome, Município e Endereço obrigatórios na Etapa 2.");
+    if(!nome || !endereco || !municipio) return alert("Preencha Nome, Município e Endereço obrigatórios.");
 
     const email = document.getElementById('userEmailDisplay').innerText;
+
+    // Constrói a string de Turno a partir das Checkboxes (Dias - Turnos)
+    let dias = Array.from(document.querySelectorAll('.chk-dia:checked')).map(e => e.value).join(', ');
+    let turnos = Array.from(document.querySelectorAll('.chk-turno:checked')).map(e => e.value).join(', ');
+    let stringFuncionamento = "";
+    if(dias && turnos) stringFuncionamento = `${dias} - ${turnos}`;
+    else if(dias || turnos) stringFuncionamento = dias || turnos;
+    else stringFuncionamento = "Não informado";
 
     const req = {
         id: Date.now(),
@@ -167,9 +191,8 @@ window.submitMuseumRegistration = function() {
         telefone: document.getElementById('regTel').value,
         site: document.getElementById('regSite').value,
         instagram: document.getElementById('regInsta').value,
-        facebook: document.getElementById('regFace').value,
         situacao: document.getElementById('regStatus').value,
-        funcionamento: document.getElementById('regFunc').value,
+        funcionamento: stringFuncionamento, // Injeta o Turno construído
         ingresso: document.getElementById('regIngresso').value,
         acervo: document.getElementById('regAcervo').value,
         museologo: document.getElementById('regMus').value,
@@ -182,16 +205,16 @@ window.submitMuseumRegistration = function() {
 
     pendingApprovals.push(req);
     
-    if(db) {
-        db.collection("requisicoes").add(req).catch((e) => console.error("Erro no DB", e));
-    }
+    if(db) db.collection("requisicoes").add(req).catch((e) => console.error("Erro no DB", e));
 
-    alert("Dados registrados com sucesso!\nSua requisição foi enviada para a análise da equipe do SIM-RJ.");
+    alert("Ficha registrada com sucesso!\nSua requisição foi enviada para a análise da equipe do SIM-RJ e, assim que aprovada, entrará no mapa.");
     
-    document.querySelectorAll('.wizard-container input, .wizard-container textarea').forEach(el => el.value = '');
+    // Limpa formulário
+    document.querySelectorAll('.wizard-container input[type="text"], .wizard-container input[type="email"], .wizard-container input[type="password"], .wizard-container textarea').forEach(el => el.value = '');
     document.querySelectorAll('.wizard-container select').forEach(el => el.selectedIndex = 0);
-    nextStep(1);
-    switchView('home');
+    document.querySelectorAll('.wizard-container input[type="checkbox"]').forEach(el => el.checked = false);
+    
+    switchView('meu-perfil');
     renderApprovalsList(); 
 }
 
@@ -208,8 +231,7 @@ function renderMuseums(data) {
     if(document.getElementById('resultCount')) document.getElementById('resultCount').innerText = data.length;
     if(document.getElementById('count-total')) document.getElementById('count-total').innerText = museumsData.length;
 
-    let tableHTML = `<div class="table-responsive"><table class="table table-hover table-bordered align-middle">
-        <thead class="table-dark"><tr><th>Instituição</th><th>Município</th><th>Natureza</th><th>Situação</th><th>Ação</th></tr></thead><tbody>`;
+    let tableHTML = `<div class="table-responsive"><table class="table table-hover table-bordered align-middle"><thead class="table-dark"><tr><th>Instituição</th><th>Município</th><th>Natureza</th><th>Situação</th><th>Ação</th></tr></thead><tbody>`;
 
     data.forEach(museum => {
         const hasPin = museum.lat && museum.lng; 
@@ -217,28 +239,11 @@ function renderMuseums(data) {
         if(listContainer) {
             const card = document.createElement('div');
             card.className = 'col-md-6 mb-3';
-            card.innerHTML = `
-                <div class="card h-100 museum-card bg-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="badge bg-secondary">${museum.regiao || 'Sem Região'}</span>
-                        </div>
-                        <h5 class="card-title text-dark fw-bold mb-1">${museum.nome}</h5>
-                        <p class="card-text small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger"></i> ${museum.municipio}</p>
-                        ${!hasPin ? '<span class="badge bg-warning text-dark mb-2"><i class="bi bi-exclamation-triangle-fill"></i> Sem Pin no Mapa</span>' : ''}
-                        <div class="mt-2"><button class="btn btn-sm btn-outline-primary" onclick="openProfile(${museum.id})">Detalhes</button></div>
-                    </div>
-                </div>`;
+            card.innerHTML = `<div class="card h-100 museum-card bg-white"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-secondary">${museum.regiao || 'Sem Região'}</span></div><h5 class="card-title text-dark fw-bold mb-1">${museum.nome}</h5><p class="card-text small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger"></i> ${museum.municipio}</p>${!hasPin ? '<span class="badge bg-warning text-dark mb-2"><i class="bi bi-exclamation-triangle-fill"></i> Sem Pin no Mapa</span>' : ''}<div class="mt-2"><button class="btn btn-sm btn-outline-primary" onclick="openProfile(${museum.id})">Detalhes</button></div></div></div>`;
             listContainer.appendChild(card);
         }
 
-        tableHTML += `<tr>
-            <td class="fw-bold">${museum.nome}</td>
-            <td>${museum.municipio}</td>
-            <td>${museum.natureza || '-'}</td>
-            <td><span class="badge ${museum.situacao && museum.situacao.includes('Aberto') ? 'bg-success' : 'bg-secondary'}">${museum.situacao || 'Desconhecido'}</span></td>
-            <td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td>
-        </tr>`;
+        tableHTML += `<tr><td class="fw-bold">${museum.nome}</td><td>${museum.municipio}</td><td>${museum.natureza || '-'}</td><td><span class="badge ${museum.situacao && museum.situacao.includes('Aberto') ? 'bg-success' : 'bg-secondary'}">${museum.situacao || 'Desconhecido'}</span></td><td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td></tr>`;
 
         let lat = museum.lat; let lng = museum.lng;
         if (!lat) {
@@ -264,63 +269,43 @@ function renderMuseums(data) {
 }
 
 // --- FILTROS ---
-function getCheckedValues(className) {
-    return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value));
-}
+function getCheckedValues(className) { return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value)); }
 
 window.applyFilters = function() {
     const term = normalizeString(document.getElementById('searchName').value);
     const filterHasMap = document.getElementById('filterHasMap').value;
     const selectedMuni = normalizeString(document.getElementById('filterMunicipio').value);
-    
     const regions = getCheckedValues('filter-region');
     const natures = getCheckedValues('filter-nature');
     const acervos = getCheckedValues('filter-acervo');
     const statusList = getCheckedValues('filter-status');
     const turnos = getCheckedValues('filter-func');
     const costs = getCheckedValues('filter-cost');
-    
     const reqMuseologo = document.getElementById('checkMuseologo').checked;
     const reqEdu = document.getElementById('checkEdu').checked;
     const textGratuidade = normalizeString(document.getElementById('searchGratuidade').value);
     const textAccess = normalizeString(document.getElementById('searchAccess').value);
 
     const filtered = museumsData.filter(m => {
-        const mNome = normalizeString(m.nome);
-        const mMuni = normalizeString(m.municipio);
-        const mRegiao = normalizeString(m.regiao);
-        const mNat = normalizeString(m.natureza);
-        const mAcervo = normalizeString(m.acervo);
-        const mStatus = normalizeString(m.situacao);
-        const mCost = normalizeString(m.ingresso);
-        const mGrat = normalizeString(m.gratuidades);
-        const mAcc = normalizeString(m.acessibilidade);
+        const mNome = normalizeString(m.nome); const mMuni = normalizeString(m.municipio); const mRegiao = normalizeString(m.regiao); const mNat = normalizeString(m.natureza); const mAcervo = normalizeString(m.acervo); const mStatus = normalizeString(m.situacao); const mCost = normalizeString(m.ingresso); const mGrat = normalizeString(m.gratuidades); const mAcc = normalizeString(m.acessibilidade);
 
         if (term && !mNome.includes(term)) return false;
         if (filterHasMap === 'sim' && (!m.lat || !m.lng)) return false;
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
         if (selectedMuni && mMuni !== selectedMuni) return false;
-        
         if (regions.length > 0 && !regions.some(v => mRegiao === v || mRegiao.includes(v))) return false;
         if (natures.length > 0 && !natures.some(v => mNat === v || mNat.includes(v))) return false;
         if (acervos.length > 0 && !acervos.some(v => mAcervo === v || mAcervo.includes(v))) return false;
         if (statusList.length > 0 && !statusList.some(v => mStatus === v || mStatus.includes(v))) return false;
         if (costs.length > 0 && !costs.some(v => mCost === v || mCost.includes(v))) return false;
-
-        if (turnos.length > 0) {
-            const funcText = normalizeString(m.funcionamento);
-            if (!turnos.some(t => funcText.includes(t))) return false;
-        }
-
+        if (turnos.length > 0) { const funcText = normalizeString(m.funcionamento); if (!turnos.some(t => funcText.includes(t))) return false; }
         if (reqMuseologo && normalizeString(m.museologo) !== "sim") return false;
         if (reqEdu && normalizeString(m.educativo) !== "sim") return false;
-        
         if (textGratuidade && !mGrat.includes(textGratuidade)) return false;
         if (textAccess && !mAcc.includes(textAccess)) return false;
 
         return true;
     });
-
     renderMuseums(filtered);
 }
 
@@ -333,18 +318,12 @@ window.resetFilters = function() {
 // --- FICHA DO MUSEU ---
 window.openProfile = function(id) {
     if(!profileModal) profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
-    
-    const m = museumsData.find(x => x.id === id);
-    if(!m) return;
+    const m = museumsData.find(x => x.id === id); if(!m) return;
     const val = (v) => v ? v : '<span class="text-muted fst-italic">Não informado</span>';
 
     document.getElementById('modalTitle').innerText = m.nome;
-    
-    const badge = document.getElementById('modalBadgeMuseologo');
-    if (normalizeString(m.museologo) === "sim") badge.classList.remove('d-none'); else badge.classList.add('d-none');
-
-    const alertPin = document.getElementById('modalAlertPin');
-    if (!m.lat || !m.lng) alertPin.classList.remove('d-none'); else alertPin.classList.add('d-none');
+    if (normalizeString(m.museologo) === "sim") document.getElementById('modalBadgeMuseologo').classList.remove('d-none'); else document.getElementById('modalBadgeMuseologo').classList.add('d-none');
+    if (!m.lat || !m.lng) document.getElementById('modalAlertPin').classList.remove('d-none'); else document.getElementById('modalAlertPin').classList.add('d-none');
 
     document.getElementById('modalEndereco').innerText = val(m.endereco);
     document.getElementById('modalMunicipio').innerText = val(m.municipio);
@@ -352,10 +331,7 @@ window.openProfile = function(id) {
     document.getElementById('modalNatureza').innerText = val(m.natureza);
     document.getElementById('modalStatus').innerText = val(m.situacao);
     document.getElementById('modalTel').innerText = val(m.telefone);
-    
-    if(m.site) { document.getElementById('modalSite').href = m.site.startsWith('http') ? m.site : 'http://'+m.site; document.getElementById('modalSite').style.display = 'inline'; }
-    else { document.getElementById('modalSite').style.display = 'none'; }
-
+    if(m.site) { document.getElementById('modalSite').href = m.site.startsWith('http') ? m.site : 'http://'+m.site; document.getElementById('modalSite').style.display = 'inline'; } else { document.getElementById('modalSite').style.display = 'none'; }
     document.getElementById('modalFunc').innerText = val(m.funcionamento);
     document.getElementById('modalIngresso').innerText = val(m.ingresso);
     document.getElementById('modalGratuidade').innerText = val(m.gratuidades);
@@ -363,18 +339,14 @@ window.openProfile = function(id) {
     document.getElementById('modalAcervo').innerText = val(m.acervo);
     document.getElementById('modalAcessibilidade').innerHTML = val(m.acessibilidade);
     document.getElementById('modalHistorico').innerText = val(m.historico);
-    
     profileModal.show();
 }
 
-// --- ADMIN E GESTÃO DE APROVAÇÕES ---
+// --- ADMIN E GESTÃO ---
 window.openLogin = function() { document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
 window.checkAdminPassword = function() {
-    if(document.getElementById('adminPassword').value === 'simrj') {
-        document.getElementById('admin-panel').style.display = 'block'; closeLogin();
-        renderApprovalsList();
-    } else alert('Senha incorreta.');
+    if(document.getElementById('adminPassword').value === 'simrj') { document.getElementById('admin-panel').style.display = 'block'; closeLogin(); renderApprovalsList(); } else alert('Senha incorreta.');
 }
 window.closeAdmin = function() { document.getElementById('admin-panel').style.display = 'none'; }
 
@@ -382,92 +354,47 @@ function renderApprovalsList() {
     const list = document.getElementById('requests-list');
     document.getElementById('reqCount').innerText = pendingApprovals.length;
     list.innerHTML = '';
-    
-    if(pendingApprovals.length === 0) {
-        list.innerHTML = '<div class="alert alert-success small">Nenhuma requisição pendente no momento.</div>';
-        return;
-    }
+    if(pendingApprovals.length === 0) return list.innerHTML = '<div class="alert alert-success small">Nenhuma requisição pendente no momento.</div>';
 
     pendingApprovals.forEach(req => {
-        list.innerHTML += `
-            <div class="req-item shadow-sm">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="fw-bold mb-1">${req.nome}</h6>
-                        <small class="text-muted d-block"><i class="bi bi-geo-alt"></i> ${req.municipio} | <i class="bi bi-person"></i> ${req.email_responsavel}</small>
-                    </div>
-                    <div>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewApprovalDetails(${req.id})"><i class="bi bi-file-text"></i> Analisar Ficha</button>
-                    </div>
-                </div>
-            </div>`;
+        list.innerHTML += `<div class="req-item shadow-sm"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-1">${req.nome}</h6><small class="text-muted d-block"><i class="bi bi-geo-alt"></i> ${req.municipio} | <i class="bi bi-person"></i> ${req.email_responsavel}</small></div><div><button class="btn btn-sm btn-outline-primary" onclick="viewApprovalDetails(${req.id})"><i class="bi bi-file-text"></i> Analisar Ficha</button></div></div></div>`;
     });
 }
 
 window.viewApprovalDetails = function(id) {
-    const req = pendingApprovals.find(r => r.id === id);
-    if(!req) return;
-
+    const req = pendingApprovals.find(r => r.id === id); if(!req) return;
     if(!approvalModal) approvalModal = new bootstrap.Modal(document.getElementById('approvalModal'));
-
-    const body = document.getElementById('approvalModalBody');
-    body.innerHTML = `
-        <h4 class="text-primary fw-bold">${req.nome}</h4>
-        <p class="small text-muted mb-3">Solicitante: <strong>${req.email_responsavel}</strong></p>
-        <div class="row small">
-            <div class="col-md-6 mb-2"><strong>Município:</strong> ${req.municipio}</div>
-            <div class="col-md-6 mb-2"><strong>Endereço:</strong> ${req.endereco}</div>
-            <div class="col-md-6 mb-2"><strong>Natureza:</strong> ${req.natureza}</div>
-            <div class="col-md-6 mb-2"><strong>Situação:</strong> ${req.situacao}</div>
-            <div class="col-md-6 mb-2"><strong>Acervo:</strong> ${req.acervo}</div>
-            <div class="col-md-6 mb-2"><strong>Ingresso:</strong> ${req.ingresso}</div>
-        </div>
-        <hr>
-        <p class="small mb-1"><strong>Acessibilidade:</strong> ${req.acessibilidade || 'Nenhuma informada'}</p>
-        <p class="small"><strong>Histórico:</strong> ${req.historico || 'Nenhum'}</p>
-    `;
-
+    document.getElementById('approvalModalBody').innerHTML = `<h4 class="text-primary fw-bold">${req.nome}</h4><p class="small text-muted mb-3">Solicitante: <strong>${req.email_responsavel}</strong></p><div class="row small"><div class="col-md-6 mb-2"><strong>Município:</strong> ${req.municipio}</div><div class="col-md-6 mb-2"><strong>Endereço:</strong> ${req.endereco}</div><div class="col-md-6 mb-2"><strong>Natureza:</strong> ${req.natureza}</div><div class="col-md-6 mb-2"><strong>Situação:</strong> ${req.situacao}</div><div class="col-md-6 mb-2"><strong>Funcionamento:</strong> ${req.funcionamento}</div><div class="col-md-6 mb-2"><strong>Ingresso:</strong> ${req.ingresso}</div></div><hr><p class="small mb-1"><strong>Acessibilidade:</strong> ${req.acessibilidade || 'Nenhuma'}</p><p class="small"><strong>Histórico:</strong> ${req.historico || 'Nenhum'}</p>`;
     document.getElementById('btnConfirmApprove').onclick = () => approveRequest(req.id);
     document.getElementById('btnRejectApprove').onclick = () => rejectRequest(req.id);
-
     approvalModal.show();
 }
 
 window.approveRequest = async function(id) {
-    const reqIndex = pendingApprovals.findIndex(r => r.id === id);
-    if(reqIndex === -1) return;
-    
+    const reqIndex = pendingApprovals.findIndex(r => r.id === id); if(reqIndex === -1) return;
     const approvedMuseum = pendingApprovals[reqIndex];
     let coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio);
-    approvedMuseum.lat = coords ? coords.lat : null;
-    approvedMuseum.lng = coords ? coords.lng : null;
-
-    pendingApprovals.splice(reqIndex, 1);
-    museumsData.push(approvedMuseum);
-    
-    if(approvalModal) approvalModal.hide();
-    renderApprovalsList();
-    renderMuseums(museumsData);
-    alert(`${approvedMuseum.nome} foi aprovado e integrado ao sistema público!`);
+    approvedMuseum.lat = coords ? coords.lat : null; approvedMuseum.lng = coords ? coords.lng : null;
+    pendingApprovals.splice(reqIndex, 1); museumsData.push(approvedMuseum);
+    if(approvalModal) approvalModal.hide(); renderApprovalsList(); renderMuseums(museumsData); alert(`${approvedMuseum.nome} foi aprovado e integrado ao sistema público!`);
 }
 
 window.rejectRequest = function(id) {
-    if(confirm("Deseja realmente rejeitar e apagar esta requisição?")) {
-        pendingApprovals = pendingApprovals.filter(r => r.id !== id);
-        if(approvalModal) approvalModal.hide();
-        renderApprovalsList();
-    }
+    if(confirm("Deseja realmente rejeitar e apagar esta requisição?")) { pendingApprovals = pendingApprovals.filter(r => r.id !== id); if(approvalModal) approvalModal.hide(); renderApprovalsList(); }
 }
 
-// --- UPLOAD CSV ---
+// --- UPLOAD CSV CORRIGIDO ---
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 document.getElementById('csvFile').addEventListener('change', async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     
     document.getElementById('upload-status').className = 'alert alert-info small p-2 d-block w-50 mt-2';
     document.getElementById('upload-status').innerText = 'Lendo arquivo...';
-    document.getElementById('upload-progress-container').classList.remove('d-none');
+    
+    const pContainer = document.getElementById('upload-progress-container');
+    const pBar = document.getElementById('upload-progress-bar');
+    if(pContainer) pContainer.classList.remove('d-none');
+    if(pBar) pBar.style.width = '0%';
 
     Papa.parse(file, {
         header: true, skipEmptyLines: true,
@@ -477,7 +404,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                 let row = rawData[i];
                 if (!row["Nome da Instituição"] && !row["Nome"]) continue;
                 
-                document.getElementById('upload-progress-bar').style.width = `${((i+1)/total)*100}%`;
+                if(pBar) pBar.style.width = `${((i+1)/total)*100}%`;
                 let coords = await geocodeAddressGoogle(row["Endereço"] || "", row["Município"] || "Rio de Janeiro");
                 await sleep(50); 
 
@@ -494,49 +421,27 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
 });
 
 function updatePendingList() {
-    const list = document.getElementById('pending-list'); 
-    if(!list) return;
-    list.innerHTML = '';
+    const list = document.getElementById('pending-list'); if(!list) return; list.innerHTML = '';
     const pendings = museumsData.filter(m => !m.lat || !m.lng);
     document.getElementById('pendingCount').innerText = pendings.length;
-    pendings.forEach(m => {
-        list.innerHTML += `<div class="pending-item d-flex justify-content-between"><div><strong>${m.nome}</strong><br><small>${m.municipio}</small></div><button class="btn btn-sm btn-warning" onclick="openAdminMapPicker(${m.id})">Mapear</button></div>`;
-    });
+    pendings.forEach(m => { list.innerHTML += `<div class="pending-item d-flex justify-content-between"><div><strong>${m.nome}</strong><br><small>${m.municipio}</small></div><button class="btn btn-sm btn-warning" onclick="openAdminMapPicker(${m.id})">Mapear</button></div>`; });
 }
 
-// --- MAPA DO GESTOR MANUAL ---
 let adminMapInstance, adminTempMarker, currentMappingId;
 window.openAdminMapPicker = function(id) {
     const m = museumsData.find(x => x.id === id); if(!m) return;
     currentMappingId = id; document.getElementById('adminMapTitle').innerText = m.nome;
     document.getElementById('adminMapSearchInput').value = `${m.endereco}, ${m.municipio}, RJ`;
     new bootstrap.Modal(document.getElementById('adminMapModal')).show();
-
     document.getElementById('adminMapModal').addEventListener('shown.bs.modal', function () {
-        if (!adminMapInstance) {
-            adminMapInstance = new google.maps.Map(document.getElementById('adminLeafletMap'), {
-                center: { lat: -22.9068, lng: -43.1729 }, zoom: 8, restriction: { latLngBounds: RJ_BOUNDS, strictBounds: false }
-            });
-            adminMapInstance.addListener('click', e => {
-                if (adminTempMarker) adminTempMarker.setMap(null);
-                adminTempMarker = new google.maps.Marker({ position: e.latLng, map: adminMapInstance });
-            });
-        }
+        if (!adminMapInstance) { adminMapInstance = new google.maps.Map(document.getElementById('adminLeafletMap'), { center: { lat: -22.9068, lng: -43.1729 }, zoom: 8, restriction: { latLngBounds: RJ_BOUNDS, strictBounds: false } }); adminMapInstance.addListener('click', e => { if (adminTempMarker) adminTempMarker.setMap(null); adminTempMarker = new google.maps.Marker({ position: e.latLng, map: adminMapInstance }); }); }
         google.maps.event.trigger(adminMapInstance, 'resize');
     }, { once: true });
 }
-
 window.searchAddressOnAdminMap = function() {
     const query = document.getElementById('adminMapSearchInput').value;
-    geocoder.geocode({ address: query, componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-            adminMapInstance.setCenter(results[0].geometry.location); adminMapInstance.setZoom(17);
-            if (adminTempMarker) adminTempMarker.setMap(null);
-            adminTempMarker = new google.maps.Marker({ position: results[0].geometry.location, map: adminMapInstance });
-        } else alert("Endereço não encontrado.");
-    });
+    geocoder.geocode({ address: query, componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } }, (results, status) => { if (status === 'OK' && results[0]) { adminMapInstance.setCenter(results[0].geometry.location); adminMapInstance.setZoom(17); if (adminTempMarker) adminTempMarker.setMap(null); adminTempMarker = new google.maps.Marker({ position: results[0].geometry.location, map: adminMapInstance }); } else alert("Endereço não encontrado."); });
 }
-
 window.saveAdminPin = function() {
     if (!adminTempMarker) return alert("Clique no mapa.");
     const m = museumsData.find(x => x.id === currentMappingId);
