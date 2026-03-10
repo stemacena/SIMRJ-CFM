@@ -1,12 +1,12 @@
 :root {
-    /* Identidade Visual SIM-RJ/CFM */
+    /* Identidade Visual Oficial */
     --color-purple: #6b4e7e;
     --color-blue: #0034bb;
     --color-green-olive: #899b1c;
     --color-yellow: #e2a512;
     --color-cfm-teal: #006666;
     --color-dark: #2c3e50;
-    --color-light-bg: #f8f9fa;
+    --color-light-bg: #f4f6f8;
 }
 
 body {
@@ -17,7 +17,7 @@ body {
 
 section { scroll-margin-top: 110px; }
 
-/* --- CABEÇALHO E NAVEGAÇÃO --- */
+/* --- CABEÇALHO GOV E NAVBAR --- */
 .gov-bar {
     background-color: var(--color-blue);
     font-size: 0.8rem;
@@ -27,17 +27,15 @@ section { scroll-margin-top: 110px; }
 .navbar {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 3px solid var(--color-green-olive);
+    background-color: #e5e9b0;
+    border-bottom: 4px solid var(--color-green-olive);
 }
 
-.header-logo {
-    max-height: 95px;
-    width: auto;
+.header-logo-small {
+    max-height: 50px;
     object-fit: contain;
     cursor: pointer;
-    transition: transform 0.2s;
 }
-.header-logo:hover { transform: scale(1.02); }
 
 .nav-link {
     font-weight: 600;
@@ -47,74 +45,73 @@ section { scroll-margin-top: 110px; }
     margin: 0 5px;
     transition: color 0.2s;
 }
-.nav-link:hover, .nav-link.active { color: var(--color-blue) !important; }
+.nav-link:hover, .nav-link.active { color: var(--color-cfm-teal) !important; }
+
+@media (min-width: 992px) {
+    .dropdown:hover .dropdown-menu { display: block; margin-top: 0; }
+}
+.dropdown-item { font-size: 0.85rem; font-weight: 500; }
 
 .btn-custom {
     background-color: var(--color-cfm-teal);
     border: none;
     color: #fff !important;
     font-weight: 600;
+    border-radius: 20px;
+    padding: 8px 20px;
 }
 .btn-custom:hover { background-color: #004d4d; }
+.btn-outline-custom {
+    border: 2px solid var(--color-cfm-teal);
+    color: var(--color-cfm-teal);
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 6px 20px;
+}
+.btn-outline-custom:hover { background-color: var(--color-cfm-teal); color: #fff; }
 
-/* --- SEÇÕES E BANNERS --- */
-.section-title {
-    color: var(--color-purple);
-    font-weight: 700;
-    margin-bottom: 1.5rem;
+/* --- HERO CAROUSEL --- */
+.hero-wrapper {
+    position: relative; width: 100%; height: 70vh; min-height: 400px;
+    overflow: hidden; background-color: #000;
 }
-.section-title::after {
-    content: ''; display: block; width: 60px; height: 4px;
-    background-color: var(--color-yellow); margin-top: 8px;
+.hero-carousel, .carousel-inner, .carousel-item { height: 100%; }
+.hero-carousel img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+.hero-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;
 }
+.hero-logo-large { max-width: 80%; height: auto; max-height: 250px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3)); }
 
-.hero-home {
-    background: linear-gradient(rgba(107, 78, 126, 0.85), rgba(0, 52, 187, 0.85)), url('logo-plano.jpg');
-    background-size: cover; background-position: center; padding: 100px 0; color: white;
-}
-.hero-cfm {
-    background: linear-gradient(rgba(0, 102, 102, 0.92), rgba(0, 52, 187, 0.85)), url('logo-plano.jpg');
-    background-size: cover; background-position: center; padding: 60px 0; color: white;
-}
+/* --- SEÇÕES E TÍTULOS --- */
+.section-title { color: var(--color-blue); font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
+.section-title::after { content: ''; display: block; width: 80px; height: 4px; background-color: var(--color-yellow); margin: 10px auto 0; }
 
-/* --- CARROSSEL INSTAGRAM --- */
-.insta-carousel-container {
-    background-color: white;
-    border-radius: 12px;
-    padding: 20px 40px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    border: 1px solid #e1e1e1;
+/* --- FORMULÁRIO WIZARD (CADASTRE-SE) --- */
+.wizard-container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.step-indicator { display: flex; justify-content: space-between; margin-bottom: 30px; }
+.step-dot {
+    width: 35px; height: 35px; border-radius: 50%; background-color: #e9ecef; color: #6c757d;
+    display: flex; justify-content: center; align-items: center; font-weight: bold; border: 2px solid #dee2e6;
 }
-.insta-carousel-item {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 450px;
+.step-dot.active { background-color: var(--color-cfm-teal); color: white; border-color: var(--color-cfm-teal); }
+.wizard-step { display: none; }
+.wizard-step.active { display: block; }
+.google-btn {
+    background-color: #fff; color: #444; border: 1px solid #ddd;
+    font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s;
 }
-.carousel-control-prev { left: -30px; }
-.carousel-control-next { right: -30px; }
-.carousel-control-prev-icon, .carousel-control-next-icon {
-    filter: invert(100%);
-}
+.google-btn:hover { background-color: #f8f9fa; border-color: #ccc; }
 
-/* --- FILTROS E CARDS --- */
-.sidebar-filters {
-    border-top: 4px solid var(--color-cfm-teal);
-    background-color: #fff;
-}
-.filter-label {
-    font-size: 0.85rem; font-weight: 700; color: var(--color-cfm-teal);
-    margin-bottom: 5px; display: block;
-}
+/* --- FILTROS E MAPA CFM --- */
+.sidebar-filters { border-top: 4px solid var(--color-cfm-teal); background-color: #fff; }
+.filter-label { font-size: 0.85rem; font-weight: 700; color: var(--color-cfm-teal); margin-bottom: 5px; display: block; }
 .filter-scroll-box {
-    max-height: 140px; overflow-y: auto; background-color: var(--color-light-bg);
+    max-height: 140px; overflow-y: auto; background-color: #f8f9fa;
     border: 1px solid #dee2e6; padding: 8px; border-radius: 4px; margin-bottom: 1rem;
 }
 
-.museum-card {
-    border-left: 5px solid var(--color-green-olive);
-    transition: transform 0.2s, box-shadow 0.2s; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
+.museum-card { border-left: 5px solid var(--color-green-olive); transition: transform 0.2s, box-shadow 0.2s; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .museum-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
 
 /* --- MODAL E ADMIN --- */
@@ -131,9 +128,6 @@ section { scroll-margin-top: 110px; }
     margin-top: 1rem; margin-bottom: 0.5rem; display: inline-block;
 }
 
-.pending-list { max-height: 300px; overflow-y: auto; }
-.pending-item { border-bottom: 1px solid #555; padding-bottom: 10px; margin-bottom: 10px; }
-
-@media (max-width: 768px) {
-    .header-logo { max-height: 60px; }
-}
+.pending-list { max-height: 350px; overflow-y: auto; }
+.pending-item { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
+.req-item { background: #fff; border-left: 4px solid var(--color-yellow); border-radius: 4px; padding: 10px; margin-bottom: 10px; color: #333; }
