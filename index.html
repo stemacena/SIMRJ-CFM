@@ -36,14 +36,10 @@
             <div class="d-flex align-items-center gap-2" onclick="switchView('home')" style="cursor:pointer;">
                 <img src="logo-sim.png" alt="Logo SIM-RJ" class="header-logo-small">
             </div>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"><span class="navbar-toggler-icon"></span></button>
             
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Sobre</a>
                         <ul class="dropdown-menu border-0 shadow">
@@ -54,7 +50,6 @@
                             <li><a class="dropdown-item" href="#" onclick="showPlaceholder('Equipe Técnica')">Equipe</a></li>
                         </ul>
                     </li>
-
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-primary" href="#" role="button" data-bs-toggle="dropdown">CFM</a>
                         <ul class="dropdown-menu border-0 shadow">
@@ -65,7 +60,6 @@
                             <li><a class="dropdown-item" href="#" onclick="showPlaceholder('Dados e Gráficos do Mapeamento')">Dados e Gráficos</a></li>
                         </ul>
                     </li>
-
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Atividades</a>
                         <ul class="dropdown-menu border-0 shadow">
@@ -77,7 +71,6 @@
                             <li><a class="dropdown-item" href="#" onclick="showPlaceholder('Parcerias Institucionais')">Parcerias</a></li>
                         </ul>
                     </li>
-
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Publicações</a>
                         <ul class="dropdown-menu border-0 shadow">
@@ -86,11 +79,9 @@
                             <li><a class="dropdown-item" href="#" onclick="showPlaceholder('Guias Práticos')">Guias</a></li>
                         </ul>
                     </li>
-
                     <li class="nav-item d-none" id="nav-meu-perfil">
                         <a class="nav-link text-success fw-bold" href="#" onclick="switchView('meu-perfil')"><i class="bi bi-person-circle"></i> Meu Perfil</a>
                     </li>
-
                     <li class="nav-item ms-lg-3 mt-2 mt-lg-0 d-flex gap-2">
                         <button class="btn btn-outline-custom btn-sm bg-white" id="btn-nav-entrar" onclick="switchView('cadastro')">Entrar</button>
                         <button class="btn btn-custom btn-sm" id="btn-nav-inscreva" onclick="switchView('cadastro')">Inscreva sua Instituição</button>
@@ -109,7 +100,7 @@
             </div>
             <ul class="nav nav-tabs mb-3" id="adminTabs">
                 <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-import">Importar Planilha</a></li>
-                <li class="nav-item"><a class="nav-link text-warning fw-bold" data-bs-toggle="tab" href="#tab-pending">Museus sem Pin (<span id="pendingCount">0</span>)</a></li>
+                <li class="nav-item"><a class="nav-link text-warning fw-bold" data-bs-toggle="tab" href="#tab-pending">Sem Geolocalização (<span id="pendingCount">0</span>)</a></li>
                 <li class="nav-item"><a class="nav-link text-info fw-bold" data-bs-toggle="tab" href="#tab-requests">Requisições (<span id="reqCount">0</span>)</a></li>
             </ul>
             <div class="tab-content">
@@ -121,7 +112,7 @@
                     </div>
                 </div>
                 <div class="tab-pane fade" id="tab-pending">
-                    <p class="text-muted small">Clique em "Mapear" para buscar o local exato.</p>
+                    <p class="text-muted small">Clique em "Mapear" para buscar o local exato das instituições virtuais ou sem endereço processado.</p>
                     <div id="pending-list" class="pending-list pe-2"></div>
                 </div>
                 <div class="tab-pane fade" id="tab-requests">
@@ -168,7 +159,7 @@
                     <div class="col-lg-3 sidebar-filters p-4 shadow-sm rounded mb-4">
                         <h5 class="mb-4 text-dark"><i class="bi bi-funnel"></i> Busca Detalhada</h5>
                         <div class="mb-3"><label class="filter-label">Nome da Instituição</label><input type="text" id="searchName" class="form-control form-control-sm" placeholder="Digite o nome..."></div>
-                        <div class="mb-3"><label class="filter-label text-warning"><i class="bi bi-geo-alt-fill"></i> Status no Mapa</label><select id="filterHasMap" class="form-select form-select-sm border-warning"><option value="">Exibir Todos</option><option value="sim">Com Localização Exata</option><option value="nao">Aguardando Mapeamento</option></select></div>
+                        <div class="mb-3"><label class="filter-label text-warning"><i class="bi bi-geo-alt-fill"></i> Status no Mapa</label><select id="filterHasMap" class="form-select form-select-sm border-warning"><option value="">Exibir Todos</option><option value="sim">Com Geolocalização</option><option value="nao">Sem Geolocalização</option></select></div>
                         <div class="mb-3"><label class="filter-label">Município</label><select id="filterMunicipio" class="form-select form-select-sm"></select></div>
                         <div class="mb-3"><label class="filter-label">Região</label><div class="filter-scroll-box">
                                 <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Baixadas Litorâneas"><label class="form-check-label small">Baixadas Litorâneas</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Centro-Sul"><label class="form-check-label small">Centro-Sul</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Costa Verde"><label class="form-check-label small">Costa Verde</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Médio Paraíba"><label class="form-check-label small">Médio Paraíba</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana I"><label class="form-check-label small">Metropolitana I</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana II"><label class="form-check-label small">Metropolitana II</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana III"><label class="form-check-label small">Metropolitana III</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Noroeste Fluminense"><label class="form-check-label small">Noroeste Fluminense</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Norte Fluminense"><label class="form-check-label small">Norte Fluminense</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Serrana"><label class="form-check-label small">Serrana</label></div>
@@ -371,7 +362,7 @@
                         </div>
                         <div class="d-flex justify-content-between mt-4">
                             <button class="btn btn-secondary" onclick="prevStep(2)">Voltar</button>
-                            <button class="btn btn-success fw-bold" onclick="submitMuseumRegistration()"><i class="bi bi-send-check"></i> Enviar Ficha para Análise</button>
+                            <button class="btn btn-success fw-bold" onclick="submitMuseumRegistration()"><i class="bi bi-send-check"></i> Enviar Ficha para Análise do SIM-RJ</button>
                         </div>
                     </div>
                 </div>
@@ -399,7 +390,6 @@
         </div>
     </div>
 
-
     <div class="modal fade" id="museumModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
@@ -409,7 +399,7 @@
                     <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div id="modalAlertPin" class="alert alert-warning small d-none py-2 mb-3">Sem localização exata no mapa.</div>
+                    <div id="modalAlertPin" class="alert alert-warning small d-none py-2 mb-3"><i class="bi bi-exclamation-triangle-fill"></i> Instituição sem geolocalização no mapa.</div>
                     <div class="row mb-3 border-bottom pb-3">
                         <div class="col-md-8">
                             <p class="mb-1 text-primary fw-bold"><i class="bi bi-geo-alt-fill"></i> <span id="modalEndereco"></span></p>

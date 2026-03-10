@@ -25,9 +25,7 @@ const firebaseConfig = {
 let db;
 try {
     if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
 
         // AUTH LISTENER
@@ -87,40 +85,45 @@ function initMapSystem() {
 }
 
 // =====================================================================
-// 3. LÓGICA DE BUSCA DE ENDEREÇO (CASCATA ESTRITA)
+// 3. LÓGICA DE BUSCA DE ENDEREÇO ESTREITA (Sem adivinhação do Google)
 // =====================================================================
 function geocodeAddressGoogle(endereco, municipio, regiao) {
     return new Promise((resolve) => {
+        // Trava 1: Se for instituição puramente virtual, anula o mapa direto.
+        if (normalizeString(endereco).includes("virtual") || normalizeString(municipio).includes("virtual")) {
+            return resolve(null);
+        }
+
         let queryMunicipio = `${endereco}, ${municipio}, RJ, Brasil`;
         geocoder.geocode({ 
             address: queryMunicipio, 
-            componentRestrictions: { country: 'BR', administrativeArea: 'RJ', locality: municipio } 
+            componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } 
         }, (res1, status1) => {
             if (status1 === 'OK' && res1[0]) {
-                return resolve({ lat: res1[0].geometry.location.lat(), lng: res1[0].geometry.location.lng() });
+                // Checa se o Google realmente achou o Município correto
+                let formatted = normalizeString(res1[0].formatted_address);
+                let munNorm = normalizeString(municipio);
+                if(formatted.includes(munNorm) || munNorm.includes(formatted.split(',')[1] || 'xxx')) {
+                    return resolve({ lat: res1[0].geometry.location.lat(), lng: res1[0].geometry.location.lng() });
+                }
             }
             
-            let queryRegiao = `${endereco}, ${municipio}, ${regiao}, RJ, Brasil`;
+            // Tentativa de contingência para cidades onde o Google mapeia pelo distrito/região
+            let queryRegiao = `${endereco}, ${regiao}, RJ, Brasil`;
             geocoder.geocode({ 
                 address: queryRegiao, 
                 componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } 
             }, (res2, status2) => {
                 if (status2 === 'OK' && res2[0]) {
-                    return resolve({ lat: res2[0].geometry.location.lat(), lng: res2[0].geometry.location.lng() });
-                }
-
-                let queryEstado = `${endereco}, Estado do Rio de Janeiro, Brasil`;
-                geocoder.geocode({ 
-                    address: queryEstado, 
-                    componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } 
-                }, (res3, status3) => {
-                    if (status3 === 'OK' && res3[0]) {
-                        return resolve({ lat: res3[0].geometry.location.lat(), lng: res3[0].geometry.location.lng() });
+                    let formatted = normalizeString(res2[0].formatted_address);
+                    let munNorm = normalizeString(municipio);
+                    if(formatted.includes(munNorm)) {
+                        return resolve({ lat: res2[0].geometry.location.lat(), lng: res2[0].geometry.location.lng() });
                     }
-                    
-                    // SE TUDO FALHAR: Retorna null. A instituição ficará sem pino e irá para a aba do Gestor.
-                    resolve(null);
-                });
+                }
+                
+                // SE O GOOGLE NÃO RETORNAR A CIDADE CORRETA: O Pino é bloqueado! Vai para a aba do Gestor.
+                resolve(null);
             });
         });
     });
@@ -142,7 +145,7 @@ window.showPlaceholder = function(titleText) {
     document.getElementById('construcao-title').innerText = titleText;
 }
 
-// --- FIREBASE AUTHENTICATION ---
+// --- FIREBASE AUTHENTICATION E REGISTRO ---
 window.signInWithGoogle = function() {
     if(typeof firebase === 'undefined' || !db) return alert("Banco de dados indisponível.");
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -212,7 +215,7 @@ window.submitMuseumRegistration = function() {
     const req = {
         id: Date.now(),
         email_responsavel: email,
-        nome_responsavel: responsavelNome, // Salva o nome de quem submeteu
+        nome_responsavel: responsavelNome, 
         nome: nome,
         sigla: document.getElementById('regSigla').value,
         cnpj: document.getElementById('regCnpj').value,
@@ -261,6 +264,7 @@ function renderMuseums(data) {
     if(document.getElementById('resultCount')) document.getElementById('resultCount').innerText = data.length;
     if(document.getElementById('count-total')) document.getElementById('count-total').innerText = museumsData.length;
 
+    // Tabela de Instituições: Removida a palavra 'Ação' no cabeçalho final
     let tableHTML = `<div class="table-responsive"><table class="table table-hover table-bordered align-middle"><thead class="table-dark"><tr><th>Instituição</th><th>Município</th><th>Natureza</th><th>Situação</th><th></th></tr></thead><tbody>`;
 
     data.forEach(museum => {
@@ -269,13 +273,14 @@ function renderMuseums(data) {
         if(listContainer) {
             const card = document.createElement('div');
             card.className = 'col-md-6 mb-3';
-            card.innerHTML = `<div class="card h-100 museum-card bg-white"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-secondary">${museum.regiao || 'Sem Região'}</span></div><h5 class="card-title text-dark fw-bold mb-1">${museum.nome}</h5><p class="card-text small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger"></i> ${museum.municipio}</p>${!hasPin ? '<span class="badge bg-warning text-dark mb-2"><i class="bi bi-exclamation-triangle-fill"></i> Sem Pin no Mapa</span>' : ''}<div class="mt-2"><button class="btn btn-sm btn-outline-primary" onclick="openProfile(${museum.id})">Detalhes</button></div></div></div>`;
+            card.innerHTML = `<div class="card h-100 museum-card bg-white"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-secondary">${museum.regiao || 'Sem Região'}</span></div><h5 class="card-title text-dark fw-bold mb-1">${museum.nome}</h5><p class="card-text small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger"></i> ${museum.municipio}</p>${!hasPin ? '<span class="badge bg-warning text-dark mb-2"><i class="bi bi-exclamation-triangle-fill"></i> Sem Geolocalização</span>' : ''}<div class="mt-2"><button class="btn btn-sm btn-outline-primary" onclick="openProfile(${museum.id})">Detalhes</button></div></div></div>`;
             listContainer.appendChild(card);
         }
 
+        // Tabela populada com fallback e botão
         tableHTML += `<tr><td class="fw-bold">${museum.nome}</td><td>${museum.municipio || '-'}</td><td>${museum.natureza || '-'}</td><td><span class="badge ${museum.situacao && museum.situacao.includes('Aberto') ? 'bg-success' : 'bg-secondary'}">${museum.situacao || 'Desconhecido'}</span></td><td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td></tr>`;
 
-        // ADICIONA O PINO NO MAPA SOMENTE SE ELE EXISTIR
+        // Coloca o pino Apenas se possuir coordenadas
         if (hasPin) {
             const marker = new google.maps.Marker({ position: { lat: museum.lat, lng: museum.lng }, map: map, title: museum.nome });
             marker.addListener("click", () => {
@@ -333,7 +338,7 @@ window.resetFilters = function() {
     renderMuseums(museumsData);
 }
 
-// --- FICHA DO MUSEU ---
+// --- FICHA DO MUSEU (Corrigido innerHTML p/ sumir os Códigos de Span) ---
 window.openProfile = function(id) {
     if(!profileModal) profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
     const m = museumsData.find(x => x.id === id); if(!m) return;
@@ -394,8 +399,14 @@ window.approveRequest = async function(id) {
     const reqIndex = pendingApprovals.findIndex(r => r.id === id); if(reqIndex === -1) return;
     const approvedMuseum = pendingApprovals[reqIndex];
     
-    let coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio, approvedMuseum.regiao);
-    approvedMuseum.lat = coords ? coords.lat : null; approvedMuseum.lng = coords ? coords.lng : null;
+    // Na aprovação, mesma inteligência de busca e tratamento virtual
+    let isVirtual = normalizeString(approvedMuseum.acervo).includes("virtual") || normalizeString(approvedMuseum.endereco).includes("virtual") || normalizeString(approvedMuseum.natureza).includes("virtual");
+    let coords = null;
+    
+    if(!isVirtual) coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio, approvedMuseum.regiao);
+    
+    approvedMuseum.lat = coords ? coords.lat : null; 
+    approvedMuseum.lng = coords ? coords.lng : null;
     
     pendingApprovals.splice(reqIndex, 1); museumsData.push(approvedMuseum);
     if(approvalModal) approvalModal.hide(); renderApprovalsList(); renderMuseums(museumsData); alert(`${approvedMuseum.nome} foi aprovado e integrado ao sistema público!`);
@@ -405,7 +416,18 @@ window.rejectRequest = function(id) {
     if(confirm("Deseja realmente rejeitar e apagar esta requisição?")) { pendingApprovals = pendingApprovals.filter(r => r.id !== id); if(approvalModal) approvalModal.hide(); renderApprovalsList(); }
 }
 
-// --- UPLOAD CSV E BARRA DE PROGRESSO CORRIGIDA ---
+// --- UPLOAD CSV E LEITOR MULTI-COLUNA (RESOLVE O PROBLEMA DO NÃO INFORMADO) ---
+const getCol = (row, possibleNames) => {
+    for (let name of possibleNames) {
+        for (let key in row) {
+            if (key.trim().toLowerCase() === name.toLowerCase()) {
+                return row[key] ? row[key].trim() : "";
+            }
+        }
+    }
+    return "";
+};
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 document.getElementById('csvFile').addEventListener('change', async function(e) {
     const file = e.target.files[0]; if (!file) return;
@@ -424,15 +446,38 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
             let rawData = results.data; let cleanData = []; let total = rawData.length;
             for (let i = 0; i < total; i++) {
                 let row = rawData[i];
-                if (!row["Nome da Instituição"] && !row["Nome"]) continue;
-                
+                let nome = getCol(row, ["Nome da Instituição", "Nome"]);
+                if (!nome) continue;
+
+                let municipio = getCol(row, ["Município", "Municipio"]);
+                let regiao = getCol(row, ["Região", "Regiao"]);
+                let natureza = getCol(row, ["Natureza Administrativa", "Natureza"]);
+                let situacao = getCol(row, ["Situação", "Situacao", "Status"]);
+                let endereco = getCol(row, ["Endereço", "Endereco"]);
+                let funcionamento = getCol(row, ["Funcionamento", "Turno", "Horário"]);
+                let ingresso = getCol(row, ["Valor do Ingresso", "Ingresso"]);
+                let gratuidades = getCol(row, ["Gratuidades", "Gratuidade"]);
+                let educativo = getCol(row, ["Setor Educativo", "Educativo"]);
+                let acervo = getCol(row, ["Acervo Predominante", "Acervo"]);
+                let museologo = getCol(row, ["Museólogo", "Museologo"]);
+                let acessibilidade = getCol(row, ["Acessibilidade"]);
+                let historico = getCol(row, ["Histórico", "Historico"]);
+                let telefone = getCol(row, ["Telefone", "Contato"]);
+                let site = getCol(row, ["Site", "Website"]);
+
                 if(pBar) pBar.style.width = `${((i+1)/total)*100}%`;
                 
-                let coords = await geocodeAddressGoogle(row["Endereço"] || "", row["Município"] || "Rio de Janeiro", row["Região"] || "");
-                await sleep(50); 
+                // Inteligência para Museus Virtuais ou Endereços Ocultos
+                let isVirtual = normalizeString(acervo).includes("virtual") || normalizeString(endereco).includes("virtual") || normalizeString(natureza).includes("virtual");
+                let coords = null;
+                
+                if (!isVirtual) {
+                    coords = await geocodeAddressGoogle(endereco, municipio, regiao);
+                    await sleep(50); 
+                }
 
                 cleanData.push({
-                    id: i + 2000, nome: row["Nome da Instituição"] || row["Nome"], municipio: row["Município"] || "", regiao: row["Região"] || "", natureza: row["Natureza Administrativa"] || "", situacao: row["Situação"] || "", endereco: row["Endereço"] || "", funcionamento: row["Funcionamento"] || "", ingresso: row["Valor do Ingresso"] || "", gratuidades: row["Gratuidades"] || "", educativo: row["Setor Educativo"] || "", acervo: row["Acervo Predominante"] || "", museologo: row["Museólogo"] || "", acessibilidade: row["Acessibilidade"] || "", historico: row["Histórico"] || "", telefone: row["Telefone"] || "", site: row["Site"] || "",
+                    id: i + 2000, nome, municipio, regiao, natureza, situacao, endereco, funcionamento, ingresso, gratuidades, educativo, acervo, museologo, acessibilidade, historico, telefone, site,
                     lat: coords ? coords.lat : null, lng: coords ? coords.lng : null
                 });
             }
