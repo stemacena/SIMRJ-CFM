@@ -25,7 +25,7 @@ const firebaseConfig = {
 // Inicialização segura do Firebase
 let db;
 try {
-    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "AIzaSyA29Y-lCBjTLe_vhB9B6U-VJZn1ajOXSxw") {
+    if (typeof firebase !== 'undefined') {
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -34,7 +34,6 @@ try {
 } catch (error) {
     console.error("Erro ao conectar com Firebase:", error);
 }
-
 // =====================================================================
 // 2. CONFIGURAÇÃO GOOGLE MAPS E LIMITES
 // =====================================================================
