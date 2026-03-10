@@ -12,12 +12,14 @@ let approvalModal;
 // 1. CONFIGURAÇÃO FIREBASE
 // =====================================================================
 const firebaseConfig = {
-    apiKey: "COLE_SUA_API_KEY_AQUI",
-    authDomain: "COLE_SEU_AUTH_DOMAIN_AQUI",
-    projectId: "COLE_SEU_PROJECT_ID_AQUI",
-    storageBucket: "COLE_SEU_STORAGE_BUCKET_AQUI",
-    messagingSenderId: "COLE_SEU_MESSAGING_SENDER_ID_AQUI",
-    appId: "COLE_SEU_APP_ID_AQUI"
+    apiKey: "AIzaSyBm0bjZc1OzDI6kBOEiJJNRaayxPCt-j1E",
+    authDomain: "bd-ecoa.firebaseapp.com",
+    databaseURL: "https://bd-ecoa-default-rtdb.firebaseio.com",
+    projectId: "bd-ecoa",
+    storageBucket: "bd-ecoa.firebasestorage.app",
+    messagingSenderId: "65380488244",
+    appId: "1:65380488244:web:647f588e1f2059727c6661",
+    measurementId: "G-GHK5XDX2E3"
 };
 
 let db;
