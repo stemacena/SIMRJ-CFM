@@ -9,7 +9,7 @@ let profileModal;
 let approvalModal;
 
 // =====================================================================
-// 1. CONFIGURAÇÃO FIREBASE 
+// 1. CONFIGURAÇÃO FIREBASE
 // =====================================================================
 const firebaseConfig = {
     apiKey: "AIzaSyA29Y-lCBjTLe_vhB9B6U-VJZn1ajOXSxw",
@@ -19,12 +19,11 @@ const firebaseConfig = {
   storageBucket: "bd-ecoa.firebasestorage.app",
   messagingSenderId: "65380488244",
   appId: "1:65380488244:web:d038596d88c3133e7c6661",
-  measurementId: "G-1LVLJXDM9W"
+  measurementId: "G-1LVLJXDM9W",
 };
 
-// Inicializa o Firebase apenas se a chave não for a de "placeholder" (para evitar erro no console)
 let db;
-if (firebaseConfig.apiKey !== "SUA_API_KEY_AQUI") {
+if (firebaseConfig.apiKey !== "AIzaSyA29Y-lCBjTLe_vhB9B6U-VJZn1ajOXSxw") {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
 }
@@ -55,7 +54,6 @@ function initMapSystem() {
     profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
     approvalModal = new bootstrap.Modal(document.getElementById('approvalModal'));
     
-    // Adiciona municípios nos 2 dropdowns (Filtro e Formulário)
     const filterSelect = document.getElementById('filterMunicipio');
     const formSelect = document.getElementById('regMuni');
     filterSelect.innerHTML = '<option value="">Todos os 92 Municípios</option>';
@@ -96,13 +94,13 @@ window.switchView = function(viewId) {
     }
 }
 
-// --- FIREBASE AUTH ---
+// --- FIREBASE AUTH & LOGIN SIMULADO ---
 window.signInWithGoogle = function() {
     if (typeof firebase === 'undefined' || !db) {
-        // Fallback fake se a chave ainda não estiver configurada
+        alert("A chave do Firebase não foi configurada. Simulando login para prosseguir com o teste visual do formulário.");
         document.getElementById('google-login-area').classList.add('d-none');
         document.getElementById('logged-in-area').classList.remove('d-none');
-        document.getElementById('userEmailDisplay').innerText = "modo-teste@museus.rj.gov.br";
+        document.getElementById('userEmailDisplay').innerText = "teste.google@museus.rj.gov.br";
         return;
     }
 
@@ -114,8 +112,21 @@ window.signInWithGoogle = function() {
             document.getElementById('userEmailDisplay').innerText = result.user.email;
         }).catch((error) => {
             console.error("Erro no login:", error);
-            document.getElementById('loginErrorMsg').innerText = "Falha no login. Tente novamente.";
+            document.getElementById('loginErrorMsg').innerText = "Falha no login com Google. Tente novamente.";
         });
+}
+
+window.simulateEmailLogin = function() {
+    const email = document.getElementById('loginEmail').value;
+    const pass = document.getElementById('loginPassword').value;
+    if(!email || !pass) {
+        document.getElementById('loginErrorMsg').innerText = "Preencha e-mail e senha institucionais.";
+        return;
+    }
+    // Simulador de sucesso para Email/Senha
+    document.getElementById('google-login-area').classList.add('d-none');
+    document.getElementById('logged-in-area').classList.remove('d-none');
+    document.getElementById('userEmailDisplay').innerText = email;
 }
 
 window.nextStep = function(step) {
@@ -127,7 +138,7 @@ window.nextStep = function(step) {
 }
 window.prevStep = function(step) { nextStep(step); }
 
-// --- FLUXO DE REQUISIÇÃO DE CADASTRO (FORMULÁRIO COMPLETO) ---
+// --- FLUXO DE REQUISIÇÃO DE CADASTRO ---
 window.submitMuseumRegistration = function() {
     const nome = document.getElementById('regNome').value;
     const endereco = document.getElementById('regEndereco').value;
@@ -164,18 +175,14 @@ window.submitMuseumRegistration = function() {
         lat: null, lng: null
     };
 
-    // Salva a requisição na fila (Localmente e opcionalmente no Firebase)
     pendingApprovals.push(req);
     
     if(db) {
-        db.collection("requisicoes").add(req)
-          .then(() => console.log("Salvo no Firestore!"))
-          .catch((e) => console.error("Erro no DB", e));
+        db.collection("requisicoes").add(req).catch((e) => console.error("Erro no DB", e));
     }
 
     alert("Dados registrados com sucesso!\nSua requisição foi enviada para a análise da equipe do SIM-RJ.");
     
-    // Limpa e reinicia view
     document.querySelectorAll('.wizard-container input, .wizard-container textarea').forEach(el => el.value = '');
     document.querySelectorAll('.wizard-container select').forEach(el => el.selectedIndex = 0);
     nextStep(1);
@@ -186,7 +193,7 @@ window.submitMuseumRegistration = function() {
 // --- RENDERIZAR MAPA E LISTA ---
 function renderMuseums(data) {
     const listContainer = document.getElementById('museum-list');
-    const tableContainer = document.getElementById('container-lista-museus'); // Div da aba de Lista
+    const tableContainer = document.getElementById('container-lista-museus');
     
     if(listContainer) listContainer.innerHTML = '';
     if(tableContainer) tableContainer.innerHTML = '';
@@ -196,14 +203,12 @@ function renderMuseums(data) {
     if(document.getElementById('resultCount')) document.getElementById('resultCount').innerText = data.length;
     if(document.getElementById('count-total')) document.getElementById('count-total').innerText = museumsData.length;
 
-    // Cabeçalho da Lista Pública (Aba Instituições)
     let tableHTML = `<div class="table-responsive"><table class="table table-hover table-bordered align-middle">
         <thead class="table-dark"><tr><th>Instituição</th><th>Município</th><th>Natureza</th><th>Situação</th><th>Ação</th></tr></thead><tbody>`;
 
     data.forEach(museum => {
         const hasPin = museum.lat && museum.lng; 
         
-        // 1. CARDS DO MAPA
         if(listContainer) {
             const card = document.createElement('div');
             card.className = 'col-md-6 mb-3';
@@ -222,16 +227,14 @@ function renderMuseums(data) {
             listContainer.appendChild(card);
         }
 
-        // 2. ADICIONA NA LISTA (Tabela)
         tableHTML += `<tr>
             <td class="fw-bold">${museum.nome}</td>
             <td>${museum.municipio}</td>
             <td>${museum.natureza || '-'}</td>
-            <td><span class="badge ${museum.situacao.includes('Aberto') ? 'bg-success' : 'bg-secondary'}">${museum.situacao || 'Desconhecido'}</span></td>
+            <td><span class="badge ${museum.situacao && museum.situacao.includes('Aberto') ? 'bg-success' : 'bg-secondary'}">${museum.situacao || 'Desconhecido'}</span></td>
             <td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td>
         </tr>`;
 
-        // 3. PINO NO GOOGLE MAPS
         let lat = museum.lat; let lng = museum.lng;
         if (!lat) {
             let normCity = normalizeString(museum.municipio);
@@ -255,7 +258,7 @@ function renderMuseums(data) {
     updatePendingList();
 }
 
-// --- FILTROS COMPLETAMENTE BLINDADOS (COMO SOLICITADO NO PRINT) ---
+// --- FILTROS ---
 function getCheckedValues(className) {
     return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value));
 }
@@ -274,8 +277,6 @@ window.applyFilters = function() {
     
     const reqMuseologo = document.getElementById('checkMuseologo').checked;
     const reqEdu = document.getElementById('checkEdu').checked;
-
-    // Duas buscas específicas independentes como no print
     const textGratuidade = normalizeString(document.getElementById('searchGratuidade').value);
     const textAccess = normalizeString(document.getElementById('searchAccess').value);
 
@@ -295,14 +296,12 @@ window.applyFilters = function() {
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
         if (selectedMuni && mMuni !== selectedMuni) return false;
         
-        // Verifica checkboxes
         if (regions.length > 0 && !regions.some(v => mRegiao === v || mRegiao.includes(v))) return false;
         if (natures.length > 0 && !natures.some(v => mNat === v || mNat.includes(v))) return false;
         if (acervos.length > 0 && !acervos.some(v => mAcervo === v || mAcervo.includes(v))) return false;
         if (statusList.length > 0 && !statusList.some(v => mStatus === v || mStatus.includes(v))) return false;
         if (costs.length > 0 && !costs.some(v => mCost === v || mCost.includes(v))) return false;
 
-        // Funcionamento pode ser texto misturado ("Manhã e tarde")
         if (turnos.length > 0) {
             const funcText = normalizeString(m.funcionamento);
             if (!turnos.some(t => funcText.includes(t))) return false;
@@ -311,7 +310,6 @@ window.applyFilters = function() {
         if (reqMuseologo && normalizeString(m.museologo) !== "sim") return false;
         if (reqEdu && normalizeString(m.educativo) !== "sim") return false;
         
-        // Busca Descritiva Independente
         if (textGratuidade && !mGrat.includes(textGratuidade)) return false;
         if (textAccess && !mAcc.includes(textAccess)) return false;
 
@@ -327,7 +325,7 @@ window.resetFilters = function() {
     renderMuseums(museumsData);
 }
 
-// --- FICHA DO MUSEU (SEGURANÇA AO ABRIR) ---
+// --- FICHA DO MUSEU ---
 window.openProfile = function(id) {
     if(!profileModal) profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
     
@@ -350,7 +348,7 @@ window.openProfile = function(id) {
     document.getElementById('modalStatus').innerText = val(m.situacao);
     document.getElementById('modalTel').innerText = val(m.telefone);
     
-    if(m.site) { document.getElementById('modalSite').href = m.site; document.getElementById('modalSite').style.display = 'inline'; }
+    if(m.site) { document.getElementById('modalSite').href = m.site.startsWith('http') ? m.site : 'http://'+m.site; document.getElementById('modalSite').style.display = 'inline'; }
     else { document.getElementById('modalSite').style.display = 'none'; }
 
     document.getElementById('modalFunc').innerText = val(m.funcionamento);
@@ -364,7 +362,7 @@ window.openProfile = function(id) {
     profileModal.show();
 }
 
-// --- ADMIN / APROVAÇÕES ---
+// --- ADMIN E GESTÃO DE APROVAÇÕES ---
 window.openLogin = function() { document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
 window.checkAdminPassword = function() {
@@ -394,14 +392,13 @@ function renderApprovalsList() {
                         <small class="text-muted d-block"><i class="bi bi-geo-alt"></i> ${req.municipio} | <i class="bi bi-person"></i> ${req.email_responsavel}</small>
                     </div>
                     <div>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewApprovalDetails(${req.id})"><i class="bi bi-file-text"></i> Analisar Ficha Completa</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewApprovalDetails(${req.id})"><i class="bi bi-file-text"></i> Analisar Ficha</button>
                     </div>
                 </div>
             </div>`;
     });
 }
 
-// VISUALIZAR FICHA DO GESTOR ANTES DE APROVAR
 window.viewApprovalDetails = function(id) {
     const req = pendingApprovals.find(r => r.id === id);
     if(!req) return;
@@ -416,11 +413,12 @@ window.viewApprovalDetails = function(id) {
             <div class="col-md-6 mb-2"><strong>Município:</strong> ${req.municipio}</div>
             <div class="col-md-6 mb-2"><strong>Endereço:</strong> ${req.endereco}</div>
             <div class="col-md-6 mb-2"><strong>Natureza:</strong> ${req.natureza}</div>
-            <div class="col-md-6 mb-2"><strong>CNPJ:</strong> ${req.cnpj || '-'}</div>
             <div class="col-md-6 mb-2"><strong>Situação:</strong> ${req.situacao}</div>
-            <div class="col-md-6 mb-2"><strong>Museólogo:</strong> ${req.museologo}</div>
+            <div class="col-md-6 mb-2"><strong>Acervo:</strong> ${req.acervo}</div>
+            <div class="col-md-6 mb-2"><strong>Ingresso:</strong> ${req.ingresso}</div>
         </div>
         <hr>
+        <p class="small mb-1"><strong>Acessibilidade:</strong> ${req.acessibilidade || 'Nenhuma informada'}</p>
         <p class="small"><strong>Histórico:</strong> ${req.historico || 'Nenhum'}</p>
     `;
 
@@ -444,7 +442,7 @@ window.approveRequest = async function(id) {
     
     if(approvalModal) approvalModal.hide();
     renderApprovalsList();
-    renderMuseums(museumsData);
+    renderMuseums(museumsData); // Atualiza mapa e aba de lista
     alert(`${approvedMuseum.nome} foi aprovado e integrado ao sistema público!`);
 }
 
@@ -456,7 +454,7 @@ window.rejectRequest = function(id) {
     }
 }
 
-// UPLOAD CSV E PENDENCIAS DO MAPA
+// --- UPLOAD CSV ---
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 document.getElementById('csvFile').addEventListener('change', async function(e) {
     const file = e.target.files[0];
@@ -483,7 +481,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                     lat: coords ? coords.lat : null, lng: coords ? coords.lng : null
                 });
             }
-            museumsData = cleanData; renderMuseums(museumsData);
+            museumsData = cleanData; renderMuseums(museumsData); // Atualiza mapa e lista
             document.getElementById('upload-status').className = 'alert alert-success small p-2 d-block w-50 mt-2';
             document.getElementById('upload-status').innerText = `Concluído! ${cleanData.length} lidos.`;
         }
@@ -501,6 +499,7 @@ function updatePendingList() {
     });
 }
 
+// --- MAPA DO GESTOR MANUAL ---
 let adminMapInstance, adminTempMarker, currentMappingId;
 window.openAdminMapPicker = function(id) {
     const m = museumsData.find(x => x.id === id); if(!m) return;

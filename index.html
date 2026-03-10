@@ -43,12 +43,18 @@
             
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto align-items-center">
+                    
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Sobre</a>
                         <ul class="dropdown-menu border-0 shadow">
                             <li><a class="dropdown-item" href="#" onclick="switchView('sobre')">Institucional</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchView('sobre')">Apresentação</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchView('sobre')">Legislação</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchView('sobre')">Comissão Consultiva</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchView('sobre')">Equipe</a></li>
                         </ul>
                     </li>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-primary" href="#" role="button" data-bs-toggle="dropdown">CFM</a>
                         <ul class="dropdown-menu border-0 shadow">
@@ -60,16 +66,25 @@
                             <li><a class="dropdown-item" href="#" onclick="switchView('dados')">Dados e Gráficos</a></li>
                         </ul>
                     </li>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Atividades</a>
                         <ul class="dropdown-menu border-0 shadow">
                             <li><a class="dropdown-item" href="#">Notícias</a></li>
+                            <li><a class="dropdown-item" href="#">Oficinas</a></li>
+                            <li><a class="dropdown-item" href="#">Visitas Técnicas</a></li>
+                            <li><a class="dropdown-item" href="#">Fórum Estadual de Museus</a></li>
+                            <li><a class="dropdown-item" href="#">Editais</a></li>
+                            <li><a class="dropdown-item" href="#">Parcerias</a></li>
                         </ul>
                     </li>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Publicações</a>
                         <ul class="dropdown-menu border-0 shadow">
                             <li><a class="dropdown-item" href="#">Manuais</a></li>
+                            <li><a class="dropdown-item" href="#">Diretrizes e Legislação</a></li>
+                            <li><a class="dropdown-item" href="#">Guias</a></li>
                         </ul>
                     </li>
 
@@ -110,13 +125,14 @@
         </div>
     </div>
 
+
     <div id="view-home" class="view-section">
         <div class="hero-wrapper">
             <div id="heroCarouselBg" class="carousel slide hero-carousel" data-bs-ride="carousel" data-bs-interval="4000" data-bs-pause="false">
                 <div class="carousel-inner">
-                    <div class="carousel-item active"><img src="img1.jpg" alt="Fundo 1"></div>
-                    <div class="carousel-item"><img src="img2.jpg" alt="Fundo 2"></div>
-                    <div class="carousel-item"><img src="img3.jpg" alt="Fundo 3"></div>
+                    <div class="carousel-item active"><img src="1.jpg" alt="Fundo 1"></div>
+                    <div class="carousel-item"><img src="2.jpg" alt="Fundo 2"></div>
+                    <div class="carousel-item"><img src="3.jpg" alt="Fundo 3"></div>
                 </div>
             </div>
             <div class="hero-overlay">
@@ -177,6 +193,7 @@
                                 <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Serrana"><label class="form-check-label small">Serrana</label></div>
                             </div>
                         </div>
+
                         <div class="mb-3">
                             <label class="filter-label">Natureza Administrativa</label>
                             <div class="filter-scroll-box" style="max-height: 100px;">
@@ -187,6 +204,7 @@
                                 <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Público-privada"><label class="form-check-label small">Público-privada</label></div>
                             </div>
                         </div>
+
                         <div class="mb-3">
                             <label class="filter-label">Acervo Predominante</label>
                             <div class="filter-scroll-box">
@@ -201,6 +219,7 @@
                                 <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Outros"><label class="form-check-label small">Outros</label></div>
                             </div>
                         </div>
+
                         <div class="accordion mb-3" id="filtersAdv">
                             <div class="accordion-item">
                                 <h2 class="accordion-header"><button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#colAdv">Funcionamento e Status</button></h2>
@@ -276,12 +295,24 @@
                     <div id="step1" class="wizard-step active text-center">
                         <h5 class="mb-4">Autenticação de Segurança</h5>
                         <p class="small text-muted mb-4">Para cadastrar uma nova instituição ou atualizar os dados de um museu já existente, faça login.</p>
+                        
                         <div id="google-login-area">
-                            <button class="btn google-btn w-50 mx-auto py-2 mb-3 fs-5" type="button" onclick="signInWithGoogle()">
+                            <button class="btn google-btn w-50 mx-auto py-2 mb-4 fs-5 shadow-sm" type="button" onclick="signInWithGoogle()">
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" class="me-2"> Entrar com Google
                             </button>
-                            <p class="small text-danger" id="loginErrorMsg"></p>
+                            
+                            <hr class="w-50 mx-auto mb-4">
+                            
+                            <div class="text-start w-50 mx-auto">
+                                <label class="small fw-bold text-muted">Ou acesse com E-mail Institucional</label>
+                                <input type="email" id="loginEmail" class="form-control mb-2" placeholder="E-mail">
+                                <input type="password" id="loginPassword" class="form-control mb-3" placeholder="Senha">
+                                <button class="btn btn-secondary w-100" onclick="simulateEmailLogin()">Entrar</button>
+                            </div>
+                            
+                            <p class="small text-danger mt-3" id="loginErrorMsg"></p>
                         </div>
+                        
                         <div id="logged-in-area" class="d-none">
                             <div class="alert alert-success d-inline-block text-start mb-4">
                                 <i class="bi bi-person-check-fill fs-4 align-middle me-2"></i>
@@ -352,7 +383,7 @@
                             <div class="col-md-3"><label class="fw-bold small">Possui Museólogo?</label><select id="regMus" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
                             <div class="col-md-3"><label class="fw-bold small">Setor Educativo?</label><select id="regEdu" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
 
-                            <div class="col-md-6"><label class="fw-bold small">Acessibilidade Universal (Física, Atitudinal)</label><textarea id="regAccess" class="form-control form-control-sm" rows="2"></textarea></div>
+                            <div class="col-md-6"><label class="fw-bold small">Acessibilidade Universal</label><textarea id="regAccess" class="form-control form-control-sm" rows="2"></textarea></div>
                             <div class="col-md-6"><label class="fw-bold small">Política de Gratuidades</label><textarea id="regGrat" class="form-control form-control-sm" rows="2"></textarea></div>
                             <div class="col-md-12"><label class="fw-bold small">Breve Histórico</label><textarea id="regHist" class="form-control form-control-sm" rows="2"></textarea></div>
                         </div>
@@ -402,8 +433,7 @@
         <div class="container py-5">
             <h2 class="section-title">Instituições Cadastradas</h2>
             <p class="text-muted text-center mb-4">Listagem completa das instituições mapeadas no Estado do Rio de Janeiro.</p>
-            <div class="row" id="container-lista-museus">
-                </div>
+            <div class="row" id="container-lista-museus"></div>
         </div>
     </div>
 
@@ -455,11 +485,10 @@
                     <h5 class="modal-title text-dark fw-bold"><i class="bi bi-file-earmark-check-fill"></i> Análise de Requisição Institucional</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 bg-light" id="approvalModalBody">
-                    </div>
+                <div class="modal-body p-4 bg-light" id="approvalModalBody"></div>
                 <div class="modal-footer d-flex justify-content-between">
                     <button class="btn btn-danger" id="btnRejectApprove"><i class="bi bi-x-circle"></i> Rejeitar Cadastro</button>
-                    <button class="btn btn-success fw-bold" id="btnConfirmApprove"><i class="bi bi-check-circle-fill"></i> Aprovar e Publicar no Mapa</button>
+                    <button class="btn btn-success fw-bold" id="btnConfirmApprove"><i class="bi bi-check-circle-fill"></i> Aprovar e Publicar</button>
                 </div>
             </div>
         </div>
