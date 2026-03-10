@@ -55,7 +55,7 @@ try {
 } catch (error) { console.error("Erro Firebase:", error); }
 
 // =====================================================================
-// 2. CONFIGURAÇÃO GOOGLE MAPS E LIMITES
+// 2. CONFIGURAÇÃO GOOGLE MAPS
 // =====================================================================
 const RJ_BOUNDS = { north: -20.76, south: -23.39, west: -44.89, east: -40.96 };
 
@@ -85,11 +85,11 @@ function initMapSystem() {
 }
 
 // =====================================================================
-// 3. LÓGICA DE BUSCA DE ENDEREÇO ESTREITA (Sem adivinhação do Google)
+// 3. GEOLOCALIZAÇÃO ESTRITA (NÃO ADIVINHA CIDADES ERRADAS)
 // =====================================================================
-function geocodeAddressGoogle(endereco, municipio, regiao) {
+function geocodeAddressGoogle(endereco, municipio) {
     return new Promise((resolve) => {
-        // Trava 1: Se for instituição puramente virtual, anula o mapa direto.
+        if (!municipio) return resolve(null);
         if (normalizeString(endereco).includes("virtual") || normalizeString(municipio).includes("virtual")) {
             return resolve(null);
         }
@@ -98,33 +98,28 @@ function geocodeAddressGoogle(endereco, municipio, regiao) {
         geocoder.geocode({ 
             address: queryMunicipio, 
             componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } 
-        }, (res1, status1) => {
-            if (status1 === 'OK' && res1[0]) {
-                // Checa se o Google realmente achou o Município correto
-                let formatted = normalizeString(res1[0].formatted_address);
-                let munNorm = normalizeString(municipio);
-                if(formatted.includes(munNorm) || munNorm.includes(formatted.split(',')[1] || 'xxx')) {
-                    return resolve({ lat: res1[0].geometry.location.lat(), lng: res1[0].geometry.location.lng() });
+        }, (res, status) => {
+            if (status === 'OK' && res[0]) {
+                // Validação de Segurança Máxima: Checa as "gavetas" do endereço do Google
+                let cityMatch = false;
+                let targetMunNorm = normalizeString(municipio);
+                
+                res[0].address_components.forEach(comp => {
+                    if(comp.types.includes("locality") || comp.types.includes("administrative_area_level_2")) {
+                        let googleCityNorm = normalizeString(comp.long_name);
+                        // Garante que o Google achou a cidade exata que pedimos
+                        if(googleCityNorm === targetMunNorm || googleCityNorm.includes(targetMunNorm) || targetMunNorm.includes(googleCityNorm)) {
+                            cityMatch = true;
+                        }
+                    }
+                });
+                
+                if(cityMatch) {
+                    return resolve({ lat: res[0].geometry.location.lat(), lng: res[0].geometry.location.lng() });
                 }
             }
-            
-            // Tentativa de contingência para cidades onde o Google mapeia pelo distrito/região
-            let queryRegiao = `${endereco}, ${regiao}, RJ, Brasil`;
-            geocoder.geocode({ 
-                address: queryRegiao, 
-                componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } 
-            }, (res2, status2) => {
-                if (status2 === 'OK' && res2[0]) {
-                    let formatted = normalizeString(res2[0].formatted_address);
-                    let munNorm = normalizeString(municipio);
-                    if(formatted.includes(munNorm)) {
-                        return resolve({ lat: res2[0].geometry.location.lat(), lng: res2[0].geometry.location.lng() });
-                    }
-                }
-                
-                // SE O GOOGLE NÃO RETORNAR A CIDADE CORRETA: O Pino é bloqueado! Vai para a aba do Gestor.
-                resolve(null);
-            });
+            // Se o Google achar rua na cidade errada (Ex: Niterói em vez de Rio), descarta o pino.
+            resolve(null);
         });
     });
 }
@@ -264,8 +259,8 @@ function renderMuseums(data) {
     if(document.getElementById('resultCount')) document.getElementById('resultCount').innerText = data.length;
     if(document.getElementById('count-total')) document.getElementById('count-total').innerText = museumsData.length;
 
-    // Tabela de Instituições: Removida a palavra 'Ação' no cabeçalho final
-    let tableHTML = `<div class="table-responsive"><table class="table table-hover table-bordered align-middle"><thead class="table-dark"><tr><th>Instituição</th><th>Município</th><th>Natureza</th><th>Situação</th><th></th></tr></thead><tbody>`;
+    // Tabela de Instituições (Alterada para Tipologia do Acervo e sem 'Ação')
+    let tableHTML = `<div class="table-responsive"><table class="table table-hover table-bordered align-middle"><thead class="table-dark"><tr><th>Instituição</th><th>Município</th><th>Tipologia do Acervo</th><th>Situação</th><th></th></tr></thead><tbody id="table-body-lista">`;
 
     data.forEach(museum => {
         const hasPin = museum.lat && museum.lng; 
@@ -277,10 +272,9 @@ function renderMuseums(data) {
             listContainer.appendChild(card);
         }
 
-        // Tabela populada com fallback e botão
-        tableHTML += `<tr><td class="fw-bold">${museum.nome}</td><td>${museum.municipio || '-'}</td><td>${museum.natureza || '-'}</td><td><span class="badge ${museum.situacao && museum.situacao.includes('Aberto') ? 'bg-success' : 'bg-secondary'}">${museum.situacao || 'Desconhecido'}</span></td><td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td></tr>`;
+        // Tabela: tr com classe para o motor de busca
+        tableHTML += `<tr class="tr-lista-item"><td class="fw-bold td-nome">${museum.nome}</td><td>${museum.municipio || '-'}</td><td>${museum.acervo || '-'}</td><td><span class="badge ${museum.situacao && museum.situacao.includes('Aberto') ? 'bg-success' : 'bg-secondary'}">${museum.situacao || 'Desconhecido'}</span></td><td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td></tr>`;
 
-        // Coloca o pino Apenas se possuir coordenadas
         if (hasPin) {
             const marker = new google.maps.Marker({ position: { lat: museum.lat, lng: museum.lng }, map: map, title: museum.nome });
             marker.addListener("click", () => {
@@ -298,7 +292,17 @@ function renderMuseums(data) {
     updatePendingList();
 }
 
-// --- FILTROS ---
+// BUSCA DA LISTA
+window.filterList = function() {
+    let input = normalizeString(document.getElementById('searchLista').value);
+    let rows = document.querySelectorAll('.tr-lista-item');
+    rows.forEach(row => {
+        let nome = normalizeString(row.querySelector('.td-nome').innerText);
+        row.style.display = nome.includes(input) ? '' : 'none';
+    });
+}
+
+// --- FILTROS (EXATIDÃO CIENTÍFICA) ---
 function getCheckedValues(className) { return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value)); }
 
 window.applyFilters = function() {
@@ -316,12 +320,15 @@ window.applyFilters = function() {
         if (filterHasMap === 'sim' && (!m.lat || !m.lng)) return false;
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
         if (selectedMuni && mMuni !== selectedMuni) return false;
-        if (regions.length > 0 && !regions.some(v => mRegiao === v || mRegiao.includes(v))) return false;
-        if (natures.length > 0 && !natures.some(v => mNat === v || mNat.includes(v))) return false;
-        if (acervos.length > 0 && !acervos.some(v => mAcervo === v || mAcervo.includes(v))) return false;
-        if (statusList.length > 0 && !statusList.some(v => mStatus === v || mStatus.includes(v))) return false;
-        if (costs.length > 0 && !costs.some(v => mCost === v || mCost.includes(v))) return false;
+        
+        // Match exato para a Região funcionar (Impede Metro I de chamar a Metro II)
+        if (regions.length > 0 && !regions.some(v => mRegiao === v)) return false;
+        if (natures.length > 0 && !natures.some(v => mNat.includes(v))) return false;
+        if (acervos.length > 0 && !acervos.some(v => mAcervo.includes(v))) return false;
+        if (statusList.length > 0 && !statusList.some(v => mStatus.includes(v))) return false;
+        if (costs.length > 0 && !costs.some(v => mCost.includes(v))) return false;
         if (turnos.length > 0) { const funcText = normalizeString(m.funcionamento); if (!turnos.some(t => funcText.includes(t))) return false; }
+        
         if (reqMuseologo && normalizeString(m.museologo) !== "sim") return false;
         if (reqEdu && normalizeString(m.educativo) !== "sim") return false;
         if (textGratuidade && !mGrat.includes(textGratuidade)) return false;
@@ -338,11 +345,13 @@ window.resetFilters = function() {
     renderMuseums(museumsData);
 }
 
-// --- FICHA DO MUSEU (Corrigido innerHTML p/ sumir os Códigos de Span) ---
+// --- FICHA DO MUSEU ---
 window.openProfile = function(id) {
     if(!profileModal) profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
     const m = museumsData.find(x => x.id === id); if(!m) return;
-    const val = (v) => v ? v : '<span class="text-muted fst-italic">Não informado</span>';
+    
+    // Tratamento de segurança para não processar código HTML sujo
+    const val = (v) => (v && v.trim() !== '') ? v : '<span class="text-muted fst-italic">Não informado</span>';
 
     document.getElementById('modalTitle').innerText = m.nome;
     if (normalizeString(m.museologo) === "sim") document.getElementById('modalBadgeMuseologo').classList.remove('d-none'); else document.getElementById('modalBadgeMuseologo').classList.add('d-none');
@@ -399,14 +408,8 @@ window.approveRequest = async function(id) {
     const reqIndex = pendingApprovals.findIndex(r => r.id === id); if(reqIndex === -1) return;
     const approvedMuseum = pendingApprovals[reqIndex];
     
-    // Na aprovação, mesma inteligência de busca e tratamento virtual
-    let isVirtual = normalizeString(approvedMuseum.acervo).includes("virtual") || normalizeString(approvedMuseum.endereco).includes("virtual") || normalizeString(approvedMuseum.natureza).includes("virtual");
-    let coords = null;
-    
-    if(!isVirtual) coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio, approvedMuseum.regiao);
-    
-    approvedMuseum.lat = coords ? coords.lat : null; 
-    approvedMuseum.lng = coords ? coords.lng : null;
+    let coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio);
+    approvedMuseum.lat = coords ? coords.lat : null; approvedMuseum.lng = coords ? coords.lng : null;
     
     pendingApprovals.splice(reqIndex, 1); museumsData.push(approvedMuseum);
     if(approvalModal) approvalModal.hide(); renderApprovalsList(); renderMuseums(museumsData); alert(`${approvedMuseum.nome} foi aprovado e integrado ao sistema público!`);
@@ -416,13 +419,14 @@ window.rejectRequest = function(id) {
     if(confirm("Deseja realmente rejeitar e apagar esta requisição?")) { pendingApprovals = pendingApprovals.filter(r => r.id !== id); if(approvalModal) approvalModal.hide(); renderApprovalsList(); }
 }
 
-// --- UPLOAD CSV E LEITOR MULTI-COLUNA (RESOLVE O PROBLEMA DO NÃO INFORMADO) ---
+// --- UPLOAD CSV (LEITOR INTELIGENTE E ANTI-CARACTERES OCULTOS) ---
 const getCol = (row, possibleNames) => {
     for (let name of possibleNames) {
         for (let key in row) {
-            if (key.trim().toLowerCase() === name.toLowerCase()) {
-                return row[key] ? row[key].trim() : "";
-            }
+            // Limpa o título da coluna para achar com precisão matemática
+            let keyClean = key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+            let nameClean = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+            if (keyClean === nameClean) return row[key] ? row[key].trim() : "";
         }
     }
     return "";
@@ -467,12 +471,12 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
 
                 if(pBar) pBar.style.width = `${((i+1)/total)*100}%`;
                 
-                // Inteligência para Museus Virtuais ou Endereços Ocultos
+                // Inteligência para Museus Virtuais: Joga direto para Sem Geolocalização
                 let isVirtual = normalizeString(acervo).includes("virtual") || normalizeString(endereco).includes("virtual") || normalizeString(natureza).includes("virtual");
                 let coords = null;
                 
-                if (!isVirtual) {
-                    coords = await geocodeAddressGoogle(endereco, municipio, regiao);
+                if (!isVirtual && endereco && municipio) {
+                    coords = await geocodeAddressGoogle(endereco, municipio);
                     await sleep(50); 
                 }
 
@@ -492,7 +496,7 @@ function updatePendingList() {
     const list = document.getElementById('pending-list'); if(!list) return; list.innerHTML = '';
     const pendings = museumsData.filter(m => !m.lat || !m.lng);
     document.getElementById('pendingCount').innerText = pendings.length;
-    pendings.forEach(m => { list.innerHTML += `<div class="pending-item d-flex justify-content-between"><div><strong>${m.nome}</strong><br><small>${m.municipio}</small></div><button class="btn btn-sm btn-warning" onclick="openAdminMapPicker(${m.id})">Mapear</button></div>`; });
+    pendings.forEach(m => { list.innerHTML += `<div class="pending-item d-flex justify-content-between"><div><strong>${m.nome}</strong><br><small>${m.municipio || 'Município não extraído'}</small></div><button class="btn btn-sm btn-warning" onclick="openAdminMapPicker(${m.id})">Mapear</button></div>`; });
 }
 
 // --- MAPA DO GESTOR MANUAL ---
