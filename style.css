@@ -55,7 +55,7 @@ section { scroll-margin-top: 110px; }
 }
 
 .hero-logo-small-static {
-    width: 220px; /* Tamanho equilibrado, legível mas sem tampar as pessoas */
+    width: 280px; /* Tamanho equilibrado, legível mas sem tampar as pessoas */
     height: auto;
     object-fit: contain;
 }
