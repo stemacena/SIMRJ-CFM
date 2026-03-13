@@ -32,8 +32,22 @@ section { scroll-margin-top: 110px; }
 .hero-wrapper { position: relative; width: 100%; height: 70vh; min-height: 400px; overflow: hidden; background-color: #000; }
 .hero-carousel, .carousel-inner, .carousel-item { height: 100%; }
 .hero-carousel img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
-.hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
-.hero-logo-large { max-width: 80%; height: auto; max-height: 250px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3)); }
+
+/* --- LOGO ESTÁTICA NO CANTO --- */
+.hero-logo-container {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 15px 25px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+.hero-logo-small-static {
+    max-height: 60px;
+    height: auto;
+}
 
 /* --- SEÇÕES E TÍTULOS --- */
 .section-title { color: var(--color-blue); font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
@@ -48,7 +62,6 @@ section { scroll-margin-top: 110px; }
 .wizard-step.active { display: block; }
 .google-btn { background-color: #fff; color: #444; border: 1px solid #ddd; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
 .google-btn:hover { background-color: #f8f9fa; border-color: #ccc; }
-
 .check-group { background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e1e1e1; }
 
 /* --- FILTROS E MAPA CFM --- */
@@ -62,7 +75,6 @@ section { scroll-margin-top: 110px; }
 /* --- MODAL E ADMIN --- */
 .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
 .login-box { background: white; padding: 2rem; border-radius: 8px; width: 300px; text-align: center; }
-.form-label-admin { font-weight: 600; font-size: 0.85rem; color: #aaa; margin-bottom: 2px; }
 
 .modal-header { background-color: var(--color-cfm-teal); color: white; }
 .modal-subtitle { color: var(--color-blue); font-weight: bold; border-bottom: 2px solid var(--color-yellow); margin-top: 1rem; margin-bottom: 0.5rem; display: inline-block; }
@@ -70,3 +82,8 @@ section { scroll-margin-top: 110px; }
 .pending-list { max-height: 350px; overflow-y: auto; }
 .pending-item { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
 .req-item { background: #fff; border-left: 4px solid var(--color-yellow); border-radius: 4px; padding: 10px; margin-bottom: 10px; color: #333; }
+
+/* --- ESTILOS DE EQUIPE E APRESENTAÇÃO --- */
+.team-member img { width: 120px; height: 120px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.team-member h6 { margin-top: 10px; font-weight: bold; color: var(--color-blue); }
+.team-member p { font-size: 0.8rem; color: #666; }

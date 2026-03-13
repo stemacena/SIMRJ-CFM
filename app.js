@@ -55,7 +55,7 @@ try {
 } catch (error) { console.error("Erro Firebase:", error); }
 
 // =====================================================================
-// 2. CONFIGURAÇÃO GOOGLE MAPS
+// 2. CONFIGURAÇÃO GOOGLE MAPS E LIMITES
 // =====================================================================
 const RJ_BOUNDS = { north: -20.76, south: -23.39, west: -44.89, east: -40.96 };
 
@@ -85,7 +85,7 @@ function initMapSystem() {
 }
 
 // =====================================================================
-// 3. GEOLOCALIZAÇÃO ESTRITA (NÃO ADIVINHA CIDADES ERRADAS)
+// 3. GEOLOCALIZAÇÃO ESTRITA E BLINDADA
 // =====================================================================
 function geocodeAddressGoogle(endereco, municipio) {
     return new Promise((resolve) => {
@@ -100,14 +100,13 @@ function geocodeAddressGoogle(endereco, municipio) {
             componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } 
         }, (res, status) => {
             if (status === 'OK' && res[0]) {
-                // Validação de Segurança Máxima: Checa as "gavetas" do endereço do Google
+                // Checa propriedades ocultas para não jogar em cidade errada
                 let cityMatch = false;
                 let targetMunNorm = normalizeString(municipio);
                 
                 res[0].address_components.forEach(comp => {
                     if(comp.types.includes("locality") || comp.types.includes("administrative_area_level_2")) {
                         let googleCityNorm = normalizeString(comp.long_name);
-                        // Garante que o Google achou a cidade exata que pedimos
                         if(googleCityNorm === targetMunNorm || googleCityNorm.includes(targetMunNorm) || targetMunNorm.includes(googleCityNorm)) {
                             cityMatch = true;
                         }
@@ -118,7 +117,6 @@ function geocodeAddressGoogle(endereco, municipio) {
                     return resolve({ lat: res[0].geometry.location.lat(), lng: res[0].geometry.location.lng() });
                 }
             }
-            // Se o Google achar rua na cidade errada (Ex: Niterói em vez de Rio), descarta o pino.
             resolve(null);
         });
     });
@@ -129,7 +127,9 @@ window.switchView = function(viewId) {
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
     const target = document.getElementById('view-' + viewId);
     if(target) target.style.display = 'block';
-    if(viewId === 'cfm-mapa' && map) {
+    
+    // Força o mapa a recalcular o tamanho se estiver visível
+    if(viewId === 'home' && map) {
         setTimeout(() => { google.maps.event.trigger(map, 'resize'); map.setCenter({ lat: -22.9068, lng: -43.1729 }); }, 200);
     }
 }
@@ -259,7 +259,6 @@ function renderMuseums(data) {
     if(document.getElementById('resultCount')) document.getElementById('resultCount').innerText = data.length;
     if(document.getElementById('count-total')) document.getElementById('count-total').innerText = museumsData.length;
 
-    // Tabela de Instituições (Alterada para Tipologia do Acervo e sem 'Ação')
     let tableHTML = `<div class="table-responsive"><table class="table table-hover table-bordered align-middle"><thead class="table-dark"><tr><th>Instituição</th><th>Município</th><th>Tipologia do Acervo</th><th>Situação</th><th></th></tr></thead><tbody id="table-body-lista">`;
 
     data.forEach(museum => {
@@ -272,7 +271,6 @@ function renderMuseums(data) {
             listContainer.appendChild(card);
         }
 
-        // Tabela: tr com classe para o motor de busca
         tableHTML += `<tr class="tr-lista-item"><td class="fw-bold td-nome">${museum.nome}</td><td>${museum.municipio || '-'}</td><td>${museum.acervo || '-'}</td><td><span class="badge ${museum.situacao && museum.situacao.includes('Aberto') ? 'bg-success' : 'bg-secondary'}">${museum.situacao || 'Desconhecido'}</span></td><td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td></tr>`;
 
         if (hasPin) {
@@ -292,7 +290,6 @@ function renderMuseums(data) {
     updatePendingList();
 }
 
-// BUSCA DA LISTA
 window.filterList = function() {
     let input = normalizeString(document.getElementById('searchLista').value);
     let rows = document.querySelectorAll('.tr-lista-item');
@@ -302,7 +299,7 @@ window.filterList = function() {
     });
 }
 
-// --- FILTROS (EXATIDÃO CIENTÍFICA) ---
+// --- FILTROS (CORRESPONDÊNCIA EXATA) ---
 function getCheckedValues(className) { return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value)); }
 
 window.applyFilters = function() {
@@ -321,14 +318,14 @@ window.applyFilters = function() {
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
         if (selectedMuni && mMuni !== selectedMuni) return false;
         
-        // Match exato para a Região funcionar (Impede Metro I de chamar a Metro II)
+        // Uso de Correspondência Exata "===" para evitar que Metro I ative Metro II
         if (regions.length > 0 && !regions.some(v => mRegiao === v)) return false;
-        if (natures.length > 0 && !natures.some(v => mNat.includes(v))) return false;
+        if (natures.length > 0 && !natures.some(v => mNat === v)) return false;
         if (acervos.length > 0 && !acervos.some(v => mAcervo.includes(v))) return false;
-        if (statusList.length > 0 && !statusList.some(v => mStatus.includes(v))) return false;
+        if (statusList.length > 0 && !statusList.some(v => mStatus === v)) return false;
         if (costs.length > 0 && !costs.some(v => mCost.includes(v))) return false;
-        if (turnos.length > 0) { const funcText = normalizeString(m.funcionamento); if (!turnos.some(t => funcText.includes(t))) return false; }
         
+        if (turnos.length > 0) { const funcText = normalizeString(m.funcionamento); if (!turnos.some(t => funcText.includes(t))) return false; }
         if (reqMuseologo && normalizeString(m.museologo) !== "sim") return false;
         if (reqEdu && normalizeString(m.educativo) !== "sim") return false;
         if (textGratuidade && !mGrat.includes(textGratuidade)) return false;
@@ -349,11 +346,11 @@ window.resetFilters = function() {
 window.openProfile = function(id) {
     if(!profileModal) profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
     const m = museumsData.find(x => x.id === id); if(!m) return;
-    
-    // Tratamento de segurança para não processar código HTML sujo
     const val = (v) => (v && v.trim() !== '') ? v : '<span class="text-muted fst-italic">Não informado</span>';
 
     document.getElementById('modalTitle').innerText = m.nome;
+    
+    // Tratamento Badge
     if (normalizeString(m.museologo) === "sim") document.getElementById('modalBadgeMuseologo').classList.remove('d-none'); else document.getElementById('modalBadgeMuseologo').classList.add('d-none');
     if (!m.lat || !m.lng) document.getElementById('modalAlertPin').classList.remove('d-none'); else document.getElementById('modalAlertPin').classList.add('d-none');
 
@@ -369,20 +366,36 @@ window.openProfile = function(id) {
     document.getElementById('modalFunc').innerHTML = val(m.funcionamento);
     document.getElementById('modalIngresso').innerHTML = val(m.ingresso);
     document.getElementById('modalGratuidade').innerHTML = val(m.gratuidades);
-    document.getElementById('modalEducativo').innerHTML = val(m.educativo);
     document.getElementById('modalAcervo').innerHTML = val(m.acervo);
+    
+    // Preenchimento restrito para visualização interna
+    document.getElementById('modalMuseologoStatus').innerHTML = val(m.museologo);
+    document.getElementById('modalEducativo').innerHTML = val(m.educativo);
+
     document.getElementById('modalAcessibilidade').innerHTML = val(m.acessibilidade);
     document.getElementById('modalHistorico').innerHTML = val(m.historico);
     profileModal.show();
 }
 
-// --- ADMIN E GESTÃO ---
+// --- ADMIN E GESTÃO (Controle de Privacidade Ocultando Classes) ---
 window.openLogin = function() { document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
+
 window.checkAdminPassword = function() {
-    if(document.getElementById('adminPassword').value === 'simrj') { document.getElementById('admin-panel').style.display = 'block'; closeLogin(); renderApprovalsList(); } else alert('Senha incorreta.');
+    if(document.getElementById('adminPassword').value === 'simrj') { 
+        document.getElementById('admin-panel').style.display = 'block'; 
+        closeLogin(); 
+        renderApprovalsList(); 
+        // LIBERA AS CLASSES GESTOR-ONLY PARA VISUALIZAÇÃO INTERNA
+        document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('d-none'));
+    } else alert('Senha incorreta.');
 }
-window.closeAdmin = function() { document.getElementById('admin-panel').style.display = 'none'; }
+
+window.closeAdmin = function() { 
+    document.getElementById('admin-panel').style.display = 'none'; 
+    // OCULTA AS CLASSES GESTOR-ONLY NOVAMENTE
+    document.querySelectorAll('.gestor-only').forEach(el => el.classList.add('d-none'));
+}
 
 function renderApprovalsList() {
     const list = document.getElementById('requests-list');
@@ -408,8 +421,13 @@ window.approveRequest = async function(id) {
     const reqIndex = pendingApprovals.findIndex(r => r.id === id); if(reqIndex === -1) return;
     const approvedMuseum = pendingApprovals[reqIndex];
     
-    let coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio);
-    approvedMuseum.lat = coords ? coords.lat : null; approvedMuseum.lng = coords ? coords.lng : null;
+    let isVirtual = normalizeString(approvedMuseum.acervo).includes("virtual") || normalizeString(approvedMuseum.endereco).includes("virtual") || normalizeString(approvedMuseum.natureza).includes("virtual");
+    let coords = null;
+    
+    if(!isVirtual) coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio);
+    
+    approvedMuseum.lat = coords ? coords.lat : null; 
+    approvedMuseum.lng = coords ? coords.lng : null;
     
     pendingApprovals.splice(reqIndex, 1); museumsData.push(approvedMuseum);
     if(approvalModal) approvalModal.hide(); renderApprovalsList(); renderMuseums(museumsData); alert(`${approvedMuseum.nome} foi aprovado e integrado ao sistema público!`);
@@ -419,11 +437,10 @@ window.rejectRequest = function(id) {
     if(confirm("Deseja realmente rejeitar e apagar esta requisição?")) { pendingApprovals = pendingApprovals.filter(r => r.id !== id); if(approvalModal) approvalModal.hide(); renderApprovalsList(); }
 }
 
-// --- UPLOAD CSV (LEITOR INTELIGENTE E ANTI-CARACTERES OCULTOS) ---
+// --- UPLOAD CSV ---
 const getCol = (row, possibleNames) => {
     for (let name of possibleNames) {
         for (let key in row) {
-            // Limpa o título da coluna para achar com precisão matemática
             let keyClean = key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
             let nameClean = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
             if (keyClean === nameClean) return row[key] ? row[key].trim() : "";
@@ -471,7 +488,6 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
 
                 if(pBar) pBar.style.width = `${((i+1)/total)*100}%`;
                 
-                // Inteligência para Museus Virtuais: Joga direto para Sem Geolocalização
                 let isVirtual = normalizeString(acervo).includes("virtual") || normalizeString(endereco).includes("virtual") || normalizeString(natureza).includes("virtual");
                 let coords = null;
                 
