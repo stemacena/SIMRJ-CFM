@@ -12,14 +12,14 @@ let approvalModal;
 // 1. CONFIGURAÇÃO FIREBASE
 // =====================================================================
 const firebaseConfig = {
-    apiKey: "AIzaSyBm0bjZc1OzDI6kBOEiJJNRaayxPCt-j1E",
-    authDomain: "bd-ecoa.firebaseapp.com",
-    databaseURL: "https://bd-ecoa-default-rtdb.firebaseio.com",
-    projectId: "bd-ecoa",
-    storageBucket: "bd-ecoa.firebasestorage.app",
-    messagingSenderId: "65380488244",
-    appId: "1:65380488244:web:647f588e1f2059727c6661",
-    measurementId: "G-GHK5XDX2E3"
+     apiKey: "AIzaSyBm0bjZc1OzDI6kBOEiJJNRaayxPCt-j1E",
+  authDomain: "bd-ecoa.firebaseapp.com",
+  databaseURL: "https://bd-ecoa-default-rtdb.firebaseio.com",
+  projectId: "bd-ecoa",
+  storageBucket: "bd-ecoa.firebasestorage.app",
+  messagingSenderId: "65380488244",
+  appId: "1:65380488244:web:647f588e1f2059727c6661",
+  measurementId: "G-GHK5XDX2E3"
 };
 
 let db;
@@ -100,7 +100,6 @@ function geocodeAddressGoogle(endereco, municipio) {
             componentRestrictions: { country: 'BR', administrativeArea: 'RJ' } 
         }, (res, status) => {
             if (status === 'OK' && res[0]) {
-                // Checa propriedades ocultas para não jogar em cidade errada
                 let cityMatch = false;
                 let targetMunNorm = normalizeString(municipio);
                 
@@ -128,7 +127,6 @@ window.switchView = function(viewId) {
     const target = document.getElementById('view-' + viewId);
     if(target) target.style.display = 'block';
     
-    // Força o mapa a recalcular o tamanho se estiver visível
     if(viewId === 'home' && map) {
         setTimeout(() => { google.maps.event.trigger(map, 'resize'); map.setCenter({ lat: -22.9068, lng: -43.1729 }); }, 200);
     }
@@ -299,7 +297,7 @@ window.filterList = function() {
     });
 }
 
-// --- FILTROS (CORRESPONDÊNCIA EXATA) ---
+// --- FILTROS ---
 function getCheckedValues(className) { return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value)); }
 
 window.applyFilters = function() {
@@ -318,7 +316,6 @@ window.applyFilters = function() {
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
         if (selectedMuni && mMuni !== selectedMuni) return false;
         
-        // Uso de Correspondência Exata "===" para evitar que Metro I ative Metro II
         if (regions.length > 0 && !regions.some(v => mRegiao === v)) return false;
         if (natures.length > 0 && !natures.some(v => mNat === v)) return false;
         if (acervos.length > 0 && !acervos.some(v => mAcervo.includes(v))) return false;
@@ -350,7 +347,6 @@ window.openProfile = function(id) {
 
     document.getElementById('modalTitle').innerText = m.nome;
     
-    // Tratamento Badge
     if (normalizeString(m.museologo) === "sim") document.getElementById('modalBadgeMuseologo').classList.remove('d-none'); else document.getElementById('modalBadgeMuseologo').classList.add('d-none');
     if (!m.lat || !m.lng) document.getElementById('modalAlertPin').classList.remove('d-none'); else document.getElementById('modalAlertPin').classList.add('d-none');
 
@@ -368,7 +364,6 @@ window.openProfile = function(id) {
     document.getElementById('modalGratuidade').innerHTML = val(m.gratuidades);
     document.getElementById('modalAcervo').innerHTML = val(m.acervo);
     
-    // Preenchimento restrito para visualização interna
     document.getElementById('modalMuseologoStatus').innerHTML = val(m.museologo);
     document.getElementById('modalEducativo').innerHTML = val(m.educativo);
 
@@ -377,7 +372,7 @@ window.openProfile = function(id) {
     profileModal.show();
 }
 
-// --- ADMIN E GESTÃO (Controle de Privacidade Ocultando Classes) ---
+// --- ADMIN E GESTÃO ---
 window.openLogin = function() { document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
 
@@ -386,14 +381,12 @@ window.checkAdminPassword = function() {
         document.getElementById('admin-panel').style.display = 'block'; 
         closeLogin(); 
         renderApprovalsList(); 
-        // LIBERA AS CLASSES GESTOR-ONLY PARA VISUALIZAÇÃO INTERNA
         document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('d-none'));
     } else alert('Senha incorreta.');
 }
 
 window.closeAdmin = function() { 
     document.getElementById('admin-panel').style.display = 'none'; 
-    // OCULTA AS CLASSES GESTOR-ONLY NOVAMENTE
     document.querySelectorAll('.gestor-only').forEach(el => el.classList.add('d-none'));
 }
 

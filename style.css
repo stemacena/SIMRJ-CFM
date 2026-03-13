@@ -15,7 +15,10 @@ section { scroll-margin-top: 110px; }
 /* --- CABEÇALHO GOV E NAVBAR --- */
 .gov-bar { background-color: var(--color-blue); font-size: 0.8rem; font-weight: 500; }
 .navbar { padding-top: 0.5rem; padding-bottom: 0.5rem; background-color: #e5e9b0; border-bottom: 4px solid var(--color-green-olive); }
-.header-logo-small { max-height: 50px; object-fit: contain; cursor: pointer; }
+
+/* Novas Classes para as duas logos da Navbar */
+.header-logo-secec { max-height: 50px; object-fit: contain; border-right: 2px solid #b3b782; padding-right: 15px; margin-right: 15px; }
+.header-logo-simrj { max-height: 75px; object-fit: contain; }
 
 .nav-link { font-weight: 600; color: var(--color-dark) !important; text-transform: uppercase; font-size: 0.85rem; margin: 0 5px; transition: color 0.2s; }
 .nav-link:hover, .nav-link.active { color: var(--color-cfm-teal) !important; }
@@ -28,25 +31,32 @@ section { scroll-margin-top: 110px; }
 .btn-outline-custom { border: 2px solid var(--color-cfm-teal); color: var(--color-cfm-teal); font-weight: 600; border-radius: 20px; padding: 6px 20px; }
 .btn-outline-custom:hover { background-color: var(--color-cfm-teal); color: #fff; }
 
-/* --- HERO CAROUSEL --- */
+/* --- HERO CAROUSEL E LOGO DESTACADA --- */
 .hero-wrapper { position: relative; width: 100%; height: 70vh; min-height: 400px; overflow: hidden; background-color: #000; }
 .hero-carousel, .carousel-inner, .carousel-item { height: 100%; }
 .hero-carousel img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
 
-/* --- LOGO ESTÁTICA NO CANTO --- */
+/* Círculo branco no canto inferior direito para a logo */
 .hero-logo-container {
     position: absolute;
-    bottom: 30px;
-    right: 30px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 15px 25px;
-    border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    bottom: -60px;
+    right: -60px;
+    width: 450px;
+    height: 450px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4);
     z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+/* Puxa a logo visualmente para o centro da parte visível do círculo */
 .hero-logo-small-static {
-    max-height: 60px;
+    max-width: 280px;
     height: auto;
+    margin-top: -40px; 
+    margin-left: -40px;
 }
 
 /* --- SEÇÕES E TÍTULOS --- */
@@ -84,6 +94,6 @@ section { scroll-margin-top: 110px; }
 .req-item { background: #fff; border-left: 4px solid var(--color-yellow); border-radius: 4px; padding: 10px; margin-bottom: 10px; color: #333; }
 
 /* --- ESTILOS DE EQUIPE E APRESENTAÇÃO --- */
-.team-member img { width: 120px; height: 120px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-.team-member h6 { margin-top: 10px; font-weight: bold; color: var(--color-blue); }
+.team-member img { width: 170px; height: 170px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.team-member h6 { margin-top: 15px; font-weight: bold; color: var(--color-blue); font-size: 1.1rem; }
 .team-member p { font-size: 0.8rem; color: #666; }
