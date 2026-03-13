@@ -36,27 +36,26 @@ section { scroll-margin-top: 110px; }
 .hero-carousel, .carousel-inner, .carousel-item { height: 100%; }
 .hero-carousel img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
 
-/* Círculo branco no canto inferior direito para a logo */
+/* --- LOGO ESTÁTICA NO CANTO (ATUALIZADA) --- */
 .hero-logo-container {
     position: absolute;
-    bottom: -60px;
-    right: -60px;
-    width: 450px;
-    height: 450px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+    bottom: 40px;
+    right: 50px;
+    background: rgba(255, 255, 255, 0.85); /* Fundo branco levemente transparente/neutro */
+    padding: 20px 40px;
+    border-radius: 25px; /* Moldura com cantos bem arredondados */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    backdrop-filter: blur(8px); /* Efeito elegante de vidro fosco */
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-/* Puxa a logo visualmente para o centro da parte visível do círculo */
+
 .hero-logo-small-static {
-    max-width: 280px;
+    width: 360px; /* Logo muito maior e em total destaque */
     height: auto;
-    margin-top: -40px; 
-    margin-left: -40px;
+    object-fit: contain;
 }
 
 /* --- SEÇÕES E TÍTULOS --- */
