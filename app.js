@@ -4,7 +4,7 @@ let markersArray = [];
 let infoWindow;
 let geocoder;
 let museumsData = [];
-let currentFilteredData = []; // Armazena os dados filtrados para gerar relatório Excel
+let currentFilteredData = []; // Armazena os dados filtrados para gerar relatório XLS
 let pendingApprovals = [];
 let profileModal;
 let approvalModal;
@@ -85,9 +85,6 @@ function initMapSystem() {
     if(museumsData.length === 0) renderMuseums([]); 
 }
 
-// =====================================================================
-// 3. GEOLOCALIZAÇÃO ESTRITA
-// =====================================================================
 function geocodeAddressGoogle(endereco, municipio) {
     return new Promise((resolve) => {
         if (!municipio) return resolve(null);
@@ -230,7 +227,7 @@ window.submitMuseumRegistration = function() {
         acessibilidade: document.getElementById('regAccess').value,
         gratuidades: document.getElementById('regGrat').value,
         historico: document.getElementById('regHist').value,
-        zona: "", // Inicializado vazio no form manual
+        zona: "", 
         lat: null, lng: null
     };
 
@@ -312,7 +309,7 @@ window.applyFilters = function() {
     const statusList = getCheckedValues('filter-status'); 
     const turnos = getCheckedValues('filter-func'); 
     const costs = getCheckedValues('filter-cost');
-    const zonas = getCheckedValues('filter-zona'); // ZONAS DO RIO
+    const zonas = getCheckedValues('filter-zona'); 
     
     const reqMuseologo = document.getElementById('checkMuseologo').checked; 
     const reqEdu = document.getElementById('checkEdu').checked;
@@ -345,7 +342,7 @@ window.applyFilters = function() {
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
         if (selectedMuni && mMuni !== selectedMuni) return false;
         
-        // Uso de Match Extrito para impedir falsos-positivos
+        // Uso de Match Extrito para impedir falsos-positivos nas regiões e naturezas
         if (regions.length > 0 && !regions.some(v => mRegiao === v)) return false;
         if (natures.length > 0 && !matchExactPart(mNat, natures)) return false;
         if (acervos.length > 0 && !matchExactPart(mAcervo, acervos)) return false;
@@ -360,8 +357,11 @@ window.applyFilters = function() {
 
         // LÓGICA DE ZONAS (Aplica apenas se o museu for na cidade do Rio de Janeiro)
         if (zonas.length > 0) {
-            if (mMuni !== normalizeString("rio de janeiro")) return false; // Isola apenas a capital
-            if (!zonas.some(z => mZona.includes(z) || mEndereco.includes(z))) return false;
+            // Se o museu não for do município do Rio (aceita "rio de janeiro", "rio de janeiro - rj", etc), ele é escondido
+            if (!mMuni.includes("rio de janeiro")) return false; 
+            
+            // Procura a zona tanto na coluna 'Zonas' quanto no próprio endereço da instituição
+            if (!zonas.some(z => mZona.includes(z) || mEndereco.includes("zona " + z) || mEndereco.includes(z))) return false;
         }
 
         return true;
@@ -374,32 +374,67 @@ window.applyFilters = function() {
 window.resetFilters = function() {
     document.querySelectorAll('.sidebar-filters input[type="text"], .sidebar-filters select').forEach(el => el.value = '');
     document.querySelectorAll('.sidebar-filters input[type="checkbox"]').forEach(cb => cb.checked = false);
+    currentFilteredData = museumsData;
     renderMuseums(museumsData);
 }
 
-// --- EXPORTAR RELATÓRIO PARA EXCEL (GERA CSV COM BOM) ---
+// --- EXPORTAR RELATÓRIO PARA EXCEL (XLS NATIVO E FORMATADO) ---
 window.exportRelatorio = function() {
     if (!currentFilteredData || currentFilteredData.length === 0) {
         return alert("Nenhum dado encontrado para exportar.");
     }
 
-    let csvContent = "\uFEFF"; // Garante leitura de acentuação (UTF-8) nativa no Excel
-    csvContent += "Nome da Instituicao;Municipio;Regiao;Zona;Natureza Administrativa;Situacao;Endereco;Funcionamento;Valor do Ingresso;Gratuidades;Setor Educativo;Acervo Predominante;Museologo;Acessibilidade;Telefone;Site\n";
+    // Cria a tabela HTML para ser convertida em Excel nativo com formatação de colunas
+    let tableHTML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="UTF-8"></head>
+    <body><table border="1"><thead><tr>
+        <th style="background-color: #0034bb; color: white;">Nome da Instituicao</th>
+        <th style="background-color: #0034bb; color: white;">Municipio</th>
+        <th style="background-color: #0034bb; color: white;">Regiao</th>
+        <th style="background-color: #0034bb; color: white;">Zona</th>
+        <th style="background-color: #0034bb; color: white;">Natureza Administrativa</th>
+        <th style="background-color: #0034bb; color: white;">Situacao</th>
+        <th style="background-color: #0034bb; color: white;">Endereco</th>
+        <th style="background-color: #0034bb; color: white;">Funcionamento</th>
+        <th style="background-color: #0034bb; color: white;">Valor do Ingresso</th>
+        <th style="background-color: #0034bb; color: white;">Gratuidades</th>
+        <th style="background-color: #0034bb; color: white;">Setor Educativo</th>
+        <th style="background-color: #0034bb; color: white;">Acervo Predominante</th>
+        <th style="background-color: #0034bb; color: white;">Museologo</th>
+        <th style="background-color: #0034bb; color: white;">Acessibilidade</th>
+        <th style="background-color: #0034bb; color: white;">Telefone</th>
+        <th style="background-color: #0034bb; color: white;">Site</th>
+    </tr></thead><tbody>`;
 
     currentFilteredData.forEach(m => {
-        let row = [
-            m.nome, m.municipio, m.regiao, m.zona, m.natureza, m.situacao, m.endereco, 
-            m.funcionamento, m.ingresso, m.gratuidades, m.educativo, m.acervo, m.museologo, 
-            m.acessibilidade, m.telefone, m.site
-        ].map(val => `"${(val || '').toString().replace(/"/g, '""')}"`).join(";"); // Blindagem contra quebras de linha nas células
-        csvContent += row + "\n";
+        tableHTML += `<tr>
+            <td>${m.nome || ''}</td>
+            <td>${m.municipio || ''}</td>
+            <td>${m.regiao || ''}</td>
+            <td>${m.zona || ''}</td>
+            <td>${m.natureza || ''}</td>
+            <td>${m.situacao || ''}</td>
+            <td>${m.endereco || ''}</td>
+            <td>${m.funcionamento || ''}</td>
+            <td>${m.ingresso || ''}</td>
+            <td>${m.gratuidades || ''}</td>
+            <td>${m.educativo || ''}</td>
+            <td>${m.acervo || ''}</td>
+            <td>${m.museologo || ''}</td>
+            <td>${m.acessibilidade || ''}</td>
+            <td>${m.telefone || ''}</td>
+            <td>${m.site || ''}</td>
+        </tr>`;
     });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    tableHTML += `</tbody></table></body></html>`;
+
+    // Transforma a string HTML em um arquivo .xls que o Excel entende perfeitamente
+    const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "Relatorio_Filtro_SIMRJ.csv");
+    link.setAttribute("download", "Relatorio_Filtro_SIMRJ.xls");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -430,7 +465,6 @@ window.openProfile = function(id) {
     document.getElementById('modalGratuidade').innerHTML = val(m.gratuidades);
     document.getElementById('modalAcervo').innerHTML = val(m.acervo);
     
-    // Preenchimento restrito para visualização interna
     document.getElementById('modalMuseologoStatus').innerHTML = val(m.museologo);
     document.getElementById('modalEducativo').innerHTML = val(m.educativo);
 

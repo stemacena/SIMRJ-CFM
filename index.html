@@ -164,17 +164,6 @@
                         <div class="mb-3"><label class="filter-label">Região</label><div class="filter-scroll-box">
                                 <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Baixadas Litorâneas"><label class="form-check-label small">Baixadas Litorâneas</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Centro-Sul"><label class="form-check-label small">Centro-Sul</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Costa Verde"><label class="form-check-label small">Costa Verde</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Médio Paraíba"><label class="form-check-label small">Médio Paraíba</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana I"><label class="form-check-label small">Metropolitana I</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana II"><label class="form-check-label small">Metropolitana II</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana III"><label class="form-check-label small">Metropolitana III</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Noroeste Fluminense"><label class="form-check-label small">Noroeste Fluminense</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Norte Fluminense"><label class="form-check-label small">Norte Fluminense</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Serrana"><label class="form-check-label small">Serrana</label></div>
                             </div></div>
-                        
-                        <div class="mb-3">
-                            <label class="filter-label">Zonas (Apenas Rio de Janeiro)</label>
-                            <div class="filter-scroll-box" style="max-height: 100px;">
-                                <div class="form-check"><input class="form-check-input filter-zona" type="checkbox" value="Centro"><label class="form-check-label small">Centro</label></div>
-                                <div class="form-check"><input class="form-check-input filter-zona" type="checkbox" value="Sul"><label class="form-check-label small">Zona Sul</label></div>
-                                <div class="form-check"><input class="form-check-input filter-zona" type="checkbox" value="Norte"><label class="form-check-label small">Zona Norte</label></div>
-                                <div class="form-check"><input class="form-check-input filter-zona" type="checkbox" value="Oeste"><label class="form-check-label small">Zona Oeste</label></div>
-                            </div>
-                        </div>
-
                         <div class="mb-3"><label class="filter-label">Natureza Administrativa</label><div class="filter-scroll-box" style="max-height: 100px;">
                                 <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Estadual"><label class="form-check-label small">Estadual</label></div><div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Federal"><label class="form-check-label small">Federal</label></div><div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Municipal"><label class="form-check-label small">Municipal</label></div><div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Privada"><label class="form-check-label small">Privada</label></div><div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Público-privada"><label class="form-check-label small">Público-privada</label></div>
                             </div></div>
@@ -203,8 +192,18 @@
                                         <label class="filter-label text-dark m-0 mb-1"><i class="bi bi-lock-fill"></i> Área do Gestor</label>
                                         <div class="form-check mb-1 mt-1"><input class="form-check-input border-dark" type="checkbox" id="checkMuseologo"><label class="form-check-label small fw-bold text-dark" for="checkMuseologo">Possui Museólogo</label></div>
                                         <div class="form-check mb-1"><input class="form-check-input border-dark" type="checkbox" id="checkEdu"><label class="form-check-label small text-dark" for="checkEdu">Possui Setor Educativo</label></div>
+                                        
                                         <hr class="border-dark my-2">
-                                        <button class="btn btn-sm btn-dark w-100 fw-bold" onclick="exportRelatorio()"><i class="bi bi-file-earmark-excel"></i> Gerar Relatório CSV</button>
+                                        <label class="filter-label text-dark small mb-1">Zonas (Apenas Rio de Janeiro)</label>
+                                        <div class="filter-scroll-box border-dark bg-white mb-2" style="max-height: 100px;">
+                                            <div class="form-check"><input class="form-check-input filter-zona border-dark" type="checkbox" value="Centro"><label class="form-check-label small text-dark">Centro</label></div>
+                                            <div class="form-check"><input class="form-check-input filter-zona border-dark" type="checkbox" value="Sul"><label class="form-check-label small text-dark">Zona Sul</label></div>
+                                            <div class="form-check"><input class="form-check-input filter-zona border-dark" type="checkbox" value="Norte"><label class="form-check-label small text-dark">Zona Norte</label></div>
+                                            <div class="form-check"><input class="form-check-input filter-zona border-dark" type="checkbox" value="Oeste"><label class="form-check-label small text-dark">Zona Oeste</label></div>
+                                        </div>
+
+                                        <hr class="border-dark my-2">
+                                        <button class="btn btn-sm btn-dark w-100 fw-bold" onclick="exportRelatorio()"><i class="bi bi-file-earmark-excel"></i> Gerar Relatório XLS</button>
                                     </div>
 
                                     <label class="filter-label mt-3">Valor Ingresso</label>
@@ -574,13 +573,7 @@
         <div class="container py-5">
             <h2 class="section-title">Instituições Cadastradas</h2>
             <p class="text-muted text-center mb-4">Listagem completa das instituições mapeadas no Estado do Rio de Janeiro.</p>
-            
-            <div class="row mb-4">
-                <div class="col-md-6 mx-auto">
-                    <input type="text" id="searchLista" class="form-control" placeholder="Buscar instituição por nome..." onkeyup="filterList()">
-                </div>
-            </div>
-
+            <div class="row mb-4"><div class="col-md-6 mx-auto"><input type="text" id="searchLista" class="form-control" placeholder="Buscar instituição por nome..." onkeyup="filterList()"></div></div>
             <div class="row" id="container-lista-museus"></div>
         </div>
     </div>
