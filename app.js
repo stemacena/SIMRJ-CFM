@@ -4,6 +4,7 @@ let markersArray = [];
 let infoWindow;
 let geocoder;
 let museumsData = [];
+let currentFilteredData = []; // Armazena os dados filtrados para gerar relatório Excel
 let pendingApprovals = [];
 let profileModal;
 let approvalModal;
@@ -12,14 +13,14 @@ let approvalModal;
 // 1. CONFIGURAÇÃO FIREBASE
 // =====================================================================
 const firebaseConfig = {
-     apiKey: "AIzaSyBm0bjZc1OzDI6kBOEiJJNRaayxPCt-j1E",
-  authDomain: "bd-ecoa.firebaseapp.com",
-  databaseURL: "https://bd-ecoa-default-rtdb.firebaseio.com",
-  projectId: "bd-ecoa",
-  storageBucket: "bd-ecoa.firebasestorage.app",
-  messagingSenderId: "65380488244",
-  appId: "1:65380488244:web:647f588e1f2059727c6661",
-  measurementId: "G-GHK5XDX2E3"
+    apiKey: "AIzaSyBm0bjZc1OzDI6kBOEiJJNRaayxPCt-j1E",
+    authDomain: "bd-ecoa.firebaseapp.com",
+    databaseURL: "https://bd-ecoa-default-rtdb.firebaseio.com",
+    projectId: "bd-ecoa",
+    storageBucket: "bd-ecoa.firebasestorage.app",
+    messagingSenderId: "65380488244",
+    appId: "1:65380488244:web:647f588e1f2059727c6661",
+    measurementId: "G-GHK5XDX2E3"
 };
 
 let db;
@@ -55,13 +56,13 @@ try {
 } catch (error) { console.error("Erro Firebase:", error); }
 
 // =====================================================================
-// 2. CONFIGURAÇÃO GOOGLE MAPS E LIMITES
+// 2. CONFIGURAÇÃO GOOGLE MAPS
 // =====================================================================
 const RJ_BOUNDS = { north: -20.76, south: -23.39, west: -44.89, east: -40.96 };
 
 const allMunicipalitiesRJ = ["Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo", "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana", "Cabo Frio", "Cachoeiras de Macacu", "Cambuci", "Campos dos Goytacazes", "Cantagalo", "Carapebus", "Cardoso Moreira", "Carmo", "Casimiro de Abreu", "Comendador Levy Gasparian", "Conceição de Macabu", "Cordeiro", "Duas Barras", "Duque de Caxias", "Engenheiro Paulo de Frontin", "Guapimirim", "Iguaba Grande", "Itaboraí", "Itaguaí", "Italva", "Itaocara", "Itaperuna", "Itatiaia", "Japeri", "Laje do Muriaé", "Macaé", "Macuco", "Magé", "Mangaratiba", "Maricá", "Mendes", "Mesquita", "Miguel Pereira", "Miracema", "Natividade", "Nilópolis", "Niterói", "Nova Friburgo", "Nova Iguaçu", "Paracambi", "Paraíba do Sul", "Paraty", "Paty do Alferes", "Petrópolis", "Pinheiral", "Piraí", "Porciúncula", "Porto Real", "Quatis", "Queimados", "Quissamã", "Resende", "Rio Bonito", "Rio das Flores", "Rio das Ostras", "Rio de Janeiro", "Rio Claro", "Santa Maria Madalena", "Santo Antônio de Pádua", "São Fidélis", "São Francisco de Itabapoana", "São Gonçalo", "São João da Barra", "São João de Meriti", "São José de Ubá", "São José do Vale do Rio Preto", "São Pedro da Aldeia", "São Sebastião do Alto", "Sapucaia", "Saquarema", "Seropédica", "Silva Jardim", "Sumidouro", "Tanguá", "Teresópolis", "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", "Vassouras", "Volta Redonda"];
 
-const normalizeString = (str) => { if(!str) return ""; return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); };
+const normalizeString = (str) => { if(!str) return ""; return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); };
 
 function initMapSystem() {
     geocoder = new google.maps.Geocoder();
@@ -85,7 +86,7 @@ function initMapSystem() {
 }
 
 // =====================================================================
-// 3. GEOLOCALIZAÇÃO ESTRITA E BLINDADA
+// 3. GEOLOCALIZAÇÃO ESTRITA
 // =====================================================================
 function geocodeAddressGoogle(endereco, municipio) {
     return new Promise((resolve) => {
@@ -229,6 +230,7 @@ window.submitMuseumRegistration = function() {
         acessibilidade: document.getElementById('regAccess').value,
         gratuidades: document.getElementById('regGrat').value,
         historico: document.getElementById('regHist').value,
+        zona: "", // Inicializado vazio no form manual
         lat: null, lng: null
     };
 
@@ -297,30 +299,58 @@ window.filterList = function() {
     });
 }
 
-// --- FILTROS ---
+// --- FILTROS (LÓGICA BLINDADA E ZONAS DO RJ) ---
 function getCheckedValues(className) { return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value)); }
 
 window.applyFilters = function() {
     const term = normalizeString(document.getElementById('searchName').value);
     const filterHasMap = document.getElementById('filterHasMap').value;
     const selectedMuni = normalizeString(document.getElementById('filterMunicipio').value);
-    const regions = getCheckedValues('filter-region'); const natures = getCheckedValues('filter-nature'); const acervos = getCheckedValues('filter-acervo'); const statusList = getCheckedValues('filter-status'); const turnos = getCheckedValues('filter-func'); const costs = getCheckedValues('filter-cost');
-    const reqMuseologo = document.getElementById('checkMuseologo').checked; const reqEdu = document.getElementById('checkEdu').checked;
-    const textGratuidade = normalizeString(document.getElementById('searchGratuidade').value); const textAccess = normalizeString(document.getElementById('searchAccess').value);
+    const regions = getCheckedValues('filter-region'); 
+    const natures = getCheckedValues('filter-nature'); 
+    const acervos = getCheckedValues('filter-acervo'); 
+    const statusList = getCheckedValues('filter-status'); 
+    const turnos = getCheckedValues('filter-func'); 
+    const costs = getCheckedValues('filter-cost');
+    const zonas = getCheckedValues('filter-zona'); // ZONAS DO RIO
+    
+    const reqMuseologo = document.getElementById('checkMuseologo').checked; 
+    const reqEdu = document.getElementById('checkEdu').checked;
+    const textGratuidade = normalizeString(document.getElementById('searchGratuidade').value); 
+    const textAccess = normalizeString(document.getElementById('searchAccess').value);
+
+    // Helper: Garante correspondência EXATA de palavras soltas separadas por vírgula (Impede "Privada" de ativar "Público-Privada")
+    const matchExactPart = (fieldString, filterArray) => {
+        if (filterArray.length === 0) return true;
+        if (!fieldString) return false;
+        let parts = fieldString.split(/[,;/e]/).map(s => s.trim());
+        return filterArray.some(f => parts.includes(f) || fieldString === f);
+    };
 
     const filtered = museumsData.filter(m => {
-        const mNome = normalizeString(m.nome); const mMuni = normalizeString(m.municipio); const mRegiao = normalizeString(m.regiao); const mNat = normalizeString(m.natureza); const mAcervo = normalizeString(m.acervo); const mStatus = normalizeString(m.situacao); const mCost = normalizeString(m.ingresso); const mGrat = normalizeString(m.gratuidades); const mAcc = normalizeString(m.acessibilidade);
+        const mNome = normalizeString(m.nome); 
+        const mMuni = normalizeString(m.municipio); 
+        const mRegiao = normalizeString(m.regiao); 
+        const mNat = normalizeString(m.natureza); 
+        const mAcervo = normalizeString(m.acervo); 
+        const mStatus = normalizeString(m.situacao); 
+        const mCost = normalizeString(m.ingresso); 
+        const mGrat = normalizeString(m.gratuidades); 
+        const mAcc = normalizeString(m.acessibilidade);
+        const mZona = normalizeString(m.zona);
+        const mEndereco = normalizeString(m.endereco);
 
         if (term && !mNome.includes(term)) return false;
         if (filterHasMap === 'sim' && (!m.lat || !m.lng)) return false;
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
         if (selectedMuni && mMuni !== selectedMuni) return false;
         
+        // Uso de Match Extrito para impedir falsos-positivos
         if (regions.length > 0 && !regions.some(v => mRegiao === v)) return false;
-        if (natures.length > 0 && !natures.some(v => mNat === v)) return false;
-        if (acervos.length > 0 && !acervos.some(v => mAcervo.includes(v))) return false;
-        if (statusList.length > 0 && !statusList.some(v => mStatus === v)) return false;
-        if (costs.length > 0 && !costs.some(v => mCost.includes(v))) return false;
+        if (natures.length > 0 && !matchExactPart(mNat, natures)) return false;
+        if (acervos.length > 0 && !matchExactPart(mAcervo, acervos)) return false;
+        if (statusList.length > 0 && !matchExactPart(mStatus, statusList)) return false;
+        if (costs.length > 0 && !matchExactPart(mCost, costs)) return false;
         
         if (turnos.length > 0) { const funcText = normalizeString(m.funcionamento); if (!turnos.some(t => funcText.includes(t))) return false; }
         if (reqMuseologo && normalizeString(m.museologo) !== "sim") return false;
@@ -328,8 +358,16 @@ window.applyFilters = function() {
         if (textGratuidade && !mGrat.includes(textGratuidade)) return false;
         if (textAccess && !mAcc.includes(textAccess)) return false;
 
+        // LÓGICA DE ZONAS (Aplica apenas se o museu for na cidade do Rio de Janeiro)
+        if (zonas.length > 0) {
+            if (mMuni !== normalizeString("rio de janeiro")) return false; // Isola apenas a capital
+            if (!zonas.some(z => mZona.includes(z) || mEndereco.includes(z))) return false;
+        }
+
         return true;
     });
+
+    currentFilteredData = filtered; // Salva o resultado globalmente para o relatório Excel
     renderMuseums(filtered);
 }
 
@@ -338,6 +376,34 @@ window.resetFilters = function() {
     document.querySelectorAll('.sidebar-filters input[type="checkbox"]').forEach(cb => cb.checked = false);
     renderMuseums(museumsData);
 }
+
+// --- EXPORTAR RELATÓRIO PARA EXCEL (GERA CSV COM BOM) ---
+window.exportRelatorio = function() {
+    if (!currentFilteredData || currentFilteredData.length === 0) {
+        return alert("Nenhum dado encontrado para exportar.");
+    }
+
+    let csvContent = "\uFEFF"; // Garante leitura de acentuação (UTF-8) nativa no Excel
+    csvContent += "Nome da Instituicao;Municipio;Regiao;Zona;Natureza Administrativa;Situacao;Endereco;Funcionamento;Valor do Ingresso;Gratuidades;Setor Educativo;Acervo Predominante;Museologo;Acessibilidade;Telefone;Site\n";
+
+    currentFilteredData.forEach(m => {
+        let row = [
+            m.nome, m.municipio, m.regiao, m.zona, m.natureza, m.situacao, m.endereco, 
+            m.funcionamento, m.ingresso, m.gratuidades, m.educativo, m.acervo, m.museologo, 
+            m.acessibilidade, m.telefone, m.site
+        ].map(val => `"${(val || '').toString().replace(/"/g, '""')}"`).join(";"); // Blindagem contra quebras de linha nas células
+        csvContent += row + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "Relatorio_Filtro_SIMRJ.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 
 // --- FICHA DO MUSEU ---
 window.openProfile = function(id) {
@@ -364,6 +430,7 @@ window.openProfile = function(id) {
     document.getElementById('modalGratuidade').innerHTML = val(m.gratuidades);
     document.getElementById('modalAcervo').innerHTML = val(m.acervo);
     
+    // Preenchimento restrito para visualização interna
     document.getElementById('modalMuseologoStatus').innerHTML = val(m.museologo);
     document.getElementById('modalEducativo').innerHTML = val(m.educativo);
 
@@ -465,6 +532,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
 
                 let municipio = getCol(row, ["Município", "Municipio"]);
                 let regiao = getCol(row, ["Região", "Regiao"]);
+                let zona = getCol(row, ["Zona", "Zonas", "Zona do Rio", "Zona da Cidade"]);
                 let natureza = getCol(row, ["Natureza Administrativa", "Natureza"]);
                 let situacao = getCol(row, ["Situação", "Situacao", "Status"]);
                 let endereco = getCol(row, ["Endereço", "Endereco"]);
@@ -490,11 +558,13 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                 }
 
                 cleanData.push({
-                    id: i + 2000, nome, municipio, regiao, natureza, situacao, endereco, funcionamento, ingresso, gratuidades, educativo, acervo, museologo, acessibilidade, historico, telefone, site,
+                    id: i + 2000, nome, municipio, regiao, zona, natureza, situacao, endereco, funcionamento, ingresso, gratuidades, educativo, acervo, museologo, acessibilidade, historico, telefone, site,
                     lat: coords ? coords.lat : null, lng: coords ? coords.lng : null
                 });
             }
-            museumsData = cleanData; renderMuseums(museumsData);
+            museumsData = cleanData; 
+            currentFilteredData = cleanData; // Disponibiliza no Excel direto
+            renderMuseums(museumsData);
             document.getElementById('upload-status').className = 'alert alert-success small p-2 d-block w-50 mt-2';
             document.getElementById('upload-status').innerText = `Concluído! ${cleanData.length} lidos.`;
         }
