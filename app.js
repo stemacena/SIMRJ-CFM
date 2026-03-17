@@ -4,7 +4,7 @@ let markersArray = [];
 let infoWindow;
 let geocoder;
 let museumsData = [];
-let currentFilteredData = []; 
+let currentFilteredData = []; // Armazena os dados filtrados para gerar relatório XLS
 let pendingApprovals = [];
 let profileModal;
 let approvalModal;
@@ -29,6 +29,7 @@ try {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
 
+        // AUTH LISTENER
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 document.getElementById('nav-meu-perfil').classList.remove('d-none');
@@ -61,19 +62,20 @@ const RJ_BOUNDS = { north: -20.76, south: -23.39, west: -44.89, east: -40.96 };
 
 const allMunicipalitiesRJ = ["Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo", "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana", "Cabo Frio", "Cachoeiras de Macacu", "Cambuci", "Campos dos Goytacazes", "Cantagalo", "Carapebus", "Cardoso Moreira", "Carmo", "Casimiro de Abreu", "Comendador Levy Gasparian", "Conceição de Macabu", "Cordeiro", "Duas Barras", "Duque de Caxias", "Engenheiro Paulo de Frontin", "Guapimirim", "Iguaba Grande", "Itaboraí", "Itaguaí", "Italva", "Itaocara", "Itaperuna", "Itatiaia", "Japeri", "Laje do Muriaé", "Macaé", "Macuco", "Magé", "Mangaratiba", "Maricá", "Mendes", "Mesquita", "Miguel Pereira", "Miracema", "Natividade", "Nilópolis", "Niterói", "Nova Friburgo", "Nova Iguaçu", "Paracambi", "Paraíba do Sul", "Paraty", "Paty do Alferes", "Petrópolis", "Pinheiral", "Piraí", "Porciúncula", "Porto Real", "Quatis", "Queimados", "Quissamã", "Resende", "Rio Bonito", "Rio das Flores", "Rio das Ostras", "Rio de Janeiro", "Rio Claro", "Santa Maria Madalena", "Santo Antônio de Pádua", "São Fidélis", "São Francisco de Itabapoana", "São Gonçalo", "São João da Barra", "São João de Meriti", "São José de Ubá", "São José do Vale do Rio Preto", "São Pedro da Aldeia", "São Sebastião do Alto", "Sapucaia", "Saquarema", "Seropédica", "Silva Jardim", "Sumidouro", "Tanguá", "Teresópolis", "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", "Vassouras", "Volta Redonda"];
 
-// Dicionário Estrito de Bairros para identificar Zonas Ocultas
+// Dicionário Estrito de Bairros para Cruzamento Lógico
 const zonasRJ = {
-    "centro": ["centro", "lapa", "cidade nova", "gamboa", "saude", "santo cristo", "rio comprido", "catumbi", "estacio", "santa teresa", "sao cristovao", "benfica", "mangueira", "vasco da gama", "caju", "paqueta"],
+    "centro": ["centro", "lapa", "cidade nova", "gamboa", "saude", "santo cristo", "rio comprido", "catumbi", "estacio", "santa teresa", "sao cristovao", "imperial de sao cristovao", "benfica", "mangueira", "vasco da gama", "caju", "paqueta", "praca maua"],
     "sul": ["botafogo", "copacabana", "ipanema", "leblon", "leme", "urca", "flamengo", "gloria", "laranjeiras", "catete", "cosme velho", "humaita", "jardim botanico", "lagoa", "gavea", "sao conrado", "rocinha", "vidigal"],
-    "norte": ["tijuca", "vila isabel", "maracana", "grajau", "andarai", "engenho novo", "meier", "cachambi", "lins", "todos os santos", "engenho de dentro", "agua santa", "encantado", "piedade", "abolicao", "pilares", "madureira", "cascadura", "quintino", "cavalcanti", "engenheiro leal", "oswaldo cruz", "campinho", "vaz lobo", "turiacu", "rocha miranda", "honorio gurgel", "bento ribeiro", "marechal hermes", "guadalupe", "bonsucesso", "ramos", "olaria", "penha", "bras de pina", "cordovil", "parada de lucas", "vigario geral", "jardim america", "iraja", "vicente de carvalho", "vila kosmos", "colegio", "vista alegre", "pavuna", "rocha", "riachuelo", "sampaio", "sao francisco xavier", "jacare", "del castilho", "inhauma", "higienopolis", "maria da graca", "tomas coelho", "engenho da rainha", "ilha do governador", "galeao", "bancarios", "cacuia", "cocota", "pitangueiras", "praia da bandeira", "ribeira", "taua", "zumbi", "tubiacanga", "acari", "barros filho", "costa barros", "parque columbia", "parque anchieta", "anchieta", "ricardo de albuquerque", "alto da boa vista"],
-    "oeste": ["barra da tijuca", "recreio", "vargem grande", "vargem pequena", "jacarepagua", "anil", "cidade de deus", "curicica", "freguesia", "gardenia", "pechincha", "praca seca", "tanque", "taquara", "vila valqueire", "bangu", "padre miguel", "realengo", "magalhaes bastos", "sulacap", "deodoro", "campo grande", "senador camara", "senador vasconcelos", "santissimo", "cosmos", "paciencia", "santa cruz", "inhoaiba", "guaratiba", "sepetiba", "camorim", "joa", "itangaa", "vila militar", "gericino", "bairro das gracas"]
+    "norte": ["tijuca", "vila isabel", "maracana", "grajau", "andarai", "engenho novo", "meier", "cachambi", "lins", "todos os santos", "engenho de dentro", "agua santa", "encantado", "piedade", "abolicao", "pilares", "madureira", "cascadura", "quintino", "cavalcanti", "engenheiro leal", "oswaldo cruz", "campinho", "vaz lobo", "turiacu", "rocha miranda", "honorio gurgel", "bento ribeiro", "marechal hermes", "guadalupe", "bonsucesso", "ramos", "olaria", "penha", "bras de pina", "cordovil", "parada de lucas", "vigario geral", "jardim america", "iraja", "vicente de carvalho", "vila kosmos", "colegio", "vista alegre", "pavuna", "rocha", "riachuelo", "sampaio", "sao francisco xavier", "jacare", "del castilho", "inhauma", "higienopolis", "maria da graca", "tomas coelho", "engenho da rainha", "ilha do governador", "galeao", "bancarios", "cacuia", "cocota", "pitangueiras", "praia da bandeira", "ribeira", "taua", "zumbi", "tubiacanga", "acari", "barros filho", "costa barros", "parque columbia", "parque anchieta", "anchieta", "ricardo de albuquerque", "alto da boa vista", "praca da bandeira", "jacarezinho"],
+    "oeste": ["barra da tijuca", "recreio", "vargem grande", "vargem pequena", "jacarepagua", "anil", "cidade de deus", "curicica", "freguesia", "gardenia", "pechincha", "praca seca", "tanque", "taquara", "vila valqueire", "bangu", "padre miguel", "realengo", "magalhaes bastos", "sulacap", "deodoro", "campo grande", "senador camara", "senador vasconcelos", "santissimo", "cosmos", "paciencia", "santa cruz", "inhoaiba", "guaratiba", "sepetiba", "camorim", "joa", "itangaa", "vila militar", "gericino", "bairro das gracas", "barra de guaratiba", "pedra de guaratiba", "ilha de guaratiba"]
 };
 
 const normalizeString = (str) => { if(!str) return ""; return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); };
 
-// Função oculta que detecta a Zona na hora da leitura do banco/planilha
-function detectarZonaRJ(endereco, municipio, zonaPlanilha) {
+// Nova Lógica Mestra de Detecção de Zona
+function detectarZonaRJ(endereco, municipio, zonaPlanilha, bairroGoogle = "") {
     if (!municipio || !normalizeString(municipio).includes("rio de janeiro")) return "";
+
     let zNorm = normalizeString(zonaPlanilha);
     if (zNorm.includes("sul")) return "Sul";
     if (zNorm.includes("norte")) return "Norte";
@@ -81,17 +83,19 @@ function detectarZonaRJ(endereco, municipio, zonaPlanilha) {
     if (zNorm.includes("centro")) return "Centro";
 
     let endNorm = normalizeString(endereco);
+    let bGoogleNorm = normalizeString(bairroGoogle);
+
     for (let zona in zonasRJ) {
         let bairros = zonasRJ[zona];
         for (let bairro of bairros) {
-            // Regex \b garante que ache a palavra inteira (Impede "Riachuelo" de ativar "Riacho")
             let regex = new RegExp("\\b" + bairro + "\\b", "i");
-            if (regex.test(endNorm)) {
+            // Cruza o endereço bruto OU o bairro exato extraído pela inteligência do Google Maps
+            if (regex.test(endNorm) || (bGoogleNorm && regex.test(bGoogleNorm))) {
                 return zona.charAt(0).toUpperCase() + zona.slice(1);
             }
         }
     }
-    return "";
+    return ""; // Sem zona
 }
 
 function initMapSystem() {
@@ -118,9 +122,7 @@ function initMapSystem() {
 function geocodeAddressGoogle(endereco, municipio) {
     return new Promise((resolve) => {
         if (!municipio) return resolve(null);
-        if (normalizeString(endereco).includes("virtual") || normalizeString(municipio).includes("virtual")) {
-            return resolve(null);
-        }
+        if (normalizeString(endereco).includes("virtual") || normalizeString(municipio).includes("virtual")) return resolve(null);
 
         let queryMunicipio = `${endereco}, ${municipio}, RJ, Brasil`;
         geocoder.geocode({ 
@@ -130,6 +132,7 @@ function geocodeAddressGoogle(endereco, municipio) {
             if (status === 'OK' && res[0]) {
                 let cityMatch = false;
                 let targetMunNorm = normalizeString(municipio);
+                let bairroEncontrado = "";
                 
                 res[0].address_components.forEach(comp => {
                     if(comp.types.includes("locality") || comp.types.includes("administrative_area_level_2")) {
@@ -138,9 +141,15 @@ function geocodeAddressGoogle(endereco, municipio) {
                             cityMatch = true;
                         }
                     }
+                    // O Google Maps nos diz qual é o bairro real da rua
+                    if(comp.types.includes("sublocality") || comp.types.includes("sublocality_level_1") || comp.types.includes("neighborhood")) {
+                        bairroEncontrado = normalizeString(comp.long_name);
+                    }
                 });
                 
-                if(cityMatch) return resolve({ lat: res[0].geometry.location.lat(), lng: res[0].geometry.location.lng() });
+                if(cityMatch) {
+                    return resolve({ lat: res[0].geometry.location.lat(), lng: res[0].geometry.location.lng(), bairro: bairroEncontrado });
+                }
             }
             resolve(null);
         });
@@ -164,7 +173,7 @@ window.showPlaceholder = function(titleText) {
     document.getElementById('construcao-title').innerText = titleText;
 }
 
-// --- FIREBASE AUTHENTICATION ---
+// --- FIREBASE AUTHENTICATION E REGISTRO ---
 window.signInWithGoogle = function() {
     if(typeof firebase === 'undefined' || !db) return alert("Banco de dados indisponível.");
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -175,6 +184,7 @@ window.registerWithEmail = function() {
     const nome = document.getElementById('regUserName').value;
     const email = document.getElementById('regEmail').value;
     const pass = document.getElementById('regPassword').value;
+    
     if(!nome) return alert("Por favor, preencha o seu Nome Completo.");
     if(!email || pass.length < 6) return alert("Insira um email válido e uma senha de no mínimo 6 caracteres.");
     
@@ -217,7 +227,6 @@ window.submitMuseumRegistration = function() {
     let turnos = Array.from(document.querySelectorAll('.chk-turno:checked')).map(e => e.value).join(', ');
     let stringFuncionamento = (dias && turnos) ? `${dias} - ${turnos}` : (dias || turnos || "Não informado");
     
-    // Calcula a zona do Rio automaticamente antes de subir
     let zonaCalculada = detectarZonaRJ(endereco, municipio, "");
 
     const req = {
@@ -293,7 +302,7 @@ window.filterList = function() {
     rows.forEach(row => { row.style.display = normalizeString(row.querySelector('.td-nome').innerText).includes(input) ? '' : 'none'; });
 }
 
-// --- FILTROS E LÓGICA DE ZONAS ---
+// --- FILTROS ---
 function getCheckedValues(className) { return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value)); }
 
 window.applyFilters = function() {
@@ -302,7 +311,8 @@ window.applyFilters = function() {
     const selectedMuni = normalizeString(document.getElementById('filterMunicipio').value);
     const regions = getCheckedValues('filter-region'); const natures = getCheckedValues('filter-nature'); 
     const acervos = getCheckedValues('filter-acervo'); const statusList = getCheckedValues('filter-status'); 
-    const turnos = getCheckedValues('filter-func'); const costs = getCheckedValues('filter-cost'); const zonas = getCheckedValues('filter-zona'); 
+    const turnos = getCheckedValues('filter-func'); const costs = getCheckedValues('filter-cost'); 
+    const zonas = getCheckedValues('filter-zona'); 
     const reqMuseologo = document.getElementById('checkMuseologo').checked; const reqEdu = document.getElementById('checkEdu').checked;
 
     const matchExactPart = (fieldString, filterArray) => {
@@ -331,9 +341,10 @@ window.applyFilters = function() {
         if (reqMuseologo && normalizeString(m.museologo) !== "sim") return false;
         if (reqEdu && normalizeString(m.educativo) !== "sim") return false;
 
+        // Se marcou algum filtro de Zona
         if (zonas.length > 0) {
-            if (!mMuni.includes("rio de janeiro")) return false; 
-            if (!zonas.some(z => mZona === z)) return false; // Match exato com a zona calculada internamente
+            if (!mMuni.includes("rio de janeiro")) return false; // Bloqueia museus fora da capital
+            if (!zonas.some(z => mZona === z)) return false; // Match exato com a zona calculada inteligentemente
         }
         return true;
     });
@@ -348,64 +359,6 @@ window.resetFilters = function() {
     currentFilteredData = museumsData;
     renderMuseums(museumsData);
 }
-
-// --- EXPORTAR RELATÓRIO PARA EXCEL (XLS NATIVO E 100% PADRONIZADO) ---
-window.exportRelatorio = function() {
-    if (!currentFilteredData || currentFilteredData.length === 0) return alert("Nenhum dado encontrado para exportar.");
-
-    let tableHTML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head><meta charset="UTF-8"></head>
-    <body><table border="1"><thead><tr>
-        <th style="background-color: #0034bb; color: white;">Nº CFM</th>
-        <th style="background-color: #0034bb; color: white;">Nome da Instituição</th>
-        <th style="background-color: #0034bb; color: white;">Sigla</th>
-        <th style="background-color: #0034bb; color: white;">CNPJ</th>
-        <th style="background-color: #0034bb; color: white;">Endereço</th>
-        <th style="background-color: #0034bb; color: white;">Município</th>
-        <th style="background-color: #0034bb; color: white;">Região</th>
-        <th style="background-color: #0034bb; color: white;">Telefone Institucional</th>
-        <th style="background-color: #0034bb; color: white;">E-mail Institucional</th>
-        <th style="background-color: #0034bb; color: white;">Site</th>
-        <th style="background-color: #0034bb; color: white;">Facebook</th>
-        <th style="background-color: #0034bb; color: white;">Instagram</th>
-        <th style="background-color: #0034bb; color: white;">Twitter</th>
-        <th style="background-color: #0034bb; color: white;">Natureza Administrativa do Museu</th>
-        <th style="background-color: #0034bb; color: white;">Documento de Criação</th>
-        <th style="background-color: #0034bb; color: white;">Situação</th>
-        <th style="background-color: #0034bb; color: white;">Funcionamento</th>
-        <th style="background-color: #0034bb; color: white;">Valor ingresso</th>
-        <th style="background-color: #0034bb; color: white;">Gratuidades</th>
-        <th style="background-color: #0034bb; color: white;">Setor Educativo</th>
-        <th style="background-color: #0034bb; color: white;">Acervo Predominante</th>
-        <th style="background-color: #0034bb; color: white;">Museólogo</th>
-        <th style="background-color: #0034bb; color: white;">Acessibilidade</th>
-        <th style="background-color: #0034bb; color: white;">Histórico</th>
-        <th style="background-color: #0034bb; color: white;">Responsável pelo Cadastro</th>
-        <th style="background-color: #0034bb; color: white;">Data Cadastro</th>
-        <th style="background-color: #0034bb; color: white;">Certificado enviado</th>
-        <th style="background-color: #006666; color: white;">Zona (Campo Extra)</th>
-    </tr></thead><tbody>`;
-
-    currentFilteredData.forEach(m => {
-        tableHTML += `<tr>
-            <td>${m.id_cfm || ''}</td><td>${m.nome || ''}</td><td>${m.sigla || ''}</td><td>${m.cnpj || ''}</td>
-            <td>${m.endereco || ''}</td><td>${m.municipio || ''}</td><td>${m.regiao || ''}</td><td>${m.telefone_institucional || ''}</td>
-            <td>${m.email_institucional || ''}</td><td>${m.site || ''}</td><td>${m.facebook || ''}</td><td>${m.instagram || ''}</td>
-            <td>${m.twitter || ''}</td><td>${m.natureza || ''}</td><td>${m.documento_criacao || ''}</td><td>${m.situacao || ''}</td>
-            <td>${m.funcionamento || ''}</td><td>${m.ingresso || ''}</td><td>${m.gratuidades || ''}</td><td>${m.educativo || ''}</td>
-            <td>${m.acervo || ''}</td><td>${m.museologo || ''}</td><td>${m.acessibilidade || ''}</td><td>${m.historico || ''}</td>
-            <td>${m.responsavel_cadastro || ''}</td><td>${m.data_cadastro || ''}</td><td>${m.certificado_enviado || ''}</td><td>${m.zona || ''}</td>
-        </tr>`;
-    });
-
-    tableHTML += `</tbody></table></body></html>`;
-
-    const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "Relatorio_Filtro_SIMRJ_Oficial.xls";
-    link.click();
-};
 
 // --- FICHA DO MUSEU ---
 window.openProfile = function(id) {
@@ -430,7 +383,6 @@ window.openProfile = function(id) {
     document.getElementById('modalIngresso').innerHTML = val(m.ingresso);
     document.getElementById('modalGratuidade').innerHTML = val(m.gratuidades);
     document.getElementById('modalAcervo').innerHTML = val(m.acervo);
-    
     document.getElementById('modalMuseologoStatus').innerHTML = val(m.museologo);
     document.getElementById('modalEducativo').innerHTML = val(m.educativo);
     document.getElementById('modalAcessibilidade').innerHTML = val(m.acessibilidade);
@@ -441,6 +393,7 @@ window.openProfile = function(id) {
 // --- ADMIN E GESTÃO ---
 window.openLogin = function() { document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
+
 window.checkAdminPassword = function() {
     if(document.getElementById('adminPassword').value === 'simrj') { 
         document.getElementById('admin-panel').style.display = 'block'; 
@@ -476,7 +429,12 @@ window.approveRequest = async function(id) {
     let isVirtual = normalizeString(approvedMuseum.acervo).includes("virtual") || normalizeString(approvedMuseum.endereco).includes("virtual") || normalizeString(approvedMuseum.natureza).includes("virtual");
     let coords = null;
     if(!isVirtual) coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio);
-    approvedMuseum.lat = coords ? coords.lat : null; approvedMuseum.lng = coords ? coords.lng : null;
+    
+    // Atualiza a zona ao aprovar com a inteligência do Google Maps
+    approvedMuseum.zona = detectarZonaRJ(approvedMuseum.endereco, approvedMuseum.municipio, approvedMuseum.zona, coords ? coords.bairro : "");
+    approvedMuseum.lat = coords ? coords.lat : null; 
+    approvedMuseum.lng = coords ? coords.lng : null;
+    
     pendingApprovals.splice(reqIndex, 1); museumsData.push(approvedMuseum);
     if(approvalModal) approvalModal.hide(); renderApprovalsList(); renderMuseums(museumsData); alert(`${approvedMuseum.nome} aprovado com sucesso!`);
 }
@@ -489,8 +447,8 @@ window.submitAdminManual = async function() {
     const municipio = document.getElementById('admMunicipio').value;
     if(!nome) return alert("O Nome da Instituição é obrigatório.");
 
-    let zonaCalculada = detectarZonaRJ(endereco, municipio, "");
     let coords = await geocodeAddressGoogle(endereco, municipio);
+    let zonaCalculada = detectarZonaRJ(endereco, municipio, "", coords ? coords.bairro : "");
 
     const manualMuseum = {
         id: Date.now(), id_cfm: document.getElementById('admCfm').value, nome: nome, sigla: document.getElementById('admSigla').value,
@@ -515,7 +473,7 @@ window.submitAdminManual = async function() {
     document.querySelectorAll('.admin-form-container select').forEach(el => el.selectedIndex = 0);
 }
 
-// --- UPLOAD CSV ---
+// --- UPLOAD CSV E EXCEL ---
 const getCol = (row, possibleNames) => {
     for (let name of possibleNames) {
         for (let key in row) {
@@ -580,12 +538,14 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                 
                 let isVirtual = normalizeString(acervo).includes("virtual") || normalizeString(endereco).includes("virtual") || normalizeString(natureza).includes("virtual");
                 let coords = null;
-                let zonaCalculada = detectarZonaRJ(endereco, municipio, zonaBruta);
 
                 if (!isVirtual && endereco && municipio) {
                     coords = await geocodeAddressGoogle(endereco, municipio);
                     await sleep(50); 
                 }
+
+                // O Dicionário trabalha em conjunto com a API do Google para definir a Zona
+                let zonaCalculada = detectarZonaRJ(endereco, municipio, zonaBruta, coords ? coords.bairro : "");
 
                 cleanData.push({
                     id: i + 2000, id_cfm: id_cfm, nome: nome, sigla: sigla, cnpj: cnpj, endereco: endereco, municipio: municipio, 
@@ -631,5 +591,10 @@ window.searchAddressOnAdminMap = function() {
 window.saveAdminPin = function() {
     if (!adminTempMarker) return alert("Clique no mapa.");
     const m = museumsData.find(x => x.id === currentMappingId);
-    if(m) { m.lat = adminTempMarker.getPosition().lat(); m.lng = adminTempMarker.getPosition().lng(); renderMuseums(museumsData); bootstrap.Modal.getInstance(document.getElementById('adminMapModal')).hide(); }
+    if(m) { 
+        m.lat = adminTempMarker.getPosition().lat(); 
+        m.lng = adminTempMarker.getPosition().lng(); 
+        renderMuseums(museumsData); 
+        bootstrap.Modal.getInstance(document.getElementById('adminMapModal')).hide(); 
+    }
 }
