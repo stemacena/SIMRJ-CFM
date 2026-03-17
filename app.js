@@ -4,7 +4,7 @@ let markersArray = [];
 let infoWindow;
 let geocoder;
 let museumsData = [];
-let currentFilteredData = []; // Armazena os dados filtrados para gerar relatório XLS
+let currentFilteredData = []; 
 let pendingApprovals = [];
 let profileModal;
 let approvalModal;
@@ -13,7 +13,7 @@ let approvalModal;
 // 1. CONFIGURAÇÃO FIREBASE
 // =====================================================================
 const firebaseConfig = {
-    apiKey: "AIzaSyBm0bjZc1OzDI6kBOEiJJNRaayxPCt-j1E",
+     apiKey: "AIzaSyBm0bjZc1OzDI6kBOEiJJNRaayxPCt-j1E",
     authDomain: "bd-ecoa.firebaseapp.com",
     databaseURL: "https://bd-ecoa-default-rtdb.firebaseio.com",
     projectId: "bd-ecoa",
@@ -29,7 +29,6 @@ try {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
 
-        // AUTH LISTENER
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 document.getElementById('nav-meu-perfil').classList.remove('d-none');
@@ -56,13 +55,13 @@ try {
 } catch (error) { console.error("Erro Firebase:", error); }
 
 // =====================================================================
-// 2. CONFIGURAÇÃO GOOGLE MAPS, LIMITES E DICIONÁRIOS DE ZONAS
+// 2. CONFIGURAÇÃO GOOGLE MAPS E DICIONÁRIO DE ZONAS
 // =====================================================================
 const RJ_BOUNDS = { north: -20.76, south: -23.39, west: -44.89, east: -40.96 };
 
 const allMunicipalitiesRJ = ["Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo", "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana", "Cabo Frio", "Cachoeiras de Macacu", "Cambuci", "Campos dos Goytacazes", "Cantagalo", "Carapebus", "Cardoso Moreira", "Carmo", "Casimiro de Abreu", "Comendador Levy Gasparian", "Conceição de Macabu", "Cordeiro", "Duas Barras", "Duque de Caxias", "Engenheiro Paulo de Frontin", "Guapimirim", "Iguaba Grande", "Itaboraí", "Itaguaí", "Italva", "Itaocara", "Itaperuna", "Itatiaia", "Japeri", "Laje do Muriaé", "Macaé", "Macuco", "Magé", "Mangaratiba", "Maricá", "Mendes", "Mesquita", "Miguel Pereira", "Miracema", "Natividade", "Nilópolis", "Niterói", "Nova Friburgo", "Nova Iguaçu", "Paracambi", "Paraíba do Sul", "Paraty", "Paty do Alferes", "Petrópolis", "Pinheiral", "Piraí", "Porciúncula", "Porto Real", "Quatis", "Queimados", "Quissamã", "Resende", "Rio Bonito", "Rio das Flores", "Rio das Ostras", "Rio de Janeiro", "Rio Claro", "Santa Maria Madalena", "Santo Antônio de Pádua", "São Fidélis", "São Francisco de Itabapoana", "São Gonçalo", "São João da Barra", "São João de Meriti", "São José de Ubá", "São José do Vale do Rio Preto", "São Pedro da Aldeia", "São Sebastião do Alto", "Sapucaia", "Saquarema", "Seropédica", "Silva Jardim", "Sumidouro", "Tanguá", "Teresópolis", "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", "Vassouras", "Volta Redonda"];
 
-// Dicionário Interno de Bairros para identificar as Zonas da Capital Automaticamente
+// Dicionário Estrito de Bairros para identificar Zonas Ocultas
 const zonasRJ = {
     "centro": ["centro", "lapa", "cidade nova", "gamboa", "saude", "santo cristo", "rio comprido", "catumbi", "estacio", "santa teresa", "sao cristovao", "benfica", "mangueira", "vasco da gama", "caju", "paqueta"],
     "sul": ["botafogo", "copacabana", "ipanema", "leblon", "leme", "urca", "flamengo", "gloria", "laranjeiras", "catete", "cosme velho", "humaita", "jardim botanico", "lagoa", "gavea", "sao conrado", "rocinha", "vidigal"],
@@ -71,6 +70,29 @@ const zonasRJ = {
 };
 
 const normalizeString = (str) => { if(!str) return ""; return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); };
+
+// Função oculta que detecta a Zona na hora da leitura do banco/planilha
+function detectarZonaRJ(endereco, municipio, zonaPlanilha) {
+    if (!municipio || !normalizeString(municipio).includes("rio de janeiro")) return "";
+    let zNorm = normalizeString(zonaPlanilha);
+    if (zNorm.includes("sul")) return "Sul";
+    if (zNorm.includes("norte")) return "Norte";
+    if (zNorm.includes("oeste")) return "Oeste";
+    if (zNorm.includes("centro")) return "Centro";
+
+    let endNorm = normalizeString(endereco);
+    for (let zona in zonasRJ) {
+        let bairros = zonasRJ[zona];
+        for (let bairro of bairros) {
+            // Regex \b garante que ache a palavra inteira (Impede "Riachuelo" de ativar "Riacho")
+            let regex = new RegExp("\\b" + bairro + "\\b", "i");
+            if (regex.test(endNorm)) {
+                return zona.charAt(0).toUpperCase() + zona.slice(1);
+            }
+        }
+    }
+    return "";
+}
 
 function initMapSystem() {
     geocoder = new google.maps.Geocoder();
@@ -118,9 +140,7 @@ function geocodeAddressGoogle(endereco, municipio) {
                     }
                 });
                 
-                if(cityMatch) {
-                    return resolve({ lat: res[0].geometry.location.lat(), lng: res[0].geometry.location.lng() });
-                }
+                if(cityMatch) return resolve({ lat: res[0].geometry.location.lat(), lng: res[0].geometry.location.lng() });
             }
             resolve(null);
         });
@@ -144,27 +164,22 @@ window.showPlaceholder = function(titleText) {
     document.getElementById('construcao-title').innerText = titleText;
 }
 
-// --- FIREBASE AUTHENTICATION E REGISTRO ---
+// --- FIREBASE AUTHENTICATION ---
 window.signInWithGoogle = function() {
     if(typeof firebase === 'undefined' || !db) return alert("Banco de dados indisponível.");
     const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider).catch(error => {
-        document.getElementById('loginErrorMsg').innerText = `Falha no login: ${error.message}`;
-    });
+    firebase.auth().signInWithPopup(provider).catch(error => { document.getElementById('loginErrorMsg').innerText = `Falha no login: ${error.message}`; });
 }
 
 window.registerWithEmail = function() {
     const nome = document.getElementById('regUserName').value;
     const email = document.getElementById('regEmail').value;
     const pass = document.getElementById('regPassword').value;
-    
     if(!nome) return alert("Por favor, preencha o seu Nome Completo.");
     if(!email || pass.length < 6) return alert("Insira um email válido e uma senha de no mínimo 6 caracteres.");
     
     firebase.auth().createUserWithEmailAndPassword(email, pass)
-        .then((userCredential) => {
-            return userCredential.user.updateProfile({ displayName: nome });
-        })
+        .then((userCredential) => userCredential.user.updateProfile({ displayName: nome }))
         .then(() => alert("Conta criada com sucesso! Você já está conectado."))
         .catch(err => document.getElementById('loginErrorMsg').innerText = `Erro: ${err.message}`);
 }
@@ -177,11 +192,7 @@ window.loginWithEmail = function() {
         .catch(err => document.getElementById('loginErrorMsg').innerText = "Usuário ou senha incorretos.");
 }
 
-window.logoutUser = function() {
-    firebase.auth().signOut().then(() => {
-        switchView('home'); alert("Desconectado com sucesso.");
-    });
-}
+window.logoutUser = function() { firebase.auth().signOut().then(() => { switchView('home'); alert("Desconectado com sucesso."); }); }
 
 // --- WIZARD FORM ---
 window.nextStep = function(step) {
@@ -193,70 +204,52 @@ window.nextStep = function(step) {
 }
 window.prevStep = function(step) { nextStep(step); }
 
-// --- ENVIAR FICHA DE CADASTRO ---
+// --- ENVIAR FICHA DE CADASTRO (PÚBLICO) ---
 window.submitMuseumRegistration = function() {
     const nome = document.getElementById('regNome').value;
     const endereco = document.getElementById('regEndereco').value;
     const municipio = document.getElementById('regMuni').value;
-    
     if(!nome || !endereco || !municipio) return alert("Preencha Nome, Município e Endereço na Etapa 2.");
 
     const email = document.getElementById('perfil-email').innerText;
     const responsavelNome = document.getElementById('perfil-nome').innerText;
-
     let dias = Array.from(document.querySelectorAll('.chk-dia:checked')).map(e => e.value).join(', ');
     let turnos = Array.from(document.querySelectorAll('.chk-turno:checked')).map(e => e.value).join(', ');
-    let stringFuncionamento = "";
-    if(dias && turnos) stringFuncionamento = `${dias} - ${turnos}`;
-    else if(dias || turnos) stringFuncionamento = dias || turnos;
-    else stringFuncionamento = "Não informado";
+    let stringFuncionamento = (dias && turnos) ? `${dias} - ${turnos}` : (dias || turnos || "Não informado");
+    
+    // Calcula a zona do Rio automaticamente antes de subir
+    let zonaCalculada = detectarZonaRJ(endereco, municipio, "");
 
     const req = {
-        id: Date.now(),
-        email_responsavel: email,
-        nome_responsavel: responsavelNome, 
-        nome: nome,
-        sigla: document.getElementById('regSigla').value,
-        cnpj: document.getElementById('regCnpj').value,
-        documento_criacao: document.getElementById('regDoc').value,
-        municipio: municipio,
-        endereco: endereco,
-        regiao: document.getElementById('regRegiao').value,
-        natureza: document.getElementById('regNatureza').value,
-        telefone: document.getElementById('regTel').value,
-        site: document.getElementById('regSite').value,
-        instagram: document.getElementById('regInsta').value,
-        situacao: document.getElementById('regStatus').value,
-        funcionamento: stringFuncionamento, 
-        ingresso: document.getElementById('regIngresso').value,
-        acervo: document.getElementById('regAcervo').value,
-        museologo: document.getElementById('regMus').value,
-        educativo: document.getElementById('regEdu').value,
-        acessibilidade: document.getElementById('regAccess').value,
-        gratuidades: document.getElementById('regGrat').value,
-        historico: document.getElementById('regHist').value,
-        zona: "", 
-        lat: null, lng: null
+        id: Date.now(), id_cfm: document.getElementById('regIdCfm').value || "", nome: nome, sigla: document.getElementById('regSigla').value,
+        cnpj: document.getElementById('regCnpj').value, documento_criacao: document.getElementById('regDoc').value,
+        municipio: municipio, endereco: endereco, regiao: document.getElementById('regRegiao').value,
+        natureza: document.getElementById('regNatureza').value, telefone_institucional: document.getElementById('regTel').value,
+        email_institucional: document.getElementById('regEmailInst').value, site: document.getElementById('regSite').value,
+        facebook: document.getElementById('regFace').value, instagram: document.getElementById('regInsta').value, twitter: document.getElementById('regTwitter').value,
+        situacao: document.getElementById('regStatus').value, funcionamento: stringFuncionamento, 
+        ingresso: document.getElementById('regIngresso').value, acervo: document.getElementById('regAcervo').value,
+        museologo: document.getElementById('regMus').value, educativo: document.getElementById('regEdu').value,
+        acessibilidade: document.getElementById('regAccess').value, gratuidades: document.getElementById('regGrat').value,
+        historico: document.getElementById('regHist').value, responsavel_cadastro: responsavelNome, email_responsavel: email,
+        data_cadastro: new Date().toLocaleDateString('pt-BR'), certificado_enviado: "Não",
+        zona: zonaCalculada, lat: null, lng: null
     };
 
     pendingApprovals.push(req);
     if(db) db.collection("requisicoes").add(req).catch(e => console.error("Erro DB", e));
 
     alert("Ficha registrada com sucesso!\nSua requisição foi enviada para a equipe do SIM-RJ.");
-    
-    document.querySelectorAll('.wizard-container input[type="text"], .wizard-container input[type="email"], .wizard-container input[type="password"], .wizard-container textarea').forEach(el => el.value = '');
+    document.querySelectorAll('.wizard-container input, .wizard-container textarea').forEach(el => el.value = '');
     document.querySelectorAll('.wizard-container select').forEach(el => el.selectedIndex = 0);
     document.querySelectorAll('.wizard-container input[type="checkbox"]').forEach(el => el.checked = false);
-    
-    switchView('meu-perfil');
-    renderApprovalsList(); 
+    switchView('meu-perfil'); renderApprovalsList(); 
 }
 
 // --- RENDERIZAR MAPA E LISTA ---
 function renderMuseums(data) {
     const listContainer = document.getElementById('museum-list');
     const tableContainer = document.getElementById('container-lista-museus');
-    
     if(listContainer) listContainer.innerHTML = '';
     if(tableContainer) tableContainer.innerHTML = '';
     
@@ -268,7 +261,6 @@ function renderMuseums(data) {
 
     data.forEach(museum => {
         const hasPin = museum.lat && museum.lng; 
-        
         if(listContainer) {
             const card = document.createElement('div');
             card.className = 'col-md-6 mb-3';
@@ -298,31 +290,20 @@ function renderMuseums(data) {
 window.filterList = function() {
     let input = normalizeString(document.getElementById('searchLista').value);
     let rows = document.querySelectorAll('.tr-lista-item');
-    rows.forEach(row => {
-        let nome = normalizeString(row.querySelector('.td-nome').innerText);
-        row.style.display = nome.includes(input) ? '' : 'none';
-    });
+    rows.forEach(row => { row.style.display = normalizeString(row.querySelector('.td-nome').innerText).includes(input) ? '' : 'none'; });
 }
 
-// --- FILTROS (LÓGICA BLINDADA COM DICIONÁRIO DE ZONAS) ---
+// --- FILTROS E LÓGICA DE ZONAS ---
 function getCheckedValues(className) { return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value)); }
 
 window.applyFilters = function() {
     const term = normalizeString(document.getElementById('searchName').value);
     const filterHasMap = document.getElementById('filterHasMap').value;
     const selectedMuni = normalizeString(document.getElementById('filterMunicipio').value);
-    const regions = getCheckedValues('filter-region'); 
-    const natures = getCheckedValues('filter-nature'); 
-    const acervos = getCheckedValues('filter-acervo'); 
-    const statusList = getCheckedValues('filter-status'); 
-    const turnos = getCheckedValues('filter-func'); 
-    const costs = getCheckedValues('filter-cost');
-    const zonas = getCheckedValues('filter-zona'); 
-    
-    const reqMuseologo = document.getElementById('checkMuseologo').checked; 
-    const reqEdu = document.getElementById('checkEdu').checked;
-    const textGratuidade = normalizeString(document.getElementById('searchGratuidade').value); 
-    const textAccess = normalizeString(document.getElementById('searchAccess').value);
+    const regions = getCheckedValues('filter-region'); const natures = getCheckedValues('filter-nature'); 
+    const acervos = getCheckedValues('filter-acervo'); const statusList = getCheckedValues('filter-status'); 
+    const turnos = getCheckedValues('filter-func'); const costs = getCheckedValues('filter-cost'); const zonas = getCheckedValues('filter-zona'); 
+    const reqMuseologo = document.getElementById('checkMuseologo').checked; const reqEdu = document.getElementById('checkEdu').checked;
 
     const matchExactPart = (fieldString, filterArray) => {
         if (filterArray.length === 0) return true;
@@ -332,17 +313,9 @@ window.applyFilters = function() {
     };
 
     const filtered = museumsData.filter(m => {
-        const mNome = normalizeString(m.nome); 
-        const mMuni = normalizeString(m.municipio); 
-        const mRegiao = normalizeString(m.regiao); 
-        const mNat = normalizeString(m.natureza); 
-        const mAcervo = normalizeString(m.acervo); 
-        const mStatus = normalizeString(m.situacao); 
-        const mCost = normalizeString(m.ingresso); 
-        const mGrat = normalizeString(m.gratuidades); 
-        const mAcc = normalizeString(m.acessibilidade);
-        const mZona = normalizeString(m.zona);
-        const mEndereco = normalizeString(m.endereco);
+        const mNome = normalizeString(m.nome); const mMuni = normalizeString(m.municipio); const mRegiao = normalizeString(m.regiao); 
+        const mNat = normalizeString(m.natureza); const mAcervo = normalizeString(m.acervo); const mStatus = normalizeString(m.situacao); 
+        const mCost = normalizeString(m.ingresso); const mZona = normalizeString(m.zona);
 
         if (term && !mNome.includes(term)) return false;
         if (filterHasMap === 'sim' && (!m.lat || !m.lng)) return false;
@@ -354,39 +327,18 @@ window.applyFilters = function() {
         if (acervos.length > 0 && !matchExactPart(mAcervo, acervos)) return false;
         if (statusList.length > 0 && !matchExactPart(mStatus, statusList)) return false;
         if (costs.length > 0 && !matchExactPart(mCost, costs)) return false;
-        
-        if (turnos.length > 0) { const funcText = normalizeString(m.funcionamento); if (!turnos.some(t => funcText.includes(t))) return false; }
+        if (turnos.length > 0 && !turnos.some(t => normalizeString(m.funcionamento).includes(t))) return false;
         if (reqMuseologo && normalizeString(m.museologo) !== "sim") return false;
         if (reqEdu && normalizeString(m.educativo) !== "sim") return false;
-        if (textGratuidade && !mGrat.includes(textGratuidade)) return false;
-        if (textAccess && !mAcc.includes(textAccess)) return false;
 
-        // LÓGICA DE ZONAS INTELIGENTE (Cruza com Dicionário de Bairros)
         if (zonas.length > 0) {
-            // Regra 1: Só entra no filtro de zonas se a instituição for na capital
             if (!mMuni.includes("rio de janeiro")) return false; 
-            
-            let matchedZona = false;
-            for (let z of zonas) {
-                // Checa se a zona foi digitada na planilha ou no endereço
-                if (mZona.includes(z) || mEndereco.includes("zona " + z) || mEndereco.includes(z + " da cidade")) {
-                    matchedZona = true;
-                    break;
-                }
-                // Checa no dicionário se o bairro do endereço pertence a essa zona
-                let bairrosDaZona = zonasRJ[z] || [];
-                if (bairrosDaZona.some(bairro => mEndereco.includes(bairro))) {
-                    matchedZona = true;
-                    break;
-                }
-            }
-            if (!matchedZona) return false;
+            if (!zonas.some(z => mZona === z)) return false; // Match exato com a zona calculada internamente
         }
-
         return true;
     });
 
-    currentFilteredData = filtered; // Salva o resultado globalmente para o relatório Excel
+    currentFilteredData = filtered; 
     renderMuseums(filtered);
 }
 
@@ -397,64 +349,62 @@ window.resetFilters = function() {
     renderMuseums(museumsData);
 }
 
-// --- EXPORTAR RELATÓRIO PARA EXCEL (XLS NATIVO E FORMATADO) ---
+// --- EXPORTAR RELATÓRIO PARA EXCEL (XLS NATIVO E 100% PADRONIZADO) ---
 window.exportRelatorio = function() {
-    if (!currentFilteredData || currentFilteredData.length === 0) {
-        return alert("Nenhum dado encontrado para exportar.");
-    }
+    if (!currentFilteredData || currentFilteredData.length === 0) return alert("Nenhum dado encontrado para exportar.");
 
     let tableHTML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="UTF-8"></head>
     <body><table border="1"><thead><tr>
-        <th style="background-color: #0034bb; color: white;">Nome da Instituicao</th>
-        <th style="background-color: #0034bb; color: white;">Municipio</th>
-        <th style="background-color: #0034bb; color: white;">Regiao</th>
-        <th style="background-color: #0034bb; color: white;">Zona</th>
-        <th style="background-color: #0034bb; color: white;">Natureza Administrativa</th>
-        <th style="background-color: #0034bb; color: white;">Situacao</th>
-        <th style="background-color: #0034bb; color: white;">Endereco</th>
+        <th style="background-color: #0034bb; color: white;">Nº CFM</th>
+        <th style="background-color: #0034bb; color: white;">Nome da Instituição</th>
+        <th style="background-color: #0034bb; color: white;">Sigla</th>
+        <th style="background-color: #0034bb; color: white;">CNPJ</th>
+        <th style="background-color: #0034bb; color: white;">Endereço</th>
+        <th style="background-color: #0034bb; color: white;">Município</th>
+        <th style="background-color: #0034bb; color: white;">Região</th>
+        <th style="background-color: #0034bb; color: white;">Telefone Institucional</th>
+        <th style="background-color: #0034bb; color: white;">E-mail Institucional</th>
+        <th style="background-color: #0034bb; color: white;">Site</th>
+        <th style="background-color: #0034bb; color: white;">Facebook</th>
+        <th style="background-color: #0034bb; color: white;">Instagram</th>
+        <th style="background-color: #0034bb; color: white;">Twitter</th>
+        <th style="background-color: #0034bb; color: white;">Natureza Administrativa do Museu</th>
+        <th style="background-color: #0034bb; color: white;">Documento de Criação</th>
+        <th style="background-color: #0034bb; color: white;">Situação</th>
         <th style="background-color: #0034bb; color: white;">Funcionamento</th>
-        <th style="background-color: #0034bb; color: white;">Valor do Ingresso</th>
+        <th style="background-color: #0034bb; color: white;">Valor ingresso</th>
         <th style="background-color: #0034bb; color: white;">Gratuidades</th>
         <th style="background-color: #0034bb; color: white;">Setor Educativo</th>
         <th style="background-color: #0034bb; color: white;">Acervo Predominante</th>
-        <th style="background-color: #0034bb; color: white;">Museologo</th>
+        <th style="background-color: #0034bb; color: white;">Museólogo</th>
         <th style="background-color: #0034bb; color: white;">Acessibilidade</th>
-        <th style="background-color: #0034bb; color: white;">Telefone</th>
-        <th style="background-color: #0034bb; color: white;">Site</th>
+        <th style="background-color: #0034bb; color: white;">Histórico</th>
+        <th style="background-color: #0034bb; color: white;">Responsável pelo Cadastro</th>
+        <th style="background-color: #0034bb; color: white;">Data Cadastro</th>
+        <th style="background-color: #0034bb; color: white;">Certificado enviado</th>
+        <th style="background-color: #006666; color: white;">Zona (Campo Extra)</th>
     </tr></thead><tbody>`;
 
     currentFilteredData.forEach(m => {
         tableHTML += `<tr>
-            <td>${m.nome || ''}</td>
-            <td>${m.municipio || ''}</td>
-            <td>${m.regiao || ''}</td>
-            <td>${m.zona || ''}</td>
-            <td>${m.natureza || ''}</td>
-            <td>${m.situacao || ''}</td>
-            <td>${m.endereco || ''}</td>
-            <td>${m.funcionamento || ''}</td>
-            <td>${m.ingresso || ''}</td>
-            <td>${m.gratuidades || ''}</td>
-            <td>${m.educativo || ''}</td>
-            <td>${m.acervo || ''}</td>
-            <td>${m.museologo || ''}</td>
-            <td>${m.acessibilidade || ''}</td>
-            <td>${m.telefone || ''}</td>
-            <td>${m.site || ''}</td>
+            <td>${m.id_cfm || ''}</td><td>${m.nome || ''}</td><td>${m.sigla || ''}</td><td>${m.cnpj || ''}</td>
+            <td>${m.endereco || ''}</td><td>${m.municipio || ''}</td><td>${m.regiao || ''}</td><td>${m.telefone_institucional || ''}</td>
+            <td>${m.email_institucional || ''}</td><td>${m.site || ''}</td><td>${m.facebook || ''}</td><td>${m.instagram || ''}</td>
+            <td>${m.twitter || ''}</td><td>${m.natureza || ''}</td><td>${m.documento_criacao || ''}</td><td>${m.situacao || ''}</td>
+            <td>${m.funcionamento || ''}</td><td>${m.ingresso || ''}</td><td>${m.gratuidades || ''}</td><td>${m.educativo || ''}</td>
+            <td>${m.acervo || ''}</td><td>${m.museologo || ''}</td><td>${m.acessibilidade || ''}</td><td>${m.historico || ''}</td>
+            <td>${m.responsavel_cadastro || ''}</td><td>${m.data_cadastro || ''}</td><td>${m.certificado_enviado || ''}</td><td>${m.zona || ''}</td>
         </tr>`;
     });
 
     tableHTML += `</tbody></table></body></html>`;
 
     const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
-    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "Relatorio_Filtro_SIMRJ.xls");
-    document.body.appendChild(link);
+    link.href = URL.createObjectURL(blob);
+    link.download = "Relatorio_Filtro_SIMRJ_Oficial.xls";
     link.click();
-    document.body.removeChild(link);
 };
 
 // --- FICHA DO MUSEU ---
@@ -464,7 +414,6 @@ window.openProfile = function(id) {
     const val = (v) => (v && v.trim() !== '') ? v : '<span class="text-muted fst-italic">Não informado</span>';
 
     document.getElementById('modalTitle').innerText = m.nome;
-    
     if (normalizeString(m.museologo) === "sim") document.getElementById('modalBadgeMuseologo').classList.remove('d-none'); else document.getElementById('modalBadgeMuseologo').classList.add('d-none');
     if (!m.lat || !m.lng) document.getElementById('modalAlertPin').classList.remove('d-none'); else document.getElementById('modalAlertPin').classList.add('d-none');
 
@@ -473,7 +422,7 @@ window.openProfile = function(id) {
     document.getElementById('modalRegiao').innerHTML = val(m.regiao);
     document.getElementById('modalNatureza').innerHTML = val(m.natureza);
     document.getElementById('modalStatus').innerHTML = val(m.situacao);
-    document.getElementById('modalTel').innerHTML = val(m.telefone);
+    document.getElementById('modalTel').innerHTML = val(m.telefone_institucional);
     
     if(m.site) { document.getElementById('modalSite').href = m.site.startsWith('http') ? m.site : 'http://'+m.site; document.getElementById('modalSite').style.display = 'inline'; } else { document.getElementById('modalSite').style.display = 'none'; }
     
@@ -484,7 +433,6 @@ window.openProfile = function(id) {
     
     document.getElementById('modalMuseologoStatus').innerHTML = val(m.museologo);
     document.getElementById('modalEducativo').innerHTML = val(m.educativo);
-
     document.getElementById('modalAcessibilidade').innerHTML = val(m.acessibilidade);
     document.getElementById('modalHistorico').innerHTML = val(m.historico);
     profileModal.show();
@@ -493,16 +441,13 @@ window.openProfile = function(id) {
 // --- ADMIN E GESTÃO ---
 window.openLogin = function() { document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
-
 window.checkAdminPassword = function() {
     if(document.getElementById('adminPassword').value === 'simrj') { 
         document.getElementById('admin-panel').style.display = 'block'; 
-        closeLogin(); 
-        renderApprovalsList(); 
+        closeLogin(); renderApprovalsList(); 
         document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('d-none'));
     } else alert('Senha incorreta.');
 }
-
 window.closeAdmin = function() { 
     document.getElementById('admin-panel').style.display = 'none'; 
     document.querySelectorAll('.gestor-only').forEach(el => el.classList.add('d-none'));
@@ -513,10 +458,7 @@ function renderApprovalsList() {
     document.getElementById('reqCount').innerText = pendingApprovals.length;
     list.innerHTML = '';
     if(pendingApprovals.length === 0) return list.innerHTML = '<div class="alert alert-success small">Nenhuma requisição pendente no momento.</div>';
-
-    pendingApprovals.forEach(req => {
-        list.innerHTML += `<div class="req-item shadow-sm"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-1">${req.nome}</h6><small class="text-muted d-block"><i class="bi bi-geo-alt"></i> ${req.municipio} | <i class="bi bi-person"></i> ${req.nome_responsavel} (${req.email_responsavel})</small></div><div><button class="btn btn-sm btn-outline-primary" onclick="viewApprovalDetails(${req.id})"><i class="bi bi-file-text"></i> Analisar Ficha</button></div></div></div>`;
-    });
+    pendingApprovals.forEach(req => { list.innerHTML += `<div class="req-item shadow-sm"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-1">${req.nome}</h6><small class="text-muted d-block"><i class="bi bi-geo-alt"></i> ${req.municipio} | <i class="bi bi-person"></i> ${req.nome_responsavel} (${req.email_institucional})</small></div><div><button class="btn btn-sm btn-outline-primary" onclick="viewApprovalDetails(${req.id})"><i class="bi bi-file-text"></i> Analisar Ficha</button></div></div></div>`; });
 }
 
 window.viewApprovalDetails = function(id) {
@@ -531,21 +473,46 @@ window.viewApprovalDetails = function(id) {
 window.approveRequest = async function(id) {
     const reqIndex = pendingApprovals.findIndex(r => r.id === id); if(reqIndex === -1) return;
     const approvedMuseum = pendingApprovals[reqIndex];
-    
     let isVirtual = normalizeString(approvedMuseum.acervo).includes("virtual") || normalizeString(approvedMuseum.endereco).includes("virtual") || normalizeString(approvedMuseum.natureza).includes("virtual");
     let coords = null;
-    
     if(!isVirtual) coords = await geocodeAddressGoogle(approvedMuseum.endereco, approvedMuseum.municipio);
-    
-    approvedMuseum.lat = coords ? coords.lat : null; 
-    approvedMuseum.lng = coords ? coords.lng : null;
-    
+    approvedMuseum.lat = coords ? coords.lat : null; approvedMuseum.lng = coords ? coords.lng : null;
     pendingApprovals.splice(reqIndex, 1); museumsData.push(approvedMuseum);
-    if(approvalModal) approvalModal.hide(); renderApprovalsList(); renderMuseums(museumsData); alert(`${approvedMuseum.nome} foi aprovado e integrado ao sistema público!`);
+    if(approvalModal) approvalModal.hide(); renderApprovalsList(); renderMuseums(museumsData); alert(`${approvedMuseum.nome} aprovado com sucesso!`);
 }
+window.rejectRequest = function(id) { if(confirm("Deseja rejeitar e apagar esta requisição?")) { pendingApprovals = pendingApprovals.filter(r => r.id !== id); if(approvalModal) approvalModal.hide(); renderApprovalsList(); } }
 
-window.rejectRequest = function(id) {
-    if(confirm("Deseja realmente rejeitar e apagar esta requisição?")) { pendingApprovals = pendingApprovals.filter(r => r.id !== id); if(approvalModal) approvalModal.hide(); renderApprovalsList(); }
+// --- ENVIAR CADASTRO MANUAL (GESTOR) ---
+window.submitAdminManual = async function() {
+    const nome = document.getElementById('admNome').value;
+    const endereco = document.getElementById('admEndereco').value;
+    const municipio = document.getElementById('admMunicipio').value;
+    if(!nome) return alert("O Nome da Instituição é obrigatório.");
+
+    let zonaCalculada = detectarZonaRJ(endereco, municipio, "");
+    let coords = await geocodeAddressGoogle(endereco, municipio);
+
+    const manualMuseum = {
+        id: Date.now(), id_cfm: document.getElementById('admCfm').value, nome: nome, sigla: document.getElementById('admSigla').value,
+        cnpj: document.getElementById('admCnpj').value, documento_criacao: document.getElementById('admDoc').value,
+        municipio: municipio, endereco: endereco, regiao: document.getElementById('admRegiao').value,
+        natureza: document.getElementById('admNat').value, telefone_institucional: document.getElementById('admTel').value,
+        email_institucional: document.getElementById('admEmailInst').value, site: document.getElementById('admSite').value,
+        facebook: document.getElementById('admFace').value, instagram: document.getElementById('admInsta').value, twitter: document.getElementById('admTwitter').value,
+        situacao: document.getElementById('admStatus').value, funcionamento: document.getElementById('admFunc').value, 
+        ingresso: document.getElementById('admIngresso').value, acervo: document.getElementById('admAcervo').value,
+        museologo: document.getElementById('admMus').value, educativo: document.getElementById('admEdu').value,
+        acessibilidade: document.getElementById('admAccess').value, gratuidades: document.getElementById('admGrat').value,
+        historico: document.getElementById('admHist').value, responsavel_cadastro: document.getElementById('admResp').value,
+        data_cadastro: document.getElementById('admData').value, certificado_enviado: document.getElementById('admCert').value,
+        zona: zonaCalculada, lat: coords ? coords.lat : null, lng: coords ? coords.lng : null
+    };
+
+    museumsData.push(manualMuseum);
+    renderMuseums(museumsData);
+    alert("Museu inserido diretamente no banco público!");
+    document.querySelectorAll('.admin-form-container input, .admin-form-container textarea').forEach(el => el.value = '');
+    document.querySelectorAll('.admin-form-container select').forEach(el => el.selectedIndex = 0);
 }
 
 // --- UPLOAD CSV ---
@@ -581,40 +548,56 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                 let nome = getCol(row, ["Nome da Instituição", "Nome"]);
                 if (!nome) continue;
 
+                let id_cfm = getCol(row, ["Nº CFM", "ID", "Nº", "CFM"]);
+                let sigla = getCol(row, ["Sigla"]);
+                let cnpj = getCol(row, ["CNPJ"]);
                 let municipio = getCol(row, ["Município", "Municipio"]);
                 let regiao = getCol(row, ["Região", "Regiao"]);
-                let zona = getCol(row, ["Zona", "Zonas", "Zona do Rio", "Zona da Cidade"]);
-                let natureza = getCol(row, ["Natureza Administrativa", "Natureza"]);
+                let natureza = getCol(row, ["Natureza Administrativa do Museu", "Natureza Administrativa", "Natureza"]);
+                let doc = getCol(row, ["Documento de Criação", "Documento"]);
                 let situacao = getCol(row, ["Situação", "Situacao", "Status"]);
                 let endereco = getCol(row, ["Endereço", "Endereco"]);
                 let funcionamento = getCol(row, ["Funcionamento", "Turno", "Horário"]);
-                let ingresso = getCol(row, ["Valor do Ingresso", "Ingresso"]);
+                let ingresso = getCol(row, ["Valor ingresso", "Valor do Ingresso", "Ingresso"]);
                 let gratuidades = getCol(row, ["Gratuidades", "Gratuidade"]);
                 let educativo = getCol(row, ["Setor Educativo", "Educativo"]);
                 let acervo = getCol(row, ["Acervo Predominante", "Acervo"]);
                 let museologo = getCol(row, ["Museólogo", "Museologo"]);
                 let acessibilidade = getCol(row, ["Acessibilidade"]);
                 let historico = getCol(row, ["Histórico", "Historico"]);
-                let telefone = getCol(row, ["Telefone", "Contato"]);
+                let telefone = getCol(row, ["Telefone Institucional", "Telefone", "Contato"]);
+                let emailInst = getCol(row, ["E-mail Institucional", "Email Institucional", "Email"]);
                 let site = getCol(row, ["Site", "Website"]);
+                let facebook = getCol(row, ["Facebook"]);
+                let instagram = getCol(row, ["Instagram"]);
+                let twitter = getCol(row, ["Twitter", "X"]);
+                let resp = getCol(row, ["Responsável pelo Cadastro", "Responsável pelo Casdastro", "Responsavel"]);
+                let dataCad = getCol(row, ["Data Cadastro", "Data", "Carimbo de data/hora"]);
+                let cert = getCol(row, ["Certificado enviado", "Certificado"]);
+                let zonaBruta = getCol(row, ["Zona", "Zonas", "Zona do Rio", "Zona da Cidade"]);
 
                 if(pBar) pBar.style.width = `${((i+1)/total)*100}%`;
                 
                 let isVirtual = normalizeString(acervo).includes("virtual") || normalizeString(endereco).includes("virtual") || normalizeString(natureza).includes("virtual");
                 let coords = null;
-                
+                let zonaCalculada = detectarZonaRJ(endereco, municipio, zonaBruta);
+
                 if (!isVirtual && endereco && municipio) {
                     coords = await geocodeAddressGoogle(endereco, municipio);
                     await sleep(50); 
                 }
 
                 cleanData.push({
-                    id: i + 2000, nome, municipio, regiao, zona, natureza, situacao, endereco, funcionamento, ingresso, gratuidades, educativo, acervo, museologo, acessibilidade, historico, telefone, site,
+                    id: i + 2000, id_cfm: id_cfm, nome: nome, sigla: sigla, cnpj: cnpj, endereco: endereco, municipio: municipio, 
+                    regiao: regiao, telefone_institucional: telefone, email_institucional: emailInst, site: site, facebook: facebook, 
+                    instagram: instagram, twitter: twitter, natureza: natureza, documento_criacao: doc, situacao: situacao, 
+                    funcionamento: funcionamento, ingresso: ingresso, gratuidades: gratuidades, educativo: educativo, 
+                    acervo: acervo, museologo: museologo, acessibilidade: acessibilidade, historico: historico, 
+                    responsavel_cadastro: resp, data_cadastro: dataCad, certificado_enviado: cert, zona: zonaCalculada,
                     lat: coords ? coords.lat : null, lng: coords ? coords.lng : null
                 });
             }
-            museumsData = cleanData; 
-            currentFilteredData = cleanData; // Disponibiliza no Excel direto
+            museumsData = cleanData; currentFilteredData = cleanData; 
             renderMuseums(museumsData);
             document.getElementById('upload-status').className = 'alert alert-success small p-2 d-block w-50 mt-2';
             document.getElementById('upload-status').innerText = `Concluído! ${cleanData.length} lidos.`;
