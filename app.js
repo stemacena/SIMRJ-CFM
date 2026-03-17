@@ -56,11 +56,19 @@ try {
 } catch (error) { console.error("Erro Firebase:", error); }
 
 // =====================================================================
-// 2. CONFIGURAÇÃO GOOGLE MAPS
+// 2. CONFIGURAÇÃO GOOGLE MAPS, LIMITES E DICIONÁRIOS DE ZONAS
 // =====================================================================
 const RJ_BOUNDS = { north: -20.76, south: -23.39, west: -44.89, east: -40.96 };
 
 const allMunicipalitiesRJ = ["Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo", "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana", "Cabo Frio", "Cachoeiras de Macacu", "Cambuci", "Campos dos Goytacazes", "Cantagalo", "Carapebus", "Cardoso Moreira", "Carmo", "Casimiro de Abreu", "Comendador Levy Gasparian", "Conceição de Macabu", "Cordeiro", "Duas Barras", "Duque de Caxias", "Engenheiro Paulo de Frontin", "Guapimirim", "Iguaba Grande", "Itaboraí", "Itaguaí", "Italva", "Itaocara", "Itaperuna", "Itatiaia", "Japeri", "Laje do Muriaé", "Macaé", "Macuco", "Magé", "Mangaratiba", "Maricá", "Mendes", "Mesquita", "Miguel Pereira", "Miracema", "Natividade", "Nilópolis", "Niterói", "Nova Friburgo", "Nova Iguaçu", "Paracambi", "Paraíba do Sul", "Paraty", "Paty do Alferes", "Petrópolis", "Pinheiral", "Piraí", "Porciúncula", "Porto Real", "Quatis", "Queimados", "Quissamã", "Resende", "Rio Bonito", "Rio das Flores", "Rio das Ostras", "Rio de Janeiro", "Rio Claro", "Santa Maria Madalena", "Santo Antônio de Pádua", "São Fidélis", "São Francisco de Itabapoana", "São Gonçalo", "São João da Barra", "São João de Meriti", "São José de Ubá", "São José do Vale do Rio Preto", "São Pedro da Aldeia", "São Sebastião do Alto", "Sapucaia", "Saquarema", "Seropédica", "Silva Jardim", "Sumidouro", "Tanguá", "Teresópolis", "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", "Vassouras", "Volta Redonda"];
+
+// Dicionário Interno de Bairros para identificar as Zonas da Capital Automaticamente
+const zonasRJ = {
+    "centro": ["centro", "lapa", "cidade nova", "gamboa", "saude", "santo cristo", "rio comprido", "catumbi", "estacio", "santa teresa", "sao cristovao", "benfica", "mangueira", "vasco da gama", "caju", "paqueta"],
+    "sul": ["botafogo", "copacabana", "ipanema", "leblon", "leme", "urca", "flamengo", "gloria", "laranjeiras", "catete", "cosme velho", "humaita", "jardim botanico", "lagoa", "gavea", "sao conrado", "rocinha", "vidigal"],
+    "norte": ["tijuca", "vila isabel", "maracana", "grajau", "andarai", "engenho novo", "meier", "cachambi", "lins", "todos os santos", "engenho de dentro", "agua santa", "encantado", "piedade", "abolicao", "pilares", "madureira", "cascadura", "quintino", "cavalcanti", "engenheiro leal", "oswaldo cruz", "campinho", "vaz lobo", "turiacu", "rocha miranda", "honorio gurgel", "bento ribeiro", "marechal hermes", "guadalupe", "bonsucesso", "ramos", "olaria", "penha", "bras de pina", "cordovil", "parada de lucas", "vigario geral", "jardim america", "iraja", "vicente de carvalho", "vila kosmos", "colegio", "vista alegre", "pavuna", "rocha", "riachuelo", "sampaio", "sao francisco xavier", "jacare", "del castilho", "inhauma", "higienopolis", "maria da graca", "tomas coelho", "engenho da rainha", "ilha do governador", "galeao", "bancarios", "cacuia", "cocota", "pitangueiras", "praia da bandeira", "ribeira", "taua", "zumbi", "tubiacanga", "acari", "barros filho", "costa barros", "parque columbia", "parque anchieta", "anchieta", "ricardo de albuquerque", "alto da boa vista"],
+    "oeste": ["barra da tijuca", "recreio", "vargem grande", "vargem pequena", "jacarepagua", "anil", "cidade de deus", "curicica", "freguesia", "gardenia", "pechincha", "praca seca", "tanque", "taquara", "vila valqueire", "bangu", "padre miguel", "realengo", "magalhaes bastos", "sulacap", "deodoro", "campo grande", "senador camara", "senador vasconcelos", "santissimo", "cosmos", "paciencia", "santa cruz", "inhoaiba", "guaratiba", "sepetiba", "camorim", "joa", "itangaa", "vila militar", "gericino", "bairro das gracas"]
+};
 
 const normalizeString = (str) => { if(!str) return ""; return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); };
 
@@ -296,7 +304,7 @@ window.filterList = function() {
     });
 }
 
-// --- FILTROS (LÓGICA BLINDADA E ZONAS DO RJ) ---
+// --- FILTROS (LÓGICA BLINDADA COM DICIONÁRIO DE ZONAS) ---
 function getCheckedValues(className) { return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => normalizeString(cb.value)); }
 
 window.applyFilters = function() {
@@ -316,7 +324,6 @@ window.applyFilters = function() {
     const textGratuidade = normalizeString(document.getElementById('searchGratuidade').value); 
     const textAccess = normalizeString(document.getElementById('searchAccess').value);
 
-    // Helper: Garante correspondência EXATA de palavras soltas separadas por vírgula (Impede "Privada" de ativar "Público-Privada")
     const matchExactPart = (fieldString, filterArray) => {
         if (filterArray.length === 0) return true;
         if (!fieldString) return false;
@@ -342,7 +349,6 @@ window.applyFilters = function() {
         if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
         if (selectedMuni && mMuni !== selectedMuni) return false;
         
-        // Uso de Match Extrito para impedir falsos-positivos nas regiões e naturezas
         if (regions.length > 0 && !regions.some(v => mRegiao === v)) return false;
         if (natures.length > 0 && !matchExactPart(mNat, natures)) return false;
         if (acervos.length > 0 && !matchExactPart(mAcervo, acervos)) return false;
@@ -355,13 +361,26 @@ window.applyFilters = function() {
         if (textGratuidade && !mGrat.includes(textGratuidade)) return false;
         if (textAccess && !mAcc.includes(textAccess)) return false;
 
-        // LÓGICA DE ZONAS (Aplica apenas se o museu for na cidade do Rio de Janeiro)
+        // LÓGICA DE ZONAS INTELIGENTE (Cruza com Dicionário de Bairros)
         if (zonas.length > 0) {
-            // Se o museu não for do município do Rio (aceita "rio de janeiro", "rio de janeiro - rj", etc), ele é escondido
+            // Regra 1: Só entra no filtro de zonas se a instituição for na capital
             if (!mMuni.includes("rio de janeiro")) return false; 
             
-            // Procura a zona tanto na coluna 'Zonas' quanto no próprio endereço da instituição
-            if (!zonas.some(z => mZona.includes(z) || mEndereco.includes("zona " + z) || mEndereco.includes(z))) return false;
+            let matchedZona = false;
+            for (let z of zonas) {
+                // Checa se a zona foi digitada na planilha ou no endereço
+                if (mZona.includes(z) || mEndereco.includes("zona " + z) || mEndereco.includes(z + " da cidade")) {
+                    matchedZona = true;
+                    break;
+                }
+                // Checa no dicionário se o bairro do endereço pertence a essa zona
+                let bairrosDaZona = zonasRJ[z] || [];
+                if (bairrosDaZona.some(bairro => mEndereco.includes(bairro))) {
+                    matchedZona = true;
+                    break;
+                }
+            }
+            if (!matchedZona) return false;
         }
 
         return true;
@@ -384,7 +403,6 @@ window.exportRelatorio = function() {
         return alert("Nenhum dado encontrado para exportar.");
     }
 
-    // Cria a tabela HTML para ser convertida em Excel nativo com formatação de colunas
     let tableHTML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="UTF-8"></head>
     <body><table border="1"><thead><tr>
@@ -429,7 +447,6 @@ window.exportRelatorio = function() {
 
     tableHTML += `</tbody></table></body></html>`;
 
-    // Transforma a string HTML em um arquivo .xls que o Excel entende perfeitamente
     const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
