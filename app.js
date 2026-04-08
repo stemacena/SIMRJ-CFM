@@ -215,44 +215,61 @@ window.nextStep = function(step) {
 window.prevStep = function(step) { nextStep(step); }
 
 // --- ENVIAR FICHA DE CADASTRO (PÚBLICO) ---
+// --- ENVIAR FICHA DE CADASTRO (PÚBLICO) ---
 window.submitMuseumRegistration = function() {
+    // 1. Coleta os campos essenciais do front-end
     const nome = document.getElementById('regNome').value;
     const endereco = document.getElementById('regEndereco').value;
     const municipio = document.getElementById('regMuni').value;
+    
     if(!nome || !endereco || !municipio) return alert("Preencha Nome, Município e Endereço na Etapa 2.");
 
+    // Coleta o e-mail logado e o nome do responsável
     const email = document.getElementById('perfil-email').innerText;
     const responsavelNome = document.getElementById('perfil-nome').innerText;
+    
+    // (Opcional) Calcula a zona, etc (Mantido da sua lógica original)
     let dias = Array.from(document.querySelectorAll('.chk-dia:checked')).map(e => e.value).join(', ');
     let turnos = Array.from(document.querySelectorAll('.chk-turno:checked')).map(e => e.value).join(', ');
     let stringFuncionamento = (dias && turnos) ? `${dias} - ${turnos}` : (dias || turnos || "Não informado");
-    
     let zonaCalculada = detectarZonaRJ(endereco, municipio, "");
 
-    const req = {
-        id: Date.now(), id_cfm: document.getElementById('regIdCfm').value || "", nome: nome, sigla: document.getElementById('regSigla').value,
-        cnpj: document.getElementById('regCnpj').value, documento_criacao: document.getElementById('regDoc').value,
-        municipio: municipio, endereco: endereco, regiao: document.getElementById('regRegiao').value,
-        natureza: document.getElementById('regNatureza').value, telefone_institucional: document.getElementById('regTel').value,
-        email_institucional: document.getElementById('regEmailInst').value, site: document.getElementById('regSite').value,
-        facebook: document.getElementById('regFace').value, instagram: document.getElementById('regInsta').value, twitter: document.getElementById('regTwitter').value,
-        situacao: document.getElementById('regStatus').value, funcionamento: stringFuncionamento, 
-        ingresso: document.getElementById('regIngresso').value, acervo: document.getElementById('regAcervo').value,
-        museologo: document.getElementById('regMus').value, educativo: document.getElementById('regEdu').value,
-        acessibilidade: document.getElementById('regAccess').value, gratuidades: document.getElementById('regGrat').value,
-        historico: document.getElementById('regHist').value, responsavel_cadastro: responsavelNome, email_responsavel: email,
-        data_cadastro: new Date().toLocaleDateString('pt-BR'), certificado_enviado: "Não",
-        zona: zonaCalculada, lat: null, lng: null
+    // 2. Monta o pacote de dados EXATAMENTE como o Python (models.py) espera receber
+    const dadosMuseu = {
+        nome_instituicao: nome,
+        email: email
+        // No futuro, quando adicionar mais campos no models.py, adicione-os aqui!
     };
 
-    pendingApprovals.push(req);
-    if(db) db.collection("requisicoes").add(req).catch(e => console.error("Erro DB", e));
-
-    alert("Ficha registrada com sucesso!\nSua requisição foi enviada para a equipe do SIM-RJ.");
-    document.querySelectorAll('.wizard-container input, .wizard-container textarea').forEach(el => el.value = '');
-    document.querySelectorAll('.wizard-container select').forEach(el => el.selectedIndex = 0);
-    document.querySelectorAll('.wizard-container input[type="checkbox"]').forEach(el => el.checked = false);
-    switchView('meu-perfil'); renderApprovalsList(); 
+    // 3. Despacha para a API do Django
+    fetch('http://localhost:8000/api/museus/cadastrar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dadosMuseu)
+    })
+    .then(resposta => {
+        if (resposta.ok) {
+            alert("Ficha registrada com sucesso!\nSua requisição foi enviada para a equipe do SIM-RJ.");
+            
+            // Limpa o formulário
+            document.querySelectorAll('.wizard-container input, .wizard-container textarea').forEach(el => el.value = '');
+            document.querySelectorAll('.wizard-container select').forEach(el => el.selectedIndex = 0);
+            document.querySelectorAll('.wizard-container input[type="checkbox"]').forEach(el => el.checked = false);
+            
+            // Volta para a tela de perfil (se existir)
+            switchView('meu-perfil'); 
+            
+        } else {
+            alert("Ops! Ocorreu um erro ao salvar no banco. Verifique os dados.");
+            console.error("Erro do Django:", resposta.statusText);
+        }
+    })
+    .catch(erro => {
+        console.error("Erro na conexão com a API:", erro);
+        alert("Erro fatal: Não foi possível conectar ao servidor. O servidor Python está rodando?");
+    });
 }
 
 // --- RENDERIZAR MAPA E LISTA ---
