@@ -205,63 +205,37 @@
         <section class="py-4 bg-light">
             <div class="container-fluid px-4">
                 <div class="row">
-                    <div class="col-lg-3 sidebar-filters p-4 shadow-sm rounded mb-4">
-                        <h5 class="mb-4 text-dark"><i class="bi bi-funnel"></i> Busca Detalhada</h5>
-                        <div class="mb-3"><label class="filter-label">Nome da Instituição</label><input type="text" id="searchName" class="form-control form-control-sm" placeholder="Digite o nome..."></div>
-                        <div class="mb-3"><label class="filter-label text-warning"><i class="bi bi-geo-alt-fill"></i> Status no Mapa</label><select id="filterHasMap" class="form-select form-select-sm border-warning"><option value="">Exibir Todos</option><option value="sim">Com Geolocalização</option><option value="nao">Sem Geolocalização</option></select></div>
-                        <div class="mb-3"><label class="filter-label">Município</label><select id="filterMunicipio" class="form-select form-select-sm"></select></div>
-                        <div class="mb-3"><label class="filter-label">Região</label><div class="filter-scroll-box">
-                                <div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Baixadas Litorâneas"><label class="form-check-label small">Baixadas Litorâneas</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Centro-Sul"><label class="form-check-label small">Centro-Sul</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Costa Verde"><label class="form-check-label small">Costa Verde</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Médio Paraíba"><label class="form-check-label small">Médio Paraíba</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana I"><label class="form-check-label small">Metropolitana I</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana II"><label class="form-check-label small">Metropolitana II</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Metropolitana III"><label class="form-check-label small">Metropolitana III</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Noroeste Fluminense"><label class="form-check-label small">Noroeste Fluminense</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Norte Fluminense"><label class="form-check-label small">Norte Fluminense</label></div><div class="form-check"><input class="form-check-input filter-region" type="checkbox" value="Serrana"><label class="form-check-label small">Serrana</label></div>
-                            </div></div>
-                        <div class="mb-3"><label class="filter-label">Natureza Administrativa</label><div class="filter-scroll-box" style="max-height: 100px;">
-                                <div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Estadual"><label class="form-check-label small">Estadual</label></div><div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Federal"><label class="form-check-label small">Federal</label></div><div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Municipal"><label class="form-check-label small">Municipal</label></div><div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Privada"><label class="form-check-label small">Privada</label></div><div class="form-check"><input class="form-check-input filter-nature" type="checkbox" value="Público-privada"><label class="form-check-label small">Público-privada</label></div>
-                            </div></div>
-                        <div class="mb-3"><label class="filter-label">Acervo Predominante</label><div class="filter-scroll-box">
-                                <div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Antropologia e Etnografia"><label class="form-check-label small">Antropologia/Etnografia</label></div><div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Arqueologia"><label class="form-check-label small">Arqueologia</label></div><div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Artes Visuais"><label class="form-check-label small">Artes Visuais</label></div><div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Ciência e Tecnologia"><label class="form-check-label small">Ciência e Tecnologia</label></div><div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Histórico"><label class="form-check-label small">Histórico</label></div><div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Imagem e Som"><label class="form-check-label small">Imagem e Som</label></div><div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Patrimônio Científico e Histórico Natural"><label class="form-check-label small">Patrimônio Científico</label></div><div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Virtual"><label class="form-check-label small">Virtual</label></div><div class="form-check"><input class="form-check-input filter-acervo" type="checkbox" value="Outros"><label class="form-check-label small">Outros</label></div>
-                            </div></div>
-                        <div class="accordion mb-3" id="filtersAdv">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header"><button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#colAdv">Funcionamento e Status</button></h2>
-                                <div id="colAdv" class="accordion-collapse collapse p-2">
-                                    <label class="filter-label mt-1">Situação</label>
-                                    <div class="filter-scroll-box mb-2">
-                                        <div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Aberto"><label class="form-check-label small">Aberto</label></div><div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Aberto funcionando parcialmente"><label class="form-check-label small">Aberto Parcial</label></div><div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Em implantação"><label class="form-check-label small">Em implantação</label></div><div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Desativado temporariamente"><label class="form-check-label small">Desativado Temp.</label></div><div class="form-check"><input class="form-check-input filter-status" type="checkbox" value="Desativado sem previsão de retorno"><label class="form-check-label small">Desativado sem Previsão</label></div>
-                                    </div>
-                                    <label class="filter-label">Turno (Funcionamento)</label>
-                                    <div class="filter-scroll-box mb-2">
-                                        <div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Manhã"><label class="form-check-label small">Manhã</label></div><div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Tarde"><label class="form-check-label small">Tarde</label></div><div class="form-check"><input class="form-check-input filter-func" type="checkbox" value="Noite"><label class="form-check-label small">Noite</label></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header"><button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#colTech">Técnico e Acessibilidade</button></h2>
-                                <div id="colTech" class="accordion-collapse collapse p-2">
-                                    <div class="gestor-only d-none p-2 bg-warning rounded mb-2 border shadow-sm">
-                                        <label class="filter-label text-dark m-0 mb-1"><i class="bi bi-lock-fill"></i> Área do Gestor</label>
-                                        <div class="form-check mb-1 mt-1"><input class="form-check-input border-dark" type="checkbox" id="checkMuseologo"><label class="form-check-label small fw-bold text-dark" for="checkMuseologo">Possui Museólogo</label></div>
-                                        <div class="form-check mb-1"><input class="form-check-input border-dark" type="checkbox" id="checkEdu"><label class="form-check-label small text-dark" for="checkEdu">Possui Setor Educativo</label></div>
-                                        <hr class="border-dark my-2">
-                                        <label class="filter-label text-dark small mb-1">Zonas (Apenas Rio de Janeiro)</label>
-                                        <div class="filter-scroll-box border-dark bg-white mb-2" style="max-height: 100px;">
-                                            <div class="form-check"><input class="form-check-input filter-zona border-dark" type="checkbox" value="Centro"><label class="form-check-label small text-dark">Centro</label></div>
-                                            <div class="form-check"><input class="form-check-input filter-zona border-dark" type="checkbox" value="Sul"><label class="form-check-label small text-dark">Zona Sul</label></div>
-                                            <div class="form-check"><input class="form-check-input filter-zona border-dark" type="checkbox" value="Norte"><label class="form-check-label small text-dark">Zona Norte</label></div>
-                                            <div class="form-check"><input class="form-check-input filter-zona border-dark" type="checkbox" value="Oeste"><label class="form-check-label small text-dark">Zona Oeste</label></div>
-                                        </div>
-                                    </div>
-                                    <label class="filter-label mt-3">Valor Ingresso</label>
-                                    <div class="filter-scroll-box mb-2">
-                                        <div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="Gratuito"><label class="form-check-label small">Gratuito</label></div><div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="de R$1 a R$10"><label class="form-check-label small">de R$1 a R$10</label></div><div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="de R$10 a R$20"><label class="form-check-label small">de R$10 a R$20</label></div><div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="de R$20 a R$30"><label class="form-check-label small">de R$20 a R$30</label></div><div class="form-check"><input class="form-check-input filter-cost" type="checkbox" value="Acima de R$30"><label class="form-check-label small">Acima de R$30</label></div>
-                                    </div>
-                                    <label class="filter-label mt-2">Busca Específica</label>
-                                    <input type="text" id="searchGratuidade" class="form-control form-control-sm mb-2" placeholder="Gratuidades (ex: idoso)">
-                                    <input type="text" id="searchAccess" class="form-control form-control-sm" placeholder="Acessibilidade (ex: rampa)">
-                                </div>
-                            </div>
-                        </div>
-                        <button class="btn btn-custom w-100 mt-2" onclick="applyFilters()">Aplicar Filtros</button>
-                        <button class="btn btn-light border w-100 mt-2 btn-sm" onclick="resetFilters()">Limpar Filtros</button>
-                    </div>
+                    <div class="sidebar-filters p-3">
+    <h5 class="filter-label">Buscar Instituição</h5>
+    <input type="text" id="searchName" class="form-control mb-3" placeholder="Digite o nome..." onkeyup="applyFilters()">
+
+    <h5 class="filter-label">Município</h5>
+    <select id="filterMunicipio" class="form-select mb-3" onchange="applyFilters()">
+        <option value="">Todos</option>
+        </select>
+
+    <h5 class="filter-label">Região</h5>
+    <select id="filterRegiao" class="form-select mb-3" onchange="applyFilters()">
+        <option value="">Todas</option>
+        <option value="Metropolitana">Metropolitana</option>
+        </select>
+
+    <h5 class="filter-label">Natureza Administrativa</h5>
+    <select id="filterNatureza" class="form-select mb-3" onchange="applyFilters()">
+        <option value="">Todas</option>
+        <option value="Pública">Pública</option>
+        <option value="Privada">Privada</option>
+        </select>
+
+    <h5 class="filter-label">Status no Mapa</h5>
+    <select id="filterHasMap" class="form-select mb-3" onchange="applyFilters()">
+        <option value="">Todos</option>
+        <option value="sim">Com Localização (Pin)</option>
+        <option value="nao">Sem Localização</option>
+    </select>
+
+    <button class="btn btn-outline-danger w-100 mt-2" onclick="resetFilters()">Limpar Filtros</button>
+</div>
                     <div class="col-lg-9">
                         <div id="map" style="height: 600px; border-radius: 8px; border: 2px solid #ddd;"></div>
                         <div class="mt-4"><h4 class="mb-3 text-purple">Resultados Filtrados (<span id="resultCount">0</span>)</h4><div class="row" id="museum-list"></div></div>

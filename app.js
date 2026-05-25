@@ -375,19 +375,38 @@ function renderMuseums(data) {
 }
 
 window.applyFilters = function() {
+    // 1. Coleta o valor de TODOS os campos de filtro da tela (se eles existirem no HTML)
     const termoNome = normalizeString(document.getElementById('searchName') ? document.getElementById('searchName').value : '');
     const filterMuni = normalizeString(document.getElementById('filterMunicipio') ? document.getElementById('filterMunicipio').value : '');
-    const filterTipo = normalizeString(document.getElementById('filterTipo') ? document.getElementById('filterTipo').value : '');
+    const filterRegiao = normalizeString(document.getElementById('filterRegiao') ? document.getElementById('filterRegiao').value : '');
+    const filterNatureza = normalizeString(document.getElementById('filterNatureza') ? document.getElementById('filterNatureza').value : '');
+    const filterHasMap = document.getElementById('filterHasMap') ? document.getElementById('filterHasMap').value : '';
 
+    // 2. Filtra a lista principal baseada nos valores acima
     currentFilteredData = museumsData.filter(m => {
         let match = true;
+        
+        // Verifica cada condição (se o filtro não estiver vazio e não bater, ele reprova o museu)
         if (termoNome && !normalizeString(m.nome).includes(termoNome)) match = false;
         if (filterMuni && normalizeString(m.municipio) !== filterMuni) match = false;
-        if (filterTipo && !normalizeString(m.natureza).includes(filterTipo)) match = false; // Ajuste para o seu filtro real
+        if (filterRegiao && normalizeString(m.regiao) !== filterRegiao) match = false;
+        if (filterNatureza && !normalizeString(m.natureza).includes(filterNatureza)) match = false;
+        
+        // Filtro específico do mapa (Com / Sem pino)
+        if (filterHasMap === 'sim' && (!m.lat || !m.lng)) match = false;
+        if (filterHasMap === 'nao' && (m.lat && m.lng)) match = false;
+        
         return match;
     });
 
+    // 3. Atualiza a lista e o mapa com os dados filtrados
     renderMuseums(currentFilteredData);
+}
+
+// Função para limpar tudo e voltar ao normal
+window.resetFilters = function() { 
+    document.querySelectorAll('.sidebar-filters input[type="text"], .sidebar-filters select').forEach(el => el.value = '');
+    renderMuseums(museumsData); 
 }
 
 // Remova a função antiga `window.filterList` se existir e use apenas o applyFilters nos botões e inputs de busca.
@@ -478,14 +497,69 @@ function updatePendingList() {
 
 function renderApprovalsList() {
     const list = document.getElementById('requests-list');
+    if(!list) return;
     document.getElementById('reqCount').innerText = pendingApprovals.length;
     list.innerHTML = '';
-    if(pendingApprovals.length === 0) return list.innerHTML = '<div class="alert alert-success small">Nenhuma ficha recebida até o momento.</div>';
+    
+    if(pendingApprovals.length === 0) {
+        return list.innerHTML = '<div class="alert alert-success small">Nenhuma ficha recebida até o momento.</div>';
+    }
+    
     pendingApprovals.forEach(req => { 
-        list.innerHTML += `<div class="req-item shadow-sm"><div class="d-flex justify-content-between align-items-center"><div><h6 class="fw-bold mb-1">${req.nome}</h6><small class="text-muted d-block"><i class="bi bi-geo-alt"></i> ${req.municipio} | <i class="bi bi-person"></i> ${req.nome_responsavel}</small></div><div><button class="btn btn-sm btn-success" onclick="approveRequest(${req.id})"><i class="bi bi-check"></i> Aprovar</button></div></div></div>`; 
+        list.innerHTML += `
+        <div class="req-item shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bold mb-1">${req.nome}</h6>
+                    <small class="text-muted d-block"><i class="bi bi-geo-alt"></i> ${req.municipio} | <i class="bi bi-person"></i> ${req.nome_responsavel}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-info text-white me-2" onclick="openPendingProfile(${req.id})"><i class="bi bi-eye"></i> Ver Ficha</button>
+                    <button class="btn btn-sm btn-success" onclick="approveRequest(${req.id})"><i class="bi bi-check-lg"></i> Aprovar</button>
+                </div>
+            </div>
+        </div>`; 
     });
 }
 
+// NOVA FUNÇÃO: Abre a ficha de um museu que ainda não foi aprovado
+window.openPendingProfile = function(id) {
+    if(!profileModal) profileModal = new bootstrap.Modal(document.getElementById('museumModal'));
+    const m = pendingApprovals.find(x => x.id === id); 
+    if(!m) return;
+    
+    const val = (v) => (v && v.trim() !== '') ? v : '<span class="text-muted fst-italic">Não informado</span>';
+
+    // Coloca um aviso no título para o gestor saber que é um rascunho
+    document.getElementById('modalTitle').innerText = m.nome + " (EM ANÁLISE)";
+    
+    if (normalizeString(m.museologo) === "sim") document.getElementById('modalBadgeMuseologo').classList.remove('d-none'); 
+    else document.getElementById('modalBadgeMuseologo').classList.add('d-none');
+
+    document.getElementById('modalAlertPin').classList.add('d-none');
+
+    document.getElementById('modalEndereco').innerHTML = val(m.endereco);
+    document.getElementById('modalMunicipio').innerHTML = val(m.municipio);
+    document.getElementById('modalRegiao').innerHTML = val(m.regiao);
+    document.getElementById('modalNatureza').innerHTML = val(m.natureza);
+    document.getElementById('modalStatus').innerHTML = val(m.situacao);
+    document.getElementById('modalTel').innerHTML = val(m.telefone_institucional);
+    
+    const siteEl = document.getElementById('modalSite');
+    if(m.site) { siteEl.href = m.site.startsWith('http') ? m.site : 'http://'+m.site; siteEl.style.display = 'inline'; } 
+    else { siteEl.style.display = 'none'; }
+    
+    document.getElementById('modalFunc').innerHTML = val(m.funcionamento);
+    document.getElementById('modalIngresso').innerHTML = val(m.ingresso);
+    document.getElementById('modalGratuidade').innerHTML = val(m.gratuidades);
+    document.getElementById('modalAcervo').innerHTML = val(m.acervo);
+    document.getElementById('modalMuseologoStatus').innerHTML = val(m.museologo);
+    document.getElementById('modalEducativo').innerHTML = val(m.educativo);
+    document.getElementById('modalAcessibilidade').innerHTML = val(m.acessibilidade);
+    document.getElementById('modalHistorico').innerHTML = val(m.historico);
+    
+    profileModal.show();
+}
 window.approveRequest = async function(id) {
     const reqIndex = pendingApprovals.findIndex(r => r.id === id); if(reqIndex === -1) return;
     const m = pendingApprovals[reqIndex];
