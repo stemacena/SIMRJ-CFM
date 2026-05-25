@@ -64,15 +64,13 @@ section { scroll-margin-top: 110px; }
 .section-title { color: var(--color-blue); font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
 .section-title::after { content: ''; display: block; width: 80px; height: 4px; background-color: var(--color-yellow); margin: 10px auto 0; }
 
-/* --- FORMULÁRIO WIZARD (CADASTRE-SE) E MANUAL --- */
+/* --- FORMULÁRIO WIZARD E MANUAL --- */
 .wizard-container, .admin-form-container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 .step-indicator { display: flex; justify-content: space-between; margin-bottom: 30px; }
 .step-dot { width: 35px; height: 35px; border-radius: 50%; background-color: #e9ecef; color: #6c757d; display: flex; justify-content: center; align-items: center; font-weight: bold; border: 2px solid #dee2e6; }
 .step-dot.active { background-color: var(--color-cfm-teal); color: white; border-color: var(--color-cfm-teal); }
 .wizard-step { display: none; }
 .wizard-step.active { display: block; }
-.google-btn { background-color: #fff; color: #444; border: 1px solid #ddd; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
-.google-btn:hover { background-color: #f8f9fa; border-color: #ccc; }
 .check-group { background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e1e1e1; }
 
 /* --- FILTROS E MAPA CFM --- */
@@ -86,6 +84,18 @@ section { scroll-margin-top: 110px; }
 /* --- MODAL E ADMIN --- */
 .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
 .login-box { background: white; padding: 2rem; border-radius: 8px; width: 300px; text-align: center; }
+
+/* Nova classe para o painel de administração em tela cheia */
+.admin-panel-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #212529 !important; /* bg-dark */
+    z-index: 9999;
+    overflow-y: auto;
+}
 
 .modal-header { background-color: var(--color-cfm-teal); color: white; }
 .modal-subtitle { color: var(--color-blue); font-weight: bold; border-bottom: 2px solid var(--color-yellow); margin-top: 1rem; margin-bottom: 0.5rem; display: inline-block; }
