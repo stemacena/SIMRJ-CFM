@@ -88,14 +88,30 @@ window.buscarCep = async function(prefixo, cep) {
 }
 
 window.geocodeAddressNominatim = async function(logradouro, numero, municipio, cep) {
-    const query = `${logradouro}, ${numero || ''}, ${municipio}, RJ, Brasil, ${cep || ''}`;
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data && data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-        return null;
-    } catch (error) { return null; }
+    // Tenta 3 níveis de precisão para garantir que o pin vá para o mapa
+    const tentativas = [
+        `${logradouro}, ${numero || ''}, ${municipio}, RJ, Brasil`, // 1. Endereço Completo
+        `${logradouro}, ${municipio}, RJ, Brasil`,                  // 2. Só a Rua e Cidade
+        `${municipio}, RJ, Brasil`                                  // 3. Apenas a Cidade (Fallback)
+    ];
+
+    for (let query of tentativas) {
+        if (!query || query.trim().length < 5) continue;
+        
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+            }
+        } catch (error) {
+            console.error("Erro na busca:", error);
+        }
+        // Espera meia fração de segundo entre tentativas para não bloquear a API
+        await new Promise(r => setTimeout(r, 600)); 
+    }
+    return null; // Só retorna nulo se realmente a cidade for inválida
 }
 
 // --- SPA NAVEGAÇÃO E PLACEHOLDERS ---
@@ -138,57 +154,41 @@ window.prevSolStep = function(step) {
 }
 
 window.enviarSolicitacaoAcesso = function() {
-    // Código mantido igual...
-    const nome = document.getElementById('solNome').value;
-    const emailOficial = document.getElementById('solEmail').value;
-    const resp = document.getElementById('solResp').value;
+    const nome = document.getElementById('solNome').value; // Certifique-se que na etapa 1 o ID é solNome
     const cep = document.getElementById('solCep').value;
     const logradouro = document.getElementById('solLogradouro').value;
     const numero = document.getElementById('solNumero').value;
     const municipio = document.getElementById('solMuni').value;
+    const natureza = document.getElementById('solNat').value;
 
-    if(!nome || !emailOficial || !resp || !cep || !logradouro || !numero || !municipio) {
-        return alert("Preencha todos os campos obrigatórios (*).");
+    if(!nome || !cep || !logradouro || !numero || !municipio || !natureza) {
+        return alert("Preencha todos os campos obrigatórios (*) com atenção.");
     }
-
-    const regiao = document.getElementById('solRegiao').value;
-    const zona = document.getElementById('solZonaValor') ? document.getElementById('solZonaValor').value : "";
 
     const req = {
         id: Date.now(),
         nome: nome,
-        email_institucional: emailOficial,
-        nome_responsavel: resp,
-        sigla: document.getElementById('solSigla').value,
-        cnpj: document.getElementById('solCnpj').value,
-        documento_criacao: document.getElementById('solDoc').value,
         municipio: municipio,
-        regiao: regiao,
-        zona: zona,
-        natureza: document.getElementById('solNat').value,
+        endereco: `${logradouro}, ${numero} - CEP: ${cep}`,
+        natureza: natureza,
         situacao: document.getElementById('solStatus').value,
         acervo: document.getElementById('solAcervo').value,
-        telefone_institucional: document.getElementById('solTel').value,
-        site: document.getElementById('solSite').value,
-        facebook: document.getElementById('solFace').value,
-        instagram: document.getElementById('solInsta').value,
-        twitter: document.getElementById('solTwitter').value,
-        funcionamento: document.getElementById('solFunc').value,
-        ingresso: document.getElementById('solIngresso').value,
-        gratuidades: document.getElementById('solGrat').value,
-        educativo: document.getElementById('solEdu').value,
         museologo: document.getElementById('solMus').value,
         acessibilidade: document.getElementById('solAccess').value,
-        historico: document.getElementById('solHist').value,
-        endereco: `${logradouro}, ${numero} - ${document.getElementById('solComplemento').value}. CEP: ${cep}`
+        ingresso: document.getElementById('solIngresso').value,
+        funcionamento: document.getElementById('solFunc').value,
+        nome_responsavel: "Pendente", // Se houver campo de responsável na etapa 1, puxe aqui
+        lat: null, // Será preenchido na aprovação
+        lng: null
     };
 
     pendingApprovals.push(req);
-    renderApprovalsList();
+    renderApprovalsList(); // Atualiza a aba de requisições do painel do gestor
 
-    alert("Sua ficha foi enviada para a Secretaria de Museus com sucesso!\nNossa equipe analisará os dados e você receberá as credenciais de login no seu e-mail.");
-    document.querySelectorAll('#sol-step1 input, #sol-step2 input, #sol-step3 input, #sol-step3 textarea').forEach(el => el.value = '');
-    document.querySelectorAll('#sol-step2 select, #sol-step3 select').forEach(el => el.selectedIndex = 0);
+    alert("Sua ficha foi enviada com sucesso! Ela já aparece no painel do Gestor para aprovação.");
+    
+    // Limpa os campos e volta pro início
+    document.querySelectorAll('.wizard-step input, .wizard-step select').forEach(el => el.value = '');
     prevSolStep(1);
     switchView('home');
 }
@@ -374,26 +374,23 @@ function renderMuseums(data) {
     updatePendingList();
 }
 
-window.filterList = function() {
-    let input = normalizeString(document.getElementById('searchLista').value);
-    let rows = document.querySelectorAll('.tr-lista-item');
-    rows.forEach(row => { row.style.display = normalizeString(row.querySelector('.td-nome').innerText).includes(input) ? '' : 'none'; });
+window.applyFilters = function() {
+    const termoNome = normalizeString(document.getElementById('searchName') ? document.getElementById('searchName').value : '');
+    const filterMuni = normalizeString(document.getElementById('filterMunicipio') ? document.getElementById('filterMunicipio').value : '');
+    const filterTipo = normalizeString(document.getElementById('filterTipo') ? document.getElementById('filterTipo').value : '');
+
+    currentFilteredData = museumsData.filter(m => {
+        let match = true;
+        if (termoNome && !normalizeString(m.nome).includes(termoNome)) match = false;
+        if (filterMuni && normalizeString(m.municipio) !== filterMuni) match = false;
+        if (filterTipo && !normalizeString(m.natureza).includes(filterTipo)) match = false; // Ajuste para o seu filtro real
+        return match;
+    });
+
+    renderMuseums(currentFilteredData);
 }
 
-window.applyFilters = function() {
-    const term = normalizeString(document.getElementById('searchName').value);
-    const filterHasMap = document.getElementById('filterHasMap').value;
-    const selectedMuni = normalizeString(document.getElementById('filterMunicipio').value);
-    
-    const filtered = museumsData.filter(m => {
-        if (term && !normalizeString(m.nome).includes(term)) return false;
-        if (filterHasMap === 'sim' && (!m.lat || !m.lng)) return false;
-        if (filterHasMap === 'nao' && (m.lat && m.lng)) return false;
-        if (selectedMuni && normalizeString(m.municipio) !== selectedMuni) return false;
-        return true;
-    });
-    renderMuseums(filtered);
-}
+// Remova a função antiga `window.filterList` se existir e use apenas o applyFilters nos botões e inputs de busca.
 window.resetFilters = function() { 
     document.querySelectorAll('.sidebar-filters input[type="text"], .sidebar-filters select').forEach(el => el.value = '');
     renderMuseums(museumsData); 
@@ -430,10 +427,10 @@ window.openProfile = function(id) {
 }
 
 // --- GESTÃO E FILAS ---
+// --- GESTÃO E FILAS ---
 window.openLogin = function() { document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
 
-// CORRIGIDO: Sistema de manter Gestor ativo após fechar o painel
 window.openAdminOrLogin = function() {
     if(isGestor) {
         document.getElementById('admin-panel').style.display = 'block';
@@ -452,10 +449,25 @@ window.checkAdminPassword = function() {
     } else alert('Senha incorreta.');
 }
 
-window.closeAdmin = function() { 
-    document.getElementById('admin-panel').style.display = 'none'; 
-    // As classes 'gestor-only' NÃO são apagadas, mantendo o usuário autenticado na navegação normal do site
+// ---> AS NOVAS FUNÇÕES ENTRAM AQUI <---
+window.minimizarPainelGestor = function() {
+    // Apenas esconde o painel preto, mas mantém você logado como gestor (isGestor = true)
+    document.getElementById('admin-panel').style.display = 'none';
 }
+
+window.logoutGestor = function() {
+    // Remove o status de gestor por segurança
+    isGestor = false;
+    document.getElementById('admin-panel').style.display = 'none';
+    
+    // Esconde os elementos sensíveis (abas e botões) do site novamente
+    document.querySelectorAll('.gestor-only').forEach(el => el.classList.add('d-none'));
+    document.querySelectorAll('.gestor-visible').forEach(el => el.classList.remove('d-block'));
+    
+    alert('Sessão de gestor encerrada com segurança.');
+}
+
+// (Logo abaixo disso deve continuar a função updatePendingList() que já está no seu código...)
 
 function updatePendingList() {
     const list = document.getElementById('pending-list'); if(!list) return; list.innerHTML = '';

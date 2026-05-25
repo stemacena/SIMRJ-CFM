@@ -93,10 +93,17 @@
 
     <div id="admin-panel" class="text-dark bg-white p-4 admin-panel-fullscreen" style="display: none;">
         <div class="container bg-light shadow-sm rounded border p-4 mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="text-primary fw-bold m-0"><i class="bi bi-database-fill-gear"></i> Painel de Administração - SIM-RJ</h4>
-                <button class="btn btn-sm btn-outline-danger fw-bold" onclick="closeAdmin()"><i class="bi bi-x-lg"></i> Sair do Painel</button>
-            </div>
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+    <h2 class="text-primary fw-bold"><i class="bi bi-shield-lock"></i> Painel do Gestor</h2>
+    <div>
+        <button class="btn btn-outline-secondary me-2" onclick="minimizarPainelGestor()">
+            <i class="bi bi-box-arrow-up-right"></i> Ir para o Site (Ver Mapa)
+        </button>
+        <button class="btn btn-danger" onclick="logoutGestor()">
+            <i class="bi bi-power"></i> Encerrar Sessão
+        </button>
+    </div>
+</div>
             <ul class="nav nav-tabs mb-4" id="adminTabs">
                 <li class="nav-item"><a class="nav-link active fw-bold text-dark" data-bs-toggle="tab" href="#tab-import"><i class="bi bi-file-earmark-excel"></i> Importar Planilha</a></li>
                 <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-pending"><i class="bi bi-geo-alt"></i> Sem Geolocalização (<span id="pendingCount" class="text-danger">0</span>)</a></li>
@@ -441,17 +448,26 @@
         </div>
     </div>
 
-    <div id="view-dados-graficos" class="view-section" style="display: none;">
-    <div class="container py-5 text-center">
-        <h2 class="section-title">Dados Gráficos do CFM</h2>
-        <div class="row mt-4 g-4">
-            <div class="col-md-6"><img src="educativo.png" class="img-fluid shadow-sm rounded border" alt="Gráfico Educativo"></div>
-            <div class="col-md-6"><img src="gratuidade.png" class="img-fluid shadow-sm rounded border" alt="Gráfico de Gratuidades"></div>
-            <div class="col-md-6"><img src="museologo.png" class="img-fluid shadow-sm rounded border" alt="Gráfico de Museólogos"></div>
-            <div class="col-md-6"><img src="tipologias.png" class="img-fluid shadow-sm rounded border" alt="Gráfico de Tipologias do Acervo"></div>
+    <div id="view-dados-graficos" class="view-section container mt-4" style="display: none;">
+        <div class="mb-4 border-bottom pb-3 text-center">
+            <h3 class="fw-bold text-primary">Painel de Dados Gráficos do CFM</h3>
+            <p class="text-muted mb-0">Panorama quantitativo das instituições museológicas fluminenses consolidado no CFM.</p>
+        </div>
+        <div class="row">
+            <div class="col-md-10 mx-auto mb-5 text-center">
+                <img src="./educativo.png" alt="Gráfico de Setor Educativo" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
+            </div>
+            <div class="col-md-10 mx-auto mb-5 text-center">
+                <img src="./gratuidade.png" alt="Gráfico de Gratuidades" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
+            </div>
+            <div class="col-md-10 mx-auto mb-5 text-center">
+                <img src="./museologo.png" alt="Gráfico de Museólogos" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
+            </div>
+            <div class="col-md-10 mx-auto mb-5 text-center">
+                <img src="./tipologias.png" alt="Gráfico de Tipologias" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
+            </div>
         </div>
     </div>
-</div>
 
     <div id="view-meu-perfil" class="view-section" style="display: none;">
         <div class="container py-5 text-center">
@@ -512,12 +528,101 @@
                     </div>
                 </div>
 
-                <div id="sol-step3" class="wizard-step">
-                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Passo 3: Caracterização</h6>
-                    <div class="d-flex justify-content-between mt-4">
-                        <button class="btn btn-secondary btn-sm fw-bold px-3" onclick="prevSolStep(2)">Voltar</button>
-                        <button class="btn btn-success btn-sm fw-bold px-4" onclick="enviarSolicitacaoAcesso()">Enviar Solicitação</button>
-                    </div>
+                <div id="sol-step2" class="wizard-step">
+    <h5 class="mb-4">Localização da Instituição</h5>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">CEP *</label>
+            <input type="text" id="solCep" class="form-control" placeholder="Apenas números" onblur="buscarCep('sol', this.value)">
+        </div>
+        <div class="col-md-8">
+            <label class="form-label">Logradouro (Rua, Av, Praça) *</label>
+            <input type="text" id="solLogradouro" class="form-control">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Número *</label>
+            <input type="text" id="solNumero" class="form-control">
+        </div>
+        <div class="col-md-8">
+            <label class="form-label">Município *</label>
+            <input type="text" id="solMuni" class="form-control">
+        </div>
+    </div>
+    <div class="mt-4 d-flex justify-content-between">
+        <button class="btn btn-outline-secondary" onclick="prevSolStep(1)">Voltar</button>
+        <button class="btn btn-primary" onclick="nextSolStep(3)">Próxima Etapa</button>
+    </div>
+</div>
+
+<div id="sol-step3" class="wizard-step">
+    <h5 class="mb-4">Características do Museu</h5>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Natureza Administrativa *</label>
+            <select id="solNat" class="form-select">
+                <option value="">Selecione...</option>
+                <option value="Pública Federal">Pública Federal</option>
+                <option value="Pública Estadual">Pública Estadual</option>
+                <option value="Pública Municipal">Pública Municipal</option>
+                <option value="Privada">Privada</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Tipologia do Acervo Predominante *</label>
+            <select id="solAcervo" class="form-select">
+                <option value="">Selecione...</option>
+                <option value="Artes Visuais">Artes Visuais</option>
+                <option value="História">História</option>
+                <option value="Ciência e Tecnologia">Ciência e Tecnologia</option>
+                <option value="Antropologia e Etnografia">Antropologia e Etnografia</option>
+                <option value="Misto/Outros">Misto/Outros</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Situação Atual *</label>
+            <select id="solStatus" class="form-select">
+                <option value="Aberto">Aberto ao Público</option>
+                <option value="Aberto funcionando parcialmente">Aberto (Parcial)</option>
+                <option value="Fechado">Fechado/Desativado</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Possui Museólogo? *</label>
+            <select id="solMus" class="form-select">
+                <option value="Sim">Sim</option>
+                <option value="Não">Não</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Acessibilidade Física *</label>
+            <select id="solAccess" class="form-select">
+                <option value="Sim">Sim (Completa ou Parcial)</option>
+                <option value="Não">Não possui</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Ingresso *</label>
+            <select id="solIngresso" class="form-select">
+                <option value="Gratuito">Totalmente Gratuito</option>
+                <option value="Pago">Pago</option>
+                <option value="Pago com dias de gratuidade">Pago (com dias gratuitos)</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Horário de Funcionamento (Descreva brevemente)</label>
+            <input type="text" id="solFunc" class="form-control" placeholder="Ex: Terça a Sexta, das 10h às 17h">
+        </div>
+        <div class="col-12">
+            <label class="form-label">Redes Sociais (Links) - Opcional</label>
+            <input type="text" id="solRedes" class="form-control" placeholder="Instagram, Site, etc.">
+        </div>
+    </div>
+    
+    <div class="mt-4 d-flex justify-content-between">
+        <button class="btn btn-outline-secondary" onclick="prevSolStep(2)">Voltar</button>
+        <button class="btn btn-success" onclick="enviarSolicitacaoAcesso()">Enviar Solicitação ao SIM-RJ</button>
+    </div>
+</div>
                 </div>
             </div>
         </div>
