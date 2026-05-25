@@ -26,7 +26,7 @@
     <div class="gov-bar py-1 text-white">
         <div class="container d-flex flex-wrap justify-content-between align-items-center">
             <small>Governo do Estado do Rio de Janeiro | SECEC | Superintendência de Museus</small>
-            <button class="btn btn-sm text-white" style="font-size:0.8rem;" onclick="openLogin()"><i class="bi bi-person-lock"></i> Gestor</button>
+            <button class="btn btn-sm text-white" style="font-size:0.8rem;" onclick="openAdminOrLogin()"><i class="bi bi-person-lock"></i> Gestor</button>
         </div>
     </div>
 
@@ -441,26 +441,17 @@
         </div>
     </div>
 
-    <div id="view-dados-graficos" class="view-section container mt-4" style="display: none;">
-        <div class="mb-4 border-bottom pb-3 text-center">
-            <h3 class="fw-bold text-primary">Painel de Dados Gráficos do CFM</h3>
-            <p class="text-muted mb-0">Panorama quantitativo das instituições museológicas fluminenses consolidado no CFM.</p>
-        </div>
-        <div class="row">
-            <div class="col-md-10 mx-auto mb-5 text-center">
-                <img src="./educativo.png" alt="Gráfico de Setor Educativo" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
-            </div>
-            <div class="col-md-10 mx-auto mb-5 text-center">
-                <img src="./gratuidade.png" alt="Gráfico de Gratuidades" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
-            </div>
-            <div class="col-md-10 mx-auto mb-5 text-center">
-                <img src="./museologo.png" alt="Gráfico de Museólogos" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
-            </div>
-            <div class="col-md-10 mx-auto mb-5 text-center">
-                <img src="./tipologias.png" alt="Gráfico de Tipologias" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
-            </div>
+    <div id="view-dados-graficos" class="view-section" style="display: none;">
+    <div class="container py-5 text-center">
+        <h2 class="section-title">Dados Gráficos do CFM</h2>
+        <div class="row mt-4 g-4">
+            <div class="col-md-6"><img src="educativo.png" class="img-fluid shadow-sm rounded border" alt="Gráfico Educativo"></div>
+            <div class="col-md-6"><img src="gratuidade.png" class="img-fluid shadow-sm rounded border" alt="Gráfico de Gratuidades"></div>
+            <div class="col-md-6"><img src="museologo.png" class="img-fluid shadow-sm rounded border" alt="Gráfico de Museólogos"></div>
+            <div class="col-md-6"><img src="tipologias.png" class="img-fluid shadow-sm rounded border" alt="Gráfico de Tipologias do Acervo"></div>
         </div>
     </div>
+</div>
 
     <div id="view-meu-perfil" class="view-section" style="display: none;">
         <div class="container py-5 text-center">

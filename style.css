@@ -63,7 +63,10 @@ section { scroll-margin-top: 110px; }
 /* --- MODAL E ADMIN --- */
 .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
 .login-box { background: white; padding: 2rem; border-radius: 8px; width: 300px; text-align: center; }
-.admin-panel-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #212529 !important; z-index: 9999; overflow-y: auto; }
+
+/* CORRIGIDO: Z-index ajustado para 1040, permitindo que os modals do bootstrap fiquem na frente (1055) */
+.admin-panel-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #f8f9fa !important; z-index: 1040; overflow-y: auto; }
+
 .modal-header { background-color: var(--color-cfm-teal); color: white; }
 .modal-subtitle { color: var(--color-blue); font-weight: bold; border-bottom: 2px solid var(--color-yellow); margin-top: 1rem; margin-bottom: 0.5rem; display: inline-block; }
 .pending-list { max-height: 350px; overflow-y: auto; }
@@ -75,9 +78,7 @@ section { scroll-margin-top: 110px; }
 .team-member h6 { margin-top: 15px; font-weight: bold; color: var(--color-blue); font-size: 1.1rem; }
 .team-member p { font-size: 0.8rem; color: #666; }
 
-/* Correções para o Painel Gestor e Cores */
-.admin-panel-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #f8f9fa !important; z-index: 9999; overflow-y: auto; }
 .badge-aberto { background-color: #198754; color: white; }
-.badge-fechado { background-color: #6c757d; color: white; }
+.badge-fechado { background-color: #dc3545; color: white; }
 .gestor-only { display: none; }
 .gestor-visible { display: block !important; }

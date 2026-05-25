@@ -6,6 +6,7 @@ let currentFilteredData = [];
 let pendingApprovals = [];
 let profileModal;
 let approvalModal;
+let isGestor = false; // NOVA VARIÁVEL
 
 // =====================================================================
 // 1. CONFIGURAÇÃO FIREBASE (Somente Login)
@@ -87,8 +88,7 @@ window.buscarCep = async function(prefixo, cep) {
 }
 
 window.geocodeAddressNominatim = async function(logradouro, numero, municipio, cep) {
-    // Afunila a busca passando a string mais exata possível
-    const query = `${logradouro}, ${numero}, ${municipio}, RJ, Brasil, ${cep}`;
+    const query = `${logradouro}, ${numero || ''}, ${municipio}, RJ, Brasil, ${cep || ''}`;
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
     try {
         const res = await fetch(url);
@@ -137,10 +137,8 @@ window.prevSolStep = function(step) {
     nextSolStep(step); 
 }
 
-// =====================================================================
-// FLUXO 1: SOLICITAÇÃO DE ACESSO COMPLETA (PÚBLICO -> GESTOR)
-// =====================================================================
 window.enviarSolicitacaoAcesso = function() {
+    // Código mantido igual...
     const nome = document.getElementById('solNome').value;
     const emailOficial = document.getElementById('solEmail').value;
     const resp = document.getElementById('solResp').value;
@@ -182,24 +180,19 @@ window.enviarSolicitacaoAcesso = function() {
         museologo: document.getElementById('solMus').value,
         acessibilidade: document.getElementById('solAccess').value,
         historico: document.getElementById('solHist').value,
-        endereco: `${logradouro}, ${numero} - ${document.getElementById('solComplemento').value}. CEP: ${cep}` // Concatenado para o card legado
+        endereco: `${logradouro}, ${numero} - ${document.getElementById('solComplemento').value}. CEP: ${cep}`
     };
 
     pendingApprovals.push(req);
     renderApprovalsList();
 
     alert("Sua ficha foi enviada para a Secretaria de Museus com sucesso!\nNossa equipe analisará os dados e você receberá as credenciais de login no seu e-mail.");
-    
-    // Limpar o formulário
     document.querySelectorAll('#sol-step1 input, #sol-step2 input, #sol-step3 input, #sol-step3 textarea').forEach(el => el.value = '');
     document.querySelectorAll('#sol-step2 select, #sol-step3 select').forEach(el => el.selectedIndex = 0);
     prevSolStep(1);
     switchView('home');
 }
 
-// =====================================================================
-// FLUXO 2: CADASTRO MANUAL (GESTOR)
-// =====================================================================
 window.submitAdminManual = async function() {
     const nome = document.getElementById('admNome').value;
     const logradouro = document.getElementById('admLogradouro').value;
@@ -253,7 +246,7 @@ window.submitAdminManual = async function() {
 }
 
 // =====================================================================
-// FLUXO 3: RESTAURAÇÃO DA LEITURA DE CSV (PapaParse)
+// FLUXO 3: RESTAURAÇÃO DA LEITURA DE CSV COM GEOLOCALIZAÇÃO
 // =====================================================================
 const getCol = (row, possibleNames) => {
     for (let name of possibleNames) {
@@ -272,7 +265,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
     const file = e.target.files[0]; if (!file) return;
     
     document.getElementById('upload-status').className = 'alert alert-info small p-2 d-block w-50 mt-2';
-    document.getElementById('upload-status').innerText = 'Lendo arquivo. Como não há coordenadas, o mapa fará a varredura visual.';
+    document.getElementById('upload-status').innerText = 'Lendo arquivo e buscando geolocalizações no mapa (isso pode levar 1 minuto a cada 60 registros devido aos limites da rede)...';
     
     const pContainer = document.getElementById('upload-progress-container');
     const pBar = document.getElementById('upload-progress-bar');
@@ -283,6 +276,8 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
         header: true, skipEmptyLines: true,
         complete: async function(results) { 
             let rawData = results.data; let cleanData = []; let total = rawData.length;
+            
+            // Loop assíncrono para buscar coordenadas pausadamente
             for (let i = 0; i < total; i++) {
                 let row = rawData[i];
                 let nome = getCol(row, ["Nome da Instituição", "Nome"]);
@@ -290,14 +285,14 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
 
                 let endereco = getCol(row, ["Endereço", "Endereco"]);
                 let municipio = getCol(row, ["Município", "Municipio"]);
+                let cep = getCol(row, ["CEP"]);
                 let acervo = getCol(row, ["Acervo Predominante", "Acervo"]);
 
                 if(pBar) pBar.style.width = `${((i+1)/total)*100}%`;
                 
-                // NOTA TÉCNICA: O Nominatim possui restrição rigorosa de limite de taxa (1 request/seg). 
-                // Num arquivo de 300 museus, a API bloquearia o IP por abuso. Portanto, na importação em lote, 
-                // assumimos null e usamos a ferramenta do "Mapeamento Manual do Gestor" para inserir o pin com calma.
-                let coords = null; 
+                // Busca o pin no mapa igual fazia no Google Maps, mas usando delay para não bloquear
+                let coords = await geocodeAddressNominatim(endereco, "", municipio, cep);
+                await sleep(1100); // Respeita a API gratuita (1 por seg)
 
                 cleanData.push({
                     id: i + 2000, 
@@ -334,16 +329,15 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
             museumsData = cleanData; currentFilteredData = cleanData; 
             renderMuseums(museumsData);
             document.getElementById('upload-status').className = 'alert alert-success small p-2 d-block w-50 mt-2';
-            document.getElementById('upload-status').innerText = `Concluído! ${cleanData.length} lidos. Vá na aba "Sem geolocalização" para definir os locais exatos.`;
+            document.getElementById('upload-status').innerText = `Concluído! ${cleanData.length} lidos.`;
         }
     });
 });
 
 // =====================================================================
-// RENDERIZAÇÃO MAPA E LISTA
+// RENDERIZAÇÃO MAPA E LISTA (Cores da Situação)
 // =====================================================================
 function renderMuseums(data) {
-    // Ordenação Alfabética da lista!
     data.sort((a, b) => a.nome.localeCompare(b.nome));
 
     const tableContainer = document.getElementById('container-lista-museus');
@@ -358,7 +352,14 @@ function renderMuseums(data) {
     data.forEach(museum => {
         const hasPin = museum.lat && museum.lng; 
         
-        tableHTML += `<tr class="tr-lista-item"><td class="fw-bold td-nome">${museum.nome}</td><td>${museum.municipio || '-'}</td><td>${museum.acervo || '-'}</td><td><span class="badge bg-secondary">${museum.situacao || 'Desconhecido'}</span></td><td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td></tr>`;
+        // CORRIGIDO: Atribuindo cores dinâmicas para a Situação da lista
+        let badgeClass = 'bg-secondary';
+        let situacaoLower = normalizeString(museum.situacao);
+        if(situacaoLower === 'aberto') badgeClass = 'bg-success';
+        else if(situacaoLower.includes('parcialmente') || situacaoLower.includes('implantacao')) badgeClass = 'bg-warning text-dark';
+        else if(situacaoLower.includes('desativado')) badgeClass = 'bg-danger';
+        
+        tableHTML += `<tr class="tr-lista-item"><td class="fw-bold td-nome">${museum.nome}</td><td>${museum.municipio || '-'}</td><td>${museum.acervo || '-'}</td><td><span class="badge ${badgeClass}">${museum.situacao || 'Desconhecido'}</span></td><td><button class="btn btn-sm btn-primary" onclick="openProfile(${museum.id})">Abrir Ficha</button></td></tr>`;
 
         if (hasPin) {
             const marker = L.marker([museum.lat, museum.lng]).addTo(map);
@@ -432,16 +433,28 @@ window.openProfile = function(id) {
 window.openLogin = function() { document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
 
+// CORRIGIDO: Sistema de manter Gestor ativo após fechar o painel
+window.openAdminOrLogin = function() {
+    if(isGestor) {
+        document.getElementById('admin-panel').style.display = 'block';
+    } else {
+        openLogin();
+    }
+}
+
 window.checkAdminPassword = function() {
     if(document.getElementById('adminPassword').value === 'simrj') { 
+        isGestor = true;
         document.getElementById('admin-panel').style.display = 'block'; 
         closeLogin(); renderApprovalsList(); 
         document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('d-none'));
+        document.querySelectorAll('.gestor-visible').forEach(el => el.classList.add('d-block'));
     } else alert('Senha incorreta.');
 }
+
 window.closeAdmin = function() { 
     document.getElementById('admin-panel').style.display = 'none'; 
-    document.querySelectorAll('.gestor-only').forEach(el => el.classList.add('d-none'));
+    // As classes 'gestor-only' NÃO são apagadas, mantendo o usuário autenticado na navegação normal do site
 }
 
 function updatePendingList() {
@@ -466,7 +479,6 @@ window.approveRequest = async function(id) {
     const m = pendingApprovals[reqIndex];
     pendingApprovals.splice(reqIndex, 1); 
     
-    // Tenta geolocalizar automaticamente na aprovação
     let coords = await geocodeAddressNominatim(m.endereco, "", m.municipio, "");
     if(coords) { m.lat = coords.lat; m.lng = coords.lng; }
     
@@ -479,6 +491,8 @@ window.openAdminMapPicker = function(id) {
     const m = museumsData.find(x => x.id === id); if(!m) return;
     currentMappingId = id; document.getElementById('adminMapTitle').innerText = m.nome;
     document.getElementById('adminMapSearchInput').value = `${m.endereco}, ${m.municipio}, RJ`;
+    
+    // Mostra o Modal de Geolocalização Manual (agora ele aparecerá na frente do Painel de Admin graças ao z-index alterado no css)
     new bootstrap.Modal(document.getElementById('adminMapModal')).show();
     
     setTimeout(() => {
