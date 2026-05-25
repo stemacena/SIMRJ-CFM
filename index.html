@@ -448,16 +448,16 @@
         </div>
         <div class="row">
             <div class="col-md-10 mx-auto mb-5 text-center">
-                <img src="./1.png" alt="Gráfico de Setor Educativo" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
+                <img src="./educativo.png" alt="Gráfico de Setor Educativo" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
             </div>
             <div class="col-md-10 mx-auto mb-5 text-center">
-                <img src="./2.png" alt="Gráfico de Gratuidades" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
+                <img src="./gratuidade.png" alt="Gráfico de Gratuidades" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
             </div>
             <div class="col-md-10 mx-auto mb-5 text-center">
-                <img src="./3.png" alt="Gráfico de Museólogos" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
+                <img src="./museologo.png" alt="Gráfico de Museólogos" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
             </div>
             <div class="col-md-10 mx-auto mb-5 text-center">
-                <img src="./4.png" alt="Gráfico de Tipologias" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
+                <img src="./tipologias.png" alt="Gráfico de Tipologias" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;">
             </div>
         </div>
     </div>
@@ -476,104 +476,62 @@
         </div>
     </div>
 
-    <div id="view-cadastro" class="view-section" style="display: none;">
-        <div class="container py-5">
-            <h2 class="section-title">Acesso da Instituição</h2>
-            <p class="text-center text-muted mb-4">Gerencie os dados do seu museu no CFM de forma segura.</p>
+    <div id="view-cadastro" class="view-section container py-5" style="display: none;">
+    <h2 class="section-title">Acesso da Instituição</h2>
+    <div class="row w-100 mx-auto bg-white rounded shadow-sm p-4">
+        <div class="col-lg-4 border-end pe-4 mt-2">
+            <h5 class="text-primary fw-bold mb-4"><i class="bi bi-door-open-fill"></i> Já tenho conta</h5>
+            <input type="email" id="loginEmail" class="form-control mb-3" placeholder="E-mail institucional">
+            <input type="password" id="loginPassword" class="form-control mb-4" placeholder="Senha">
+            <button class="btn btn-primary w-100 fw-bold py-2" onclick="loginWithEmail()">Entrar no Sistema</button>
+            <p class="text-center small text-danger mt-3 fw-bold" id="loginErrorMsg"></p>
+        </div>
+
+        <div class="col-lg-8 ps-4 mt-2 position-relative">
+            <h5 class="text-success fw-bold mb-2"><i class="bi bi-person-plus-fill"></i> Não possui conta? Solicite Acesso.</h5>
+            <p class="small text-muted mb-3">Preencha a ficha base da sua instituição. O SIM-RJ fará a verificação.</p>
             
-            <div class="row w-100 mx-auto bg-white rounded shadow-sm p-4">
-                
-                <div class="col-lg-4 border-end pe-4 mt-2">
-                    <h5 class="text-primary fw-bold mb-4"><i class="bi bi-door-open-fill"></i> Já tenho conta</h5>
-                    <input type="email" id="loginEmail" class="form-control mb-3" placeholder="E-mail institucional">
-                    <input type="password" id="loginPassword" class="form-control mb-4" placeholder="Senha">
-                    <button class="btn btn-primary w-100 fw-bold py-2" onclick="loginWithEmail()">Entrar no Sistema</button>
-                    <p class="text-center small text-danger mt-3 fw-bold" id="loginErrorMsg"></p>
+            <div class="step-indicator" id="sol-wizard-steps" style="visibility: hidden; margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                <div class="step-dot active" id="sol-dot1">1</div>
+                <div class="step-dot" id="sol-dot2">2</div>
+                <div class="step-dot" id="sol-dot3">3</div>
+            </div>
+
+            <div class="bg-light p-4 border rounded">
+                <div id="sol-step1" class="wizard-step active">
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Passo 1: Identificação Básica</h6>
+                    <div class="row g-3 small">
+                        <div class="col-md-12"><label class="fw-bold">Nome da Instituição *</label><input type="text" id="solNome" class="form-control form-control-sm" required></div>
+                        <div class="col-md-6"><label class="fw-bold">Nome do Responsável *</label><input type="text" id="solResp" class="form-control form-control-sm" required></div>
+                        <div class="col-md-6"><label class="fw-bold">E-mail Institucional Oficial *</label><input type="email" id="solEmail" class="form-control form-control-sm" required></div>
+                    </div>
+                    <div class="text-end mt-4"><button class="btn btn-primary btn-sm fw-bold px-4" onclick="nextSolStep(2)">Avançar <i class="bi bi-arrow-right"></i></button></div>
                 </div>
 
-                <div class="col-lg-8 ps-4 mt-2 position-relative">
-                    <h5 class="text-success fw-bold mb-2"><i class="bi bi-person-plus-fill"></i> Não possui conta? Solicite Acesso.</h5>
-                    <p class="small text-muted mb-3">Preencha a ficha base da sua instituição. O SIM-RJ fará a verificação e você receberá as credenciais de login no e-mail indicado.</p>
-                    
-                    <div class="step-indicator" id="sol-wizard-steps" style="visibility: hidden; margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
-                        <div class="step-dot active" id="sol-dot1">1</div>
-                        <div class="step-dot" id="sol-dot2">2</div>
-                        <div class="step-dot" id="sol-dot3">3</div>
+                <div id="sol-step2" class="wizard-step">
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Passo 2: Localização e Estrutura</h6>
+                    <div class="row g-3 small">
+                        <div class="col-md-3"><label class="fw-bold">CEP *</label><input type="text" id="solCep" class="form-control form-control-sm" onblur="buscarCep('sol', this.value)"></div>
+                        <div class="col-md-6"><label class="fw-bold">Logradouro *</label><input type="text" id="solLogradouro" class="form-control form-control-sm"></div>
+                        <div class="col-md-3"><label class="fw-bold">Número *</label><input type="text" id="solNumero" class="form-control form-control-sm"></div>
+                        </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button class="btn btn-secondary btn-sm fw-bold px-3" onclick="prevSolStep(1)">Voltar</button>
+                        <button class="btn btn-primary btn-sm fw-bold px-4" onclick="nextSolStep(3)">Avançar</button>
                     </div>
+                </div>
 
-                    <div class="bg-light p-4 border rounded">
-                        
-                        <div id="sol-step1" class="wizard-step active">
-                            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Passo 1: Identificação Básica</h6>
-                            <div class="row g-3 small">
-                                <div class="col-md-12"><label class="fw-bold">Nome da Instituição *</label><input type="text" id="solNome" class="form-control form-control-sm" required></div>
-                                <div class="col-md-6"><label class="fw-bold">Nome do Responsável *</label><input type="text" id="solResp" class="form-control form-control-sm" required></div>
-                                <div class="col-md-6"><label class="fw-bold">E-mail Institucional Oficial *</label><input type="email" id="solEmail" class="form-control form-control-sm" required></div>
-                            </div>
-                            <div class="text-end mt-4">
-                                <button class="btn btn-primary btn-sm fw-bold px-4" onclick="nextSolStep(2)">Avançar <i class="bi bi-arrow-right"></i></button>
-                            </div>
-                        </div>
-
-                        <div id="sol-step2" class="wizard-step">
-                            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Passo 2: Localização e Estrutura</h6>
-                            <div class="row g-3 small">
-                                <div class="col-md-3"><label class="fw-bold">Sigla</label><input type="text" id="solSigla" class="form-control form-control-sm"></div>
-                                <div class="col-md-4"><label class="fw-bold">CNPJ</label><input type="text" id="solCnpj" class="form-control form-control-sm"></div>
-                                <div class="col-md-5"><label class="fw-bold">Doc. de Criação</label><input type="text" id="solDoc" class="form-control form-control-sm" placeholder="Lei, Decreto..."></div>
-                                
-                                <div class="col-12 mt-3 mb-1"><h6 class="text-primary fw-bold m-0" style="font-size:0.85rem;">Localização</h6></div>
-                                <div class="col-md-3"><label class="fw-bold">CEP *</label><input type="text" id="solCep" class="form-control form-control-sm" onblur="buscarCep('sol', this.value)"></div>
-                                <div class="col-md-6"><label class="fw-bold">Logradouro (Rua, Av) *</label><input type="text" id="solLogradouro" class="form-control form-control-sm"></div>
-                                <div class="col-md-3"><label class="fw-bold">Número *</label><input type="text" id="solNumero" class="form-control form-control-sm"></div>
-                                
-                                <div class="col-md-3"><label class="fw-bold">Complemento</label><input type="text" id="solComplemento" class="form-control form-control-sm"></div>
-                                <div class="col-md-5"><label class="fw-bold">Município *</label><input type="text" id="solMuni" class="form-control form-control-sm"></div>
-                                <div class="col-md-4"><label class="fw-bold">Região</label><select id="solRegiao" class="form-select form-select-sm" onchange="verificarRegiaoMetropolitana(this.value, 'solZonasRio')"><option value="">Selecione...</option><option value="Metropolitana I">Metropolitana I</option><option value="Metropolitana II">Metropolitana II</option><option value="Metropolitana III">Metropolitana III</option><option value="Baixadas Litorâneas">Baixadas Litorâneas</option><option value="Centro-Sul">Centro-Sul</option><option value="Costa Verde">Costa Verde</option><option value="Médio Paraíba">Médio Paraíba</option><option value="Noroeste Fluminense">Noroeste Fluminense</option><option value="Norte Fluminense">Norte Fluminense</option><option value="Serrana">Serrana</option></select></div>
-                                
-                                <div class="col-md-4 d-none" id="solZonasRio"><label class="fw-bold">Zona do Rio</label><select id="solZonaValor" class="form-select form-select-sm"><option value="">Selecione...</option><option value="Centro">Centro</option><option value="Zona Sul">Zona Sul</option><option value="Zona Norte">Zona Norte</option><option value="Zona Oeste">Zona Oeste</option><option value="Zona Sudoeste">Zona Sudoeste</option></select></div>
-
-                                <div class="col-12 mt-3 mb-1"><h6 class="text-primary fw-bold m-0" style="font-size:0.85rem;">Contato</h6></div>
-                                <div class="col-md-3"><label class="fw-bold">Telefone</label><input type="text" id="solTel" class="form-control form-control-sm"></div>
-                                <div class="col-md-3"><label class="fw-bold">Site</label><input type="text" id="solSite" class="form-control form-control-sm"></div>
-                                <div class="col-md-2"><label class="fw-bold">Facebook</label><input type="text" id="solFace" class="form-control form-control-sm"></div>
-                                <div class="col-md-2"><label class="fw-bold">Instagram</label><input type="text" id="solInsta" class="form-control form-control-sm"></div>
-                                <div class="col-md-2"><label class="fw-bold">Twitter/X</label><input type="text" id="solTwitter" class="form-control form-control-sm"></div>
-                            </div>
-                            <div class="d-flex justify-content-between mt-4">
-                                <button class="btn btn-secondary btn-sm fw-bold px-3" onclick="prevSolStep(1)"><i class="bi bi-arrow-left"></i> Voltar</button>
-                                <button class="btn btn-primary btn-sm fw-bold px-4" onclick="nextSolStep(3)">Avançar <i class="bi bi-arrow-right"></i></button>
-                            </div>
-                        </div>
-
-                        <div id="sol-step3" class="wizard-step">
-                            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Passo 3: Caracterização e Acervo</h6>
-                            <div class="row g-3 small">
-                                <div class="col-md-4"><label class="fw-bold">Natureza Administrativa</label><select id="solNat" class="form-select form-select-sm"><option value="">Selecione...</option><option value="Estadual">Estadual</option><option value="Federal">Federal</option><option value="Municipal">Municipal</option><option value="Privada">Privada</option><option value="Público-privada">Público-privada</option></select></div>
-                                <div class="col-md-4"><label class="fw-bold">Situação Atual</label><select id="solStatus" class="form-select form-select-sm"><option value="Aberto">Aberto</option><option value="Aberto funcionando parcialmente">Aberto funcionando parcialmente</option><option value="Em implantação">Em implantação</option><option value="Desativado temporariamente">Desativado temporariamente</option><option value="Desativado sem previsão de retorno">Desativado sem previsão de retorno</option></select></div>
-                                <div class="col-md-4"><label class="fw-bold">Acervo Predominante</label><select id="solAcervo" class="form-select form-select-sm"><option value="">Selecione...</option><option value="Antropologia e Etnografia">Antropologia e Etnografia</option><option value="Arqueologia">Arqueologia</option><option value="Artes Visuais">Artes Visuais</option><option value="Ciência e Tecnologia">Ciência e Tecnologia</option><option value="Histórico">Histórico</option><option value="Imagem e Som">Imagem e Som</option><option value="Patrimônio Científico e Histórico Natural">Patrimônio Científico</option><option value="Virtual">Virtual</option><option value="Outros">Outros</option></select></div>
-                                
-                                <div class="col-md-4"><label class="fw-bold">Dias e Turnos</label><input type="text" id="solFunc" class="form-control form-control-sm" placeholder="Ex: Terça a Domingo, Manhã"></div>
-                                <div class="col-md-4"><label class="fw-bold">Valor Ingresso</label><input type="text" id="solIngresso" class="form-control form-control-sm" placeholder="Ex: Gratuito, R$10..."></div>
-                                <div class="col-md-4"><label class="fw-bold">Gratuidades</label><input type="text" id="solGrat" class="form-control form-control-sm"></div>
-
-                                <div class="col-md-3"><label class="fw-bold">Setor Educativo?</label><select id="solEdu" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
-                                <div class="col-md-3"><label class="fw-bold">Museólogo?</label><select id="solMus" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
-                                <div class="col-md-6"><label class="fw-bold">Acessibilidade Universal</label><textarea id="solAccess" class="form-control form-control-sm" rows="1"></textarea></div>
-                                
-                                <div class="col-md-12"><label class="fw-bold">Histórico do Museu</label><textarea id="solHist" class="form-control form-control-sm" rows="2"></textarea></div>
-                            </div>
-                            <div class="d-flex justify-content-between mt-4">
-                                <button class="btn btn-secondary btn-sm fw-bold px-3" onclick="prevSolStep(2)"><i class="bi bi-arrow-left"></i> Voltar</button>
-                                <button class="btn btn-success btn-sm fw-bold px-4" onclick="enviarSolicitacaoAcesso()"><i class="bi bi-send-check-fill"></i> Enviar Ficha e Solicitar Acesso</button>
-                            </div>
-                        </div>
-
+                <div id="sol-step3" class="wizard-step">
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Passo 3: Caracterização</h6>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button class="btn btn-secondary btn-sm fw-bold px-3" onclick="prevSolStep(2)">Voltar</button>
+                        <button class="btn btn-success btn-sm fw-bold px-4" onclick="enviarSolicitacaoAcesso()">Enviar Solicitação</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <div id="view-cfm-lista" class="view-section" style="display: none;">
         <div class="container py-5">

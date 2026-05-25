@@ -125,9 +125,13 @@ window.logoutUser = function() { firebase.auth().signOut().then(() => { switchVi
 window.nextSolStep = function(step) {
     document.getElementById('sol-wizard-steps').style.visibility = 'visible';
     document.querySelectorAll('#sol-step1, #sol-step2, #sol-step3').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('#sol-dot1, #sol-dot2, #sol-dot3').forEach((el, index) => { if(index < step) el.classList.add('active'); else el.classList.remove('active'); });
+    document.querySelectorAll('#sol-dot1, #sol-dot2, #sol-dot3').forEach((el, index) => { 
+        if(index < step) el.classList.add('active'); 
+        else el.classList.remove('active'); 
+    });
     document.getElementById('sol-step' + step).classList.add('active');
 }
+
 window.prevSolStep = function(step) { 
     if(step === 1) document.getElementById('sol-wizard-steps').style.visibility = 'hidden';
     nextSolStep(step); 

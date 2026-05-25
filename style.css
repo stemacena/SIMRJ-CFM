@@ -75,8 +75,9 @@ section { scroll-margin-top: 110px; }
 .team-member h6 { margin-top: 15px; font-weight: bold; color: var(--color-blue); font-size: 1.1rem; }
 .team-member p { font-size: 0.8rem; color: #666; }
 
-* Correção das cores dos badges de situação */
+/* Correções para o Painel Gestor e Cores */
+.admin-panel-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #f8f9fa !important; z-index: 9999; overflow-y: auto; }
 .badge-aberto { background-color: #198754; color: white; }
 .badge-fechado { background-color: #6c757d; color: white; }
-/* Garante que o painel gestor não bloqueie a navegação */
-.admin-panel-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #212529 !important; z-index: 9999; overflow-y: auto; }
+.gestor-only { display: none; }
+.gestor-visible { display: block !important; }
