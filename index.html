@@ -62,7 +62,7 @@
         </div>
     </nav>
 
-    <!-- PAINEL GESTOR COM TODOS OS CAMPOS RESTAURADOS -->
+    <!-- PAINEL GESTOR -->
     <div id="admin-panel" class="text-dark bg-light p-4 admin-panel-fullscreen" style="display: none;">
         <div class="container bg-white shadow rounded border p-4 mt-3">
             <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -74,7 +74,7 @@
             </div>
             <ul class="nav nav-tabs mb-4">
                 <li class="nav-item"><a class="nav-link active fw-bold text-dark" data-bs-toggle="tab" href="#tab-visibility"><i class="bi bi-pencil-square"></i> Gestão e Edição (<span id="gestaoCount" class="text-primary">0</span>)</a></li>
-                <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-import"><i class="bi bi-robot"></i> Importação</a></li>
+                <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-import"><i class="bi bi-robot"></i> Importação e Robô</a></li>
                 <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-manual"><i class="bi bi-plus-circle"></i> Cadastro Manual Oficial</a></li>
                 <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-pending"><i class="bi bi-geo-alt"></i> Sem Geolocalização (<span id="pendingCount" class="text-danger">0</span>)</a></li>
             </ul>
@@ -85,10 +85,25 @@
                 </div>
 
                 <div class="tab-pane fade" id="tab-import">
-                    <div class="alert alert-info">Atualize os dados em massa importando o arquivo <strong>dados.csv</strong> com as coordenadas preenchidas.</div>
-                    <input class="form-control mb-2 border-primary w-50" type="file" id="csvFileUpdate" accept=".csv">
-                    <button class="btn btn-primary fw-bold w-50" onclick="startUpdateImport()">Importar Dados</button>
-                    <div id="upload-status" class="alert alert-secondary d-none small p-2 w-50 mt-2"></div>
+                    <div class="row">
+                        <div class="col-md-6 border-end pe-4">
+                            <h5 class="text-primary fw-bold"><i class="bi bi-database-down"></i> Importar Planilha de Atualização</h5>
+                            <p class="small text-muted">Carregue um arquivo <b>dados.csv</b>. Se for o arquivo gerado pelo robô ao lado, o mapa será atualizado automaticamente com as localizações.</p>
+                            <input class="form-control mb-2 border-primary" type="file" id="csvFileUpdate" accept=".csv">
+                            <button class="btn btn-primary w-100 fw-bold" onclick="startUpdateImport()">Carregar e Atualizar Mapa</button>
+                            <div id="upload-status" class="alert alert-secondary d-none small p-2 mt-2"></div>
+                        </div>
+                        <div class="col-md-6 ps-4">
+                            <h5 class="text-success fw-bold"><i class="bi bi-robot"></i> Robô Geocodificador (Otimizado)</h5>
+                            <p class="small text-muted">A sua planilha tem instituições sem latitude e longitude? Rode o robô para ele encontrar as coordenadas perfeitamente formatadas para o mapa.</p>
+                            <input class="form-control mb-2 border-success" type="file" id="csvFileRobot" accept=".csv">
+                            <button class="btn btn-success w-100 fw-bold" id="btnRobot" onclick="startRobotProcessing()">1. Iniciar Busca e Baixar CSV</button>
+                            <div class="progress mt-3 d-none" id="robotProgressContainer" style="height: 25px;">
+                                <div id="robotProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%; font-weight: bold; font-size: 14px;">0%</div>
+                            </div>
+                            <div id="robotLog" class="history-log mt-2 d-none">> Robô aguardando...</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="tab-pane fade" id="tab-manual">
@@ -108,8 +123,8 @@
                             <div class="col-md-4"><label class="fw-bold">Município</label><input type="text" id="man_municipio" class="form-control form-control-sm"></div>
                             <div class="col-md-4"><label class="fw-bold">Região</label><input type="text" id="man_regiao" class="form-control form-control-sm"></div>
                             <div class="col-md-4"><label class="fw-bold">Zona do Rio</label><input type="text" id="man_zona" class="form-control form-control-sm"></div>
-                            <div class="col-md-6"><label class="fw-bold text-danger">Latitude Exata (Mapa)</label><input type="text" id="man_lat" class="form-control form-control-sm" placeholder="Ex: -22.906"></div>
-                            <div class="col-md-6"><label class="fw-bold text-danger">Longitude Exata (Mapa)</label><input type="text" id="man_lng" class="form-control form-control-sm" placeholder="Ex: -43.172"></div>
+                            <div class="col-md-6"><label class="fw-bold text-danger">Latitude Exata</label><input type="text" id="man_lat" class="form-control form-control-sm" placeholder="Ex: -22.906"></div>
+                            <div class="col-md-6"><label class="fw-bold text-danger">Longitude Exata</label><input type="text" id="man_lng" class="form-control form-control-sm" placeholder="Ex: -43.172"></div>
 
                             <div class="col-12 mt-3 mb-1 border-bottom"><h6 class="text-primary fw-bold">Contato e Redes</h6></div>
                             <div class="col-md-4"><label class="fw-bold">Telefone Institucional</label><input type="text" id="man_telefone" class="form-control form-control-sm"></div>
@@ -117,7 +132,7 @@
                             <div class="col-md-4"><label class="fw-bold">Site Oficial</label><input type="text" id="man_site" class="form-control form-control-sm"></div>
                             <div class="col-md-4"><label class="fw-bold">Facebook</label><input type="text" id="man_facebook" class="form-control form-control-sm"></div>
                             <div class="col-md-4"><label class="fw-bold">Instagram</label><input type="text" id="man_instagram" class="form-control form-control-sm"></div>
-                            <div class="col-md-4"><label class="fw-bold">Twitter/X</label><input type="text" id="man_twitter" class="form-control form-control-sm"></div>
+                            <div class="col-md-4"><label class="fw-bold">Twitter</label><input type="text" id="man_twitter" class="form-control form-control-sm"></div>
                             
                             <div class="col-12 mt-3 mb-1 border-bottom"><h6 class="text-primary fw-bold">Estrutura e Acervo</h6></div>
                             <div class="col-md-3"><label class="fw-bold">Natureza Administrativa</label><input type="text" id="man_natureza" class="form-control form-control-sm"></div>
@@ -170,7 +185,7 @@
         <section class="py-4 bg-light">
             <div class="container-fluid px-4">
                 <div class="row">
-                    <!-- FILTROS (RESTAURADOS COMPLETAMENTE) -->
+                    <!-- FILTROS LATERAIS -->
                     <div class="col-lg-3">
                         <div class="sidebar-filters p-4 mb-4">
                             <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-funnel"></i> Busca Detalhada</h5>
@@ -224,7 +239,6 @@
                             </div>
 
                             <div class="accordion accordion-flush border mb-2 rounded" id="accordionFiltros">
-                                <!-- Funcionamento e Status -->
                                 <div class="accordion-item border-bottom">
                                     <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStatus">Funcionamento e Status</button></h2>
                                     <div id="collapseStatus" class="accordion-collapse collapse"><div class="accordion-body p-2 bg-light">
@@ -244,7 +258,6 @@
                                         </div>
                                     </div></div>
                                 </div>
-                                <!-- Técnico e Acessibilidade -->
                                 <div class="accordion-item">
                                     <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTecnico">Técnico e Acessibilidade</button></h2>
                                     <div id="collapseTecnico" class="accordion-collapse collapse"><div class="accordion-body p-2 bg-light">
@@ -256,7 +269,7 @@
                                             <label><input type="checkbox" value="R$20 a R$30" onchange="applyFilters()"> de R$20 a R$30</label>
                                             <label><input type="checkbox" value="Acima de R$30" onchange="applyFilters()"> Acima de R$30</label>
                                         </div>
-                                        <label class="filter-label mb-1">Busca Específica (Texto Livre)</label>
+                                        <label class="filter-label mb-1">Busca Específica (Texto)</label>
                                         <input type="text" id="filterGratuidade" class="form-control form-control-sm mb-2" placeholder="Gratuidades (ex: idoso)" onkeyup="applyFilters()">
                                         <input type="text" id="filterAcesso" class="form-control form-control-sm mb-1" placeholder="Acessibilidade (ex: rampa)" onkeyup="applyFilters()">
                                     </div></div>
@@ -266,7 +279,7 @@
                         </div>
                     </div>
 
-                    <!-- DIVISÃO MAPA E LISTA LATERAL (Resolve a rolagem de tela infinita) -->
+                    <!-- MAPA E LISTA LATERAL (Layout Otimizado) -->
                     <div class="col-lg-9">
                         <div class="row">
                             <div class="col-md-7 mb-3">
@@ -285,6 +298,7 @@
         </section>
     </div>
 
+    <!-- ABAS RESTAURADAS COM O CONTEÚDO ORIGINAL -->
     <div id="view-equipe" class="view-section" style="display: none;">
         <div class="container py-5 text-center">
             <h2 class="section-title">Equipe Técnica SUPMU</h2>
@@ -318,42 +332,117 @@
         </div>
     </div>
 
-    <!-- ABAS RESTANTES -->
+    <!-- Apresentação Restaurada -->
+    <div id="view-apresentacao" class="view-section" style="display: none;">
+        <div class="container py-5">
+            <h2 class="section-title">Missão, Visão e Valores</h2>
+            <div class="row mt-5 g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm border-top-0 border-end-0 border-bottom-0 border-primary border-4">
+                        <div class="card-body text-center">
+                            <i class="bi bi-bullseye text-primary" style="font-size: 3rem;"></i><h4 class="fw-bold mt-3 text-dark">Missão</h4>
+                            <p class="small text-muted mt-3" style="text-align: justify;">Promover a articulação, o fortalecimento e o desenvolvimento do campo museológico fluminense, por meio de ações que buscam efetivar as políticas públicas para preservação, documentação, pesquisa, gestão e difusão dos acervos e patrimônios culturais do Estado do Rio de Janeiro.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm border-top-0 border-end-0 border-bottom-0 border-success border-4">
+                        <div class="card-body text-center">
+                            <i class="bi bi-eye text-success" style="font-size: 3rem;"></i><h4 class="fw-bold mt-3 text-dark">Visão</h4>
+                            <p class="small text-muted mt-3" style="text-align: justify;">Ser referência local em iniciativas de consolidação das áreas museológicas integradas através da preservação da memória e da diversidade cultural fluminense, o fortalecimento institucional dos museus e o acesso democrático da população ao patrimônio cultural material e imaterial.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm border-top-0 border-end-0 border-bottom-0 border-warning border-4">
+                        <div class="card-body text-center">
+                            <i class="bi bi-star text-warning" style="font-size: 3rem;"></i><h4 class="fw-bold mt-3 text-dark">Valores</h4>
+                            <ul class="text-start small text-muted mt-3 ps-3" style="list-style-type: square;"><li>Cooperação e Transparência</li><li>Diversidade</li><li>Acesso e inclusão</li><li>Excelência técnica e Sustentabilidade</li><li>Educação e cidadania</li><li>Engajamento dos públicos para o desenvolvimento comunitário</li></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center mt-5">
+                <div class="col-md-10 text-muted" style="text-align: justify; font-size: 0.95rem;">
+                    <p>O Sistema Estadual de Museus do Rio de Janeiro foi criado pelo Decreto nº 42.306, de 2010, em conformidade com o Sistema Brasileiro de Museus com o objetivo de promover políticas públicas para o setor museal fluminense.</p>
+                    <p>Sua atuação busca integrar os museus e instituições afins, públicas e privadas, no território do Estado do Rio de Janeiro, atuando no intuito de fortalecer a articulação e o desenvolvimento institucional de museus, de processos museológicos, de redes de profissionais e de espaços de memória, com vistas à pesquisa, à conservação e à difusão de acervos museológicos.</p>
+                    <p>O SIM-RJ, por meio do Cadastro Fluminense de Museus, realiza o mapeamento de espaços e iniciativas de memória no estado. É a partir do CFM que são produzidos dados sistematizados de forma periódica, abertos ao público, que servem de base para a elaboração de diagnósticos, para orientar a tomada de decisões e para a avaliação das políticas do setor.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legislação Restaurada -->
+    <div id="view-legislacao" class="view-section" style="display: none;">
+        <div class="container py-5 text-center">
+            <h2 class="section-title">Legislação e Documentos</h2>
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-5">
+                    <a href="https://drive.google.com/file/d/1dZvf4dowCg6zwPjqJ8txD8UnQJlB9YCZ/view?usp=drive_link" target="_blank" class="btn btn-outline-primary w-100 mb-3 py-3 text-start fw-bold shadow-sm"><i class="bi bi-file-earmark-pdf-fill fs-4 align-middle me-2"></i> Decreto 2010</a>
+                    <a href="https://drive.google.com/file/d/155hs26R2rxB6V7Ig822a6rLQHGuNzwL8/view?usp=drive_link" target="_blank" class="btn btn-outline-primary w-100 mb-3 py-3 text-start fw-bold shadow-sm"><i class="bi bi-file-earmark-pdf-fill fs-4 align-middle me-2"></i> Decreto 2018</a>
+                    <a href="https://drive.google.com/file/d/1K6o0NhMgc9Bz4dNr7jrJxP0RFR-pEx2C/view?usp=drive_link" target="_blank" class="btn btn-outline-primary w-100 mb-3 py-3 text-start fw-bold shadow-sm"><i class="bi bi-file-earmark-pdf-fill fs-4 align-middle me-2"></i> Regimento Interno 2022</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comissão Restaurada -->
+    <div id="view-comissao" class="view-section" style="display: none;">
+        <div class="container py-5">
+            <h2 class="section-title">Comissão Consultiva</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-10 text-muted" style="text-align: justify; font-size: 0.95rem;">
+                    <p>A Comissão Consultiva do SIM-RJ é uma parceria que auxilia nos encaminhamentos das demandas do campo museal e na organização e planejamento das atividades.</p>
+                    <h5 class="mt-5 text-dark fw-bold border-bottom pb-2">Distribuição Regional:</h5>
+                    <ul class="list-group list-group-flush shadow-sm mt-3">
+                        <li class="list-group-item"><strong>Metropolitana I / Capital:</strong> Rio de Janeiro</li>
+                        <li class="list-group-item"><strong>Metropolitana II / Baixada Fluminense:</strong> Belford Roxo, Duque de Caxias, Japeri, Magé, Mesquita, Nilópolis, Nova Iguaçu, Paracambi, Queimados, São João de Meriti e Seropédica.</li>
+                        <li class="list-group-item"><strong>Metropolitana III / Leste Fluminense:</strong> Itaboraí, Maricá, Niterói, Rio Bonito, São Gonçalo e Tanguá.</li>
+                        <li class="list-group-item"><strong>Noroeste Fluminense:</strong> Aperibé, Bom Jesus do Itabapoana, Cambuci, Italva, Itaocara, Itaperuna, Laje do Muriaé, Miracema, Natividade, Porciúncula, Santo Antônio de Pádua, São José de Ubá e Varre-Sai.</li>
+                        <li class="list-group-item"><strong>Norte Fluminense:</strong> Campos dos Goytacazes, Carapebus, Cardoso Moreira, Conceição de Macabu, Macaé, Quissamã, São Fidélis, São Francisco do Itabapoana e São João da Barra.</li>
+                        <li class="list-group-item"><strong>Serrana:</strong> Bom Jardim, Cachoeiras de Macacu, Cantagalo, Carmo, Cordeiro, Duas Barras, Guapimirim, Macuco, Nova Friburgo, Petrópolis, Santa Maria Madalena, São José do Vale do Rio Preto, São Sebastião do Alto, Sumidouro, Teresópolis e Trajano de Moraes.</li>
+                        <li class="list-group-item"><strong>Baixadas Litorâneas:</strong> Araruama, Armação dos Búzios, Arraial do Cabo, Cabo Frio, Casimiro de Abreu, Iguaba Grande, Rio das Ostras, São Pedro da Aldeia, Saquarema e Silva Jardim.</li>
+                        <li class="list-group-item"><strong>Médio Paraíba:</strong> Barra do Piraí, Barra Mansa, Itatiaia, Pinheiral, Piraí, Porto Real, Quatis, Resende, Rio Claro, Rio das Flores, Valença e Volta Redonda.</li>
+                        <li class="list-group-item"><strong>Centro-Sul:</strong> Areal, Comendador Levy Gasparian, Engenheiro Paulo de Frontin, Mendes, Miguel Pereira, Paraíba do Sul, Paty do Alferes, Sapucaia, Três Rios e Vassouras.</li>
+                        <li class="list-group-item"><strong>Costa Verde:</strong> Angra dos Reis, Itaguaí, Mangaratiba e Paraty.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- O que é o CFM Restaurado -->
+    <div id="view-cfm-sobre" class="view-section" style="display: none;">
+        <div class="container py-5">
+            <h2 class="section-title">O que é o CFM?</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-muted" style="text-align: justify; font-size: 1rem;">
+                    <p>O Cadastro Fluminense de Museus (CFM) é um instrumento do Sistema Estadual de Museus do Rio de Janeiro (SIM-RJ), no âmbito da Secretaria de Estado de Cultura e Economia Criativa, destinado ao mapeamento, diagnóstico e difusão do conjunto de museus e instituições museológicas existentes no estado. Por meio do cadastro, são sistematizadas informações sobre instituições pertencentes às esferas públicas, privadas ou ao terceiro setor, contribuindo para a produção de dados e para o fortalecimento das políticas voltadas ao campo museal fluminense.</p>
+                    <p>A adesão ao CFM é voluntária e ocorre mediante o preenchimento dos campos obrigatórios do formulário de cadastro disponibilizado pelo SIM-RJ.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dados e Gráficos Restaurados -->
+    <div id="view-dados-graficos" class="view-section container mt-4" style="display: none;">
+        <div class="mb-4 border-bottom pb-3 text-center"><h3 class="fw-bold text-primary">Painel de Dados Gráficos do CFM</h3></div>
+        <div class="row">
+            <div class="col-md-10 mx-auto mb-5 text-center"><img src="./educativo.png" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;" onerror="this.style.display='none'"></div>
+            <div class="col-md-10 mx-auto mb-5 text-center"><img src="./gratuidade.png" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;" onerror="this.style.display='none'"></div>
+            <div class="col-md-10 mx-auto mb-5 text-center"><img src="./museologo.png" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;" onerror="this.style.display='none'"></div>
+            <div class="col-md-10 mx-auto mb-5 text-center"><img src="./tipologias.png" class="img-fluid rounded shadow-sm w-100" style="max-width: 800px;" onerror="this.style.display='none'"></div>
+        </div>
+    </div>
+
     <div id="view-cfm-lista" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Instituições Cadastradas (Geral)</h2><div class="row mb-4"><div class="col-md-6 mx-auto"><input type="text" id="searchLista" class="form-control border-primary" placeholder="Buscar instituição..." onkeyup="filterListaTexto()"></div></div><div class="row" id="container-lista-geral"></div></div></div>
-    <div id="view-apresentacao" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Apresentação</h2></div></div>
-    <div id="view-legislacao" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Legislação</h2></div></div>
-    <div id="view-comissao" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Comissão</h2></div></div>
-    <div id="view-cfm-sobre" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">O que é o CFM?</h2></div></div>
-    <div id="view-dados-graficos" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Gráficos</h2></div></div>
-    <div id="view-em-construcao" class="view-section" style="display: none;"><div class="container py-5 text-center"><h2 class="section-title" id="construcao-title">Em Construção</h2></div></div>
+    <div id="view-em-construcao" class="view-section" style="display: none;"><div class="container py-5 text-center"><h2 class="section-title" id="construcao-title">Em Construção</h2><p class="text-muted mt-3">Conteúdo disponível em breve.</p></div></div>
 
-    <!-- MODAL PÚBLICO (FICHA COM HISTÓRICO RESTAURADO) -->
-    <div class="modal fade" id="museumModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
-            <div class="modal-header d-flex align-items-center"><h5 class="modal-title m-0 fw-bold" id="modalTitle">Nome</h5><button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body p-4" id="modalPublicBody"></div>
-        </div></div>
-    </div>
+    <!-- MODAIS RESTANTES -->
+    <div class="modal fade" id="museumModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header d-flex align-items-center"><h5 class="modal-title m-0 fw-bold" id="modalTitle">Nome</h5><button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button></div><div class="modal-body p-4" id="modalPublicBody"></div></div></div></div>
 
-    <!-- MODAL GESTOR DE EDIÇÃO (COM TODOS OS CAMPOS) -->
-    <div class="modal fade" id="gestorEditModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
-            <div class="modal-header bg-dark text-white"><h5 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square"></i> Editar: <span id="gestorEditTitle"></span></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body p-4 bg-light">
-                <div class="alert alert-warning small">Desmarque a caixa Visível para esconder informações específicas do público.</div>
-                <div class="row g-3" id="gestorEditFields"></div>
-                <hr class="mt-4"><h6 class="text-primary fw-bold"><i class="bi bi-clock-history"></i> Histórico de Edições</h6>
-                <div id="gestorHistoryLog" class="history-log mb-3"></div>
-                <div class="bg-white p-3 border rounded border-danger shadow-sm mt-3"><label class="fw-bold text-danger">Seu nome (Responsável pela atualização): *</label><input type="text" id="gestorAuthor" class="form-control border-danger" placeholder="Digite seu Nome Completo"></div>
-            </div>
-            <div class="modal-footer justify-content-between">
-                <div><input type="checkbox" id="gestorMuseumVisible" class="form-check-input me-1"> <label class="fw-bold text-danger">Ocultar Museu Inteiro do Público</label></div>
-                <button class="btn btn-success fw-bold px-4" onclick="saveGestorEdits()"><i class="bi bi-floppy-fill"></i> Salvar Alterações</button>
-            </div>
-        </div></div>
-    </div>
+    <div class="modal fade" id="gestorEditModal" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square"></i> Editar: <span id="gestorEditTitle"></span></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4 bg-light"><div class="alert alert-warning small">Desmarque a caixa Visível para esconder informações específicas do público.</div><div class="row g-3" id="gestorEditFields"></div><hr class="mt-4"><h6 class="text-primary fw-bold"><i class="bi bi-clock-history"></i> Histórico de Edições</h6><div id="gestorHistoryLog" class="history-log mb-3"></div><div class="bg-white p-3 border rounded border-danger shadow-sm mt-3"><label class="fw-bold text-danger">Seu nome (Responsável pela atualização): *</label><input type="text" id="gestorAuthor" class="form-control border-danger" placeholder="Digite seu Nome Completo"></div></div><div class="modal-footer justify-content-between"><div><input type="checkbox" id="gestorMuseumVisible" class="form-check-input me-1"> <label class="fw-bold text-danger">Ocultar Museu Inteiro do Público</label></div><button class="btn btn-success fw-bold px-4" onclick="saveGestorEdits()"><i class="bi bi-floppy-fill"></i> Salvar Alterações</button></div></div></div></div>
 
-    <!-- MODAL MAPA ADMIN -->
     <div class="modal fade" id="adminMapModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark"><h5 class="modal-title text-white">Forçar Mapeamento Manual</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div class="p-2 bg-light"><input type="text" id="adminMapSearchInput" class="form-control" placeholder="Busca"><button class="btn btn-primary mt-2 w-100" onclick="searchAddressOnAdminMap()">Buscar no Nominatim</button></div><div id="adminLeafletMap" style="height: 450px;"></div></div><div class="modal-footer"><button class="btn btn-success" onclick="saveAdminPin()">Salvar Pin</button></div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

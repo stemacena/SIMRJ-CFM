@@ -15,9 +15,9 @@ function initMapSystem() {
     editModal = new bootstrap.Modal(document.getElementById('gestorEditModal'));
 }
 
-const normalizeString = (str) => { if(!str) return ""; return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); };
+// CORREÇÃO CENTRO-SUL: Ignora hífens ao normalizar a string
+const normalizeString = (str) => { if(!str) return ""; return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/-/g, " ").replace(/\s+/g, " ").toLowerCase().trim(); };
 
-// --- BLINDAGEM DO RJ (Ajustada para o polígono correto) ---
 function parseCoordinate(val) {
     if (!val) return null;
     let f = parseFloat(String(val).replace(',', '.').replace(/[^0-9.-]/g, ''));
@@ -25,7 +25,6 @@ function parseCoordinate(val) {
 }
 function isWithinRJ(lat, lng) { return (lat >= -23.4 && lat <= -20.7) && (lng >= -44.9 && lng <= -40.9); }
 
-// --- CARREGAMENTO DE DADOS (COM TODOS OS CAMPOS) ---
 async function loadInitialCSVData() {
     try {
         const response = await fetch('dados.csv');
@@ -37,7 +36,7 @@ async function loadInitialCSVData() {
     } catch(e) { console.warn("Planilha dados.csv não encontrada na raiz."); }
 }
 
-async function processParsedData(rawData) {
+async function processParsedData(rawData, isUpdate = false) {
     let cleanData = [];
     for (let i = 0; i < rawData.length; i++) {
         let row = rawData[i];
@@ -73,7 +72,7 @@ async function processParsedData(rawData) {
             educativo: row["Setor Educativo"] || row["Educativo"] || "",
             museologo: row["Museólogo"] || row["Museologo"] || "",
             acessibilidade: row["Acessibilidade"] || row["Acessibilidade Universal"] || "",
-            historico_museu: row["Histórico"] || row["Histórico do Museu"] || "", // RESTAURADO O HISTÓRICO DO MUSEU
+            historico_museu: row["Histórico"] || row["Histórico do Museu"] || "", 
             resp_nome: row["Responsável pelo Cadastro"] || "",
             resp_email: row["E-mail do Responsável"] || "",
             lat: lat, lng: lng,
@@ -92,7 +91,6 @@ function populateCityFilter() {
     [...new Set(museumsData.map(m => m.municipio).filter(Boolean))].sort().forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
 }
 
-// --- FILTROS COMPLETOS ---
 function getCheckedValues(containerId) { return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(el => normalizeString(el.value)); }
 
 window.applyFilters = function() {
@@ -170,7 +168,6 @@ function renderMuseums(data) {
 
 window.filterListaTexto = function() { let input = normalizeString(document.getElementById('searchLista').value); document.querySelectorAll('#container-lista-geral tbody tr').forEach(row => { row.style.display = normalizeString(row.innerText).includes(input) ? '' : 'none'; }); }
 
-// --- FICHA PÚBLICA (HISTÓRICO DO MUSEU RESTAURADO) ---
 window.openProfile = function(id) {
     const m = museumsData.find(x => x.id === id); if(!m) return;
     const val = (vStr, idC) => { if(m.hidden_fields && m.hidden_fields[idC]) return '<span class="badge bg-danger">Oculto</span>'; return (vStr && vStr.trim() !== '') ? vStr : '<span class="text-muted fst-italic">Não inf.</span>'; };
@@ -202,26 +199,21 @@ window.openProfile = function(id) {
     profileModal.show();
 }
 
-// =====================================================================
-// NAVEGAÇÃO SUPERIOR (Evita o pulo da tela e ativa abas)
-// =====================================================================
 window.switchView = function(viewId) {
-    event.preventDefault(); // Previne o erro do botão não clicar
+    if(event) event.preventDefault();
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
     const target = document.getElementById('view-' + viewId);
     if(target) target.style.display = 'block';
     if(viewId === 'home' && map) { setTimeout(() => { map.invalidateSize(); }, 200); }
 }
+
 window.showPlaceholder = function(titleText) {
-    event.preventDefault();
+    if(event) event.preventDefault();
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
     document.getElementById('view-em-construcao').style.display = 'block';
     document.getElementById('construcao-title').innerText = titleText;
 }
 
-// =====================================================================
-// GESTOR (TODOS OS CAMPOS)
-// =====================================================================
 window.openAdminOrLogin = function() { if(isGestor) { document.getElementById('admin-panel').style.display = 'block'; applyFilters(); } else document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
 window.minimizarPainelGestor = function() { document.getElementById('admin-panel').style.display = 'none'; }
@@ -235,11 +227,10 @@ window.renderVisibilityList = function() {
     museumsData.forEach(m => {
         if(term && !normalizeString(m.nome).includes(term)) return;
         let bgClass = m.visivel ? "bg-white border shadow-sm" : "item-hidden";
-        list.innerHTML += `<div class="d-flex justify-content-between align-items-center mb-2 p-3 rounded ${bgClass}"><div><h6 class="fw-bold mb-0 text-primary">${m.nome}</h6><small class="text-dark">${m.municipio} | <b>Edições: ${m.history ? m.history.length : 0}</b></small></div><button class="btn btn-sm btn-primary fw-bold px-3" onclick="openGestorEdit(${m.id})"><i class="bi bi-pencil-square"></i> Editar Ficha Completa</button></div>`;
+        list.innerHTML += `<div class="d-flex justify-content-between align-items-center mb-2 p-3 rounded ${bgClass}"><div><h6 class="fw-bold mb-0 text-primary">${m.nome}</h6><small class="text-dark">${m.municipio} | <b>Edições: ${m.history ? m.history.length : 0}</b></small></div><button class="btn btn-sm btn-primary fw-bold px-3" onclick="openGestorEdit(${m.id})"><i class="bi bi-pencil-square"></i> Editar Ficha</button></div>`;
     });
 }
 
-// O Gestor agora vê e edita todos os campos da planilha + Lat e Lng
 window.openGestorEdit = function(id) {
     editingMuseumId = id; const m = museumsData.find(x => x.id === id); if(!m) return;
     document.getElementById('gestorEditTitle').innerText = m.nome;
@@ -270,7 +261,7 @@ window.openGestorEdit = function(id) {
 
 window.saveGestorEdits = function() {
     const author = document.getElementById('gestorAuthor').value.trim();
-    if(!author || author.length < 3) return alert("Erro: O nome do Responsável é obrigatório para o histórico.");
+    if(!author || author.length < 3) return alert("O nome do Responsável é obrigatório para o histórico.");
     let m = museumsData.find(x => x.id === editingMuseumId); if(!m) return;
 
     m.hidden_fields = {};
@@ -281,7 +272,7 @@ window.saveGestorEdits = function() {
         if(!document.getElementById(`vis_${f}`).checked) m.hidden_fields[f] = true;
     });
 
-    m.lat = parseCoordinate(m.lat); m.lng = parseCoordinate(m.lng); // Garante a formatação exata da lat/lng digitada na mão
+    m.lat = parseCoordinate(m.lat); m.lng = parseCoordinate(m.lng); 
     m.visivel = !document.getElementById('gestorMuseumVisible').checked;
     
     m.history.push({ date: new Date().toLocaleString('pt-BR'), user: author });
@@ -305,7 +296,6 @@ window.saveManualGestor = function() {
     applyFilters(); alert("Museu cadastrado com sucesso!"); document.querySelectorAll('#formManualGestor input, #formManualGestor textarea').forEach(el => el.value = '');
 }
 
-// --- SEM GEOLOCALIZAÇÃO ---
 function updatePendingList() {
     const list = document.getElementById('pending-list'); if(!list) return; list.innerHTML = '';
     const pendings = museumsData.filter(m => !m.lat || !m.lng); 
@@ -333,4 +323,63 @@ window.saveAdminPin = function() {
         localEditsMemory[m.nome] = m; localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
         applyFilters(); bootstrap.Modal.getInstance(document.getElementById('adminMapModal')).hide(); 
     }
+}
+
+// IMPORTAÇÃO NOVA E ROBÔ OTIMIZADOS
+window.startUpdateImport = function() {
+    const file = document.getElementById('csvFileUpdate').files[0];
+    if(!file) return alert("Selecione a planilha primeiro.");
+    let statEl = document.getElementById('upload-status');
+    statEl.classList.remove('d-none'); statEl.className = 'alert alert-info small p-2 mt-2'; statEl.innerText = "Lendo planilha e atualizando base...";
+    Papa.parse(file, {
+        header: true, skipEmptyLines: true,
+        complete: async function(results) {
+            await processParsedData(results.data, true);
+            statEl.className = 'alert alert-success small p-2 mt-2'; statEl.innerText = "Mapa e Base atualizados com sucesso!";
+        }
+    });
+}
+
+window.startRobotProcessing = function() {
+    const file = document.getElementById('csvFileRobot').files[0];
+    if(!file) return alert("Selecione uma planilha primeiro!");
+    document.getElementById('btnRobot').disabled = true;
+    document.getElementById('robotProgressContainer').classList.remove('d-none');
+    document.getElementById('robotLog').classList.remove('d-none');
+
+    const log = msg => { let el = document.getElementById('robotLog'); el.innerHTML += `<br>> ${msg}`; el.scrollTop = el.scrollHeight; };
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    Papa.parse(file, {
+        header: true, skipEmptyLines: true,
+        complete: async function(results) {
+            let data = results.data;
+            for (let i = 0; i < data.length; i++) {
+                let row = data[i];
+                let nome = row["Nome da Instituição"] || row["Nome"];
+                if(!row["Lat"] && !row["Lng"] && nome) {
+                    log(`Buscando: ${nome}...`);
+                    let query = `${row["Endereço"]||''}, ${row["Município"]||''}, RJ, Brasil`.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+                    try {
+                        let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+                        let d = await res.json();
+                        if(d && d.length > 0 && isWithinRJ(parseFloat(d[0].lat), parseFloat(d[0].lon))) {
+                            row["Lat"] = String(d[0].lat).replace(',','.'); row["Lng"] = String(d[0].lon).replace(',','.'); log(`   -> OK!`);
+                        } else log(`   -> Falhou.`);
+                    } catch(e) { log(`   -> Erro API.`); }
+                    await sleep(1100);
+                }
+                // BARRA DE PROGRESSO CORRIGIDA
+                let pct = Math.round(((i + 1) / data.length) * 100);
+                let pBar = document.getElementById('robotProgressBar');
+                pBar.style.width = `${pct}%`;
+                pBar.innerText = `${pct}%`;
+            }
+            log(`Concluído! Baixando CSV...`);
+            let csv = Papa.unparse(data);
+            let blob = new Blob(["\uFEFF"+csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "dados_geocodificados.csv"; link.click();
+            document.getElementById('btnRobot').disabled = false;
+        }
+    });
 }
