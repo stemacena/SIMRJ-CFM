@@ -27,6 +27,7 @@
         </div>
     </div>
 
+    <!-- NAVBAR (Com botões consertados usando javascript:void(0)) -->
     <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
         <div class="container">
             <div class="d-flex align-items-center" onclick="switchView('home')" style="cursor:pointer;">
@@ -37,32 +38,38 @@
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Sobre</a>
+                        <a class="nav-link dropdown-toggle" href="javascript:void(0)" role="button" data-bs-toggle="dropdown">Sobre</a>
                         <ul class="dropdown-menu border-0 shadow">
-                            <li><a class="dropdown-item" href="#" onclick="switchView('apresentacao')">Apresentação</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="switchView('legislacao')">Legislação</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="switchView('comissao')">Comissão Consultiva</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="switchView('equipe')">Equipe</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('apresentacao')">Apresentação</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('legislacao')">Legislação</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('comissao')">Comissão Consultiva</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('equipe')">Equipe</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle text-primary" href="#" role="button" data-bs-toggle="dropdown">CFM</a>
+                        <a class="nav-link dropdown-toggle text-primary" href="javascript:void(0)" role="button" data-bs-toggle="dropdown">CFM</a>
                         <ul class="dropdown-menu border-0 shadow">
-                            <li><a class="dropdown-item" href="#" onclick="switchView('cfm-sobre')">O que é?</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('cfm-sobre')">O que é?</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" onclick="switchView('home'); window.scrollTo(0,0);">Mapa & Filtros</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="switchView('cfm-lista')">Instituições Cadastradas</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="switchView('dados-graficos')">Dados e Gráficos</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('home')">Mapa & Filtros</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('cfm-lista')">Instituições Cadastradas</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('dados-graficos')">Dados e Gráficos</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Atividades</a><ul class="dropdown-menu border-0 shadow"><li><a class="dropdown-item" href="#" onclick="showPlaceholder('Fórum Estadual de Museus')">Fórum Estadual de Museus</a></li></ul></li>
-                    <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Publicações</a><ul class="dropdown-menu border-0 shadow"><li><a class="dropdown-item" href="#" onclick="showPlaceholder('Diretrizes e Legislação')">Diretrizes e Legislação</a></li></ul></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="javascript:void(0)" role="button" data-bs-toggle="dropdown">Atividades</a>
+                        <ul class="dropdown-menu border-0 shadow"><li><a class="dropdown-item" href="javascript:void(0)" onclick="showPlaceholder('Fórum Estadual de Museus')">Fórum Estadual de Museus</a></li></ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="javascript:void(0)" role="button" data-bs-toggle="dropdown">Publicações</a>
+                        <ul class="dropdown-menu border-0 shadow"><li><a class="dropdown-item" href="javascript:void(0)" onclick="showPlaceholder('Diretrizes e Legislação')">Diretrizes e Legislação</a></li></ul>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- PAINEL GESTOR (AVANÇADO) -->
+    <!-- PAINEL GESTOR (COMPLETO) -->
     <div id="admin-panel" class="text-dark bg-light p-4 admin-panel-fullscreen" style="display: none;">
         <div class="container bg-white shadow rounded border p-4 mt-3">
             <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -76,12 +83,12 @@
                 <li class="nav-item"><a class="nav-link active fw-bold text-dark" data-bs-toggle="tab" href="#tab-visibility"><i class="bi bi-pencil-square"></i> Gestão e Edição (<span id="gestaoCount" class="text-primary">0</span>)</a></li>
                 <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-import"><i class="bi bi-robot"></i> Importação e Robô Geocodificador</a></li>
                 <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-manual"><i class="bi bi-plus-circle"></i> Cadastro Manual Oficial</a></li>
-                <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-pending"><i class="bi bi-geo-alt"></i> Erro Geolocalização (<span id="pendingCount" class="text-danger">0</span>)</a></li>
+                <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#tab-pending"><i class="bi bi-geo-alt"></i> Sem Geolocalização (<span id="pendingCount" class="text-danger">0</span>)</a></li>
             </ul>
             <div class="tab-content">
                 
                 <div class="tab-pane fade show active" id="tab-visibility">
-                    <div class="alert alert-info small border-info">Busque a instituição para editar dados, visualizar histórico de edições e controlar a visibilidade pública de cada informação ou da ficha completa.</div>
+                    <div class="alert alert-info small border-info">Busque a instituição para editar TODOS os dados, visualizar histórico de edições e controlar a visibilidade de cada informação.</div>
                     <input type="text" id="searchVisibility" class="form-control mb-3 border-primary" placeholder="Buscar instituição por nome..." onkeyup="renderVisibilityList()">
                     <div id="visibility-list" class="pending-list pe-2"></div>
                 </div>
@@ -90,79 +97,97 @@
                     <div class="row">
                         <div class="col-md-6 border-end pe-4">
                             <h5 class="text-primary fw-bold"><i class="bi bi-database-down"></i> Importar Planilha (Atualização)</h5>
-                            <p class="small text-muted">Carregue um CSV com a base. Se a instituição existir, os dados serão atualizados. Se tiver Lat e Lng, os pinos entrarão na hora.</p>
+                            <p class="small text-muted">Carregue sua planilha CSV com Lat e Lng formatadas.</p>
                             <input class="form-control mb-2 border-primary" type="file" id="csvFileUpdate" accept=".csv">
                             <button class="btn btn-primary w-100 fw-bold" onclick="startUpdateImport()">Importar Dados</button>
-                            <div id="upload-status" class="alert alert-secondary d-none small p-2 mt-2"></div>
                         </div>
                         <div class="col-md-6 ps-4">
-                            <h5 class="text-success fw-bold"><i class="bi bi-robot"></i> Robô Geocodificador</h5>
-                            <p class="small text-muted">A planilha tem instituições novas sem latitude/longitude? Rode o robô. Ele buscará na nuvem e baixará uma nova planilha pronta para você importar no botão ao lado.</p>
+                            <h5 class="text-success fw-bold"><i class="bi bi-robot"></i> Robô Geocodificador Integrado</h5>
+                            <p class="small text-muted">Use isto se adicionou novas instituições sem coordenadas. O robô vai preencher Lat/Lng no formato perfeito para o mapa e baixar a planilha pronta.</p>
                             <input class="form-control mb-2 border-success" type="file" id="csvFileRobot" accept=".csv">
                             <button class="btn btn-success w-100 fw-bold" id="btnRobot" onclick="startRobotProcessing()">Iniciar Robô e Baixar Novo CSV</button>
-                            <div class="progress mt-2 d-none" id="robotProgressContainer" style="height: 15px;">
-                                <div id="robotProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%">0%</div>
-                            </div>
+                            <div class="progress mt-2 d-none" id="robotProgressContainer" style="height: 15px;"><div id="robotProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%">0%</div></div>
                             <div id="robotLog" class="history-log mt-2 d-none">> Robô aguardando...</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="tab-pane fade" id="tab-manual">
-                    <!-- Cadastro Manual Restaurado -->
                     <div class="bg-white border p-3 rounded">
-                        <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Inserção Direta no Banco de Dados</h5>
+                        <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Inserção Direta no Banco de Dados (Completa)</h5>
                         <div class="row g-3 small" id="formManualGestor">
-                            <div class="col-md-8"><label class="fw-bold">Nome da Instituição</label><input type="text" id="manNome" class="form-control form-control-sm"></div>
-                            <div class="col-md-4"><label class="fw-bold">Sigla</label><input type="text" id="manSigla" class="form-control form-control-sm"></div>
+                            <div class="col-md-9"><label class="fw-bold">Nome da Instituição</label><input type="text" id="manNome" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="fw-bold">Sigla</label><input type="text" id="manSigla" class="form-control form-control-sm"></div>
+                            <div class="col-md-4"><label class="fw-bold">CNPJ</label><input type="text" id="manCNPJ" class="form-control form-control-sm"></div>
+                            <div class="col-md-8"><label class="fw-bold">Documento de Criação</label><input type="text" id="manDoc" class="form-control form-control-sm"></div>
+                            
+                            <div class="col-12 mt-3"><h6 class="text-primary fw-bold border-bottom pb-1">Localização</h6></div>
+                            <div class="col-md-3"><label class="fw-bold">CEP</label><input type="text" id="manCEP" class="form-control form-control-sm"></div>
+                            <div class="col-md-5"><label class="fw-bold">Logradouro (Rua, Av)</label><input type="text" id="manLogradouro" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="fw-bold">Número</label><input type="text" id="manNumero" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="fw-bold">Complemento</label><input type="text" id="manComp" class="form-control form-control-sm"></div>
                             <div class="col-md-4"><label class="fw-bold">Município</label><input type="text" id="manMuni" class="form-control form-control-sm"></div>
-                            <div class="col-md-8"><label class="fw-bold">Endereço Completo</label><input type="text" id="manEnd" class="form-control form-control-sm" placeholder="Rua, Número, CEP..."></div>
-                            <div class="col-md-3"><label class="fw-bold">Latitude (Opcional)</label><input type="text" id="manLat" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="fw-bold">Longitude (Opcional)</label><input type="text" id="manLng" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="fw-bold">Situação</label><select id="manSit" class="form-select form-select-sm"><option value="Aberto">Aberto</option><option value="Fechado">Fechado</option></select></div>
-                            <div class="col-md-3"><label class="fw-bold">Natureza</label><select id="manNat" class="form-select form-select-sm"><option value="Pública">Pública</option><option value="Privada">Privada</option></select></div>
+                            <div class="col-md-4"><label class="fw-bold">Região</label><input type="text" id="manRegiao" class="form-control form-control-sm"></div>
+                            <div class="col-md-4"><label class="fw-bold">Zona do Rio</label><input type="text" id="manZona" class="form-control form-control-sm"></div>
+                            
+                            <div class="col-12 mt-3"><h6 class="text-primary fw-bold border-bottom pb-1">Contato e Redes</h6></div>
+                            <div class="col-md-3"><label class="fw-bold">Telefone Institucional</label><input type="text" id="manTel" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="fw-bold">E-mail Institucional</label><input type="text" id="manEmail" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="fw-bold">Site Oficial</label><input type="text" id="manSite" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="fw-bold">Instagram</label><input type="text" id="manInsta" class="form-control form-control-sm"></div>
+                            
+                            <div class="col-12 mt-3"><h6 class="text-primary fw-bold border-bottom pb-1">Estrutura, Acervo e Histórico</h6></div>
+                            <div class="col-md-4"><label class="fw-bold">Natureza Administrativa</label><input type="text" id="manNat" class="form-control form-control-sm"></div>
+                            <div class="col-md-4"><label class="fw-bold">Situação Atual</label><input type="text" id="manSit" class="form-control form-control-sm" placeholder="Ex: Aberto"></div>
+                            <div class="col-md-4"><label class="fw-bold">Dias e Turnos (Funcionamento)</label><input type="text" id="manFunc" class="form-control form-control-sm"></div>
+                            <div class="col-md-4"><label class="fw-bold">Valor do Ingresso</label><input type="text" id="manIngresso" class="form-control form-control-sm"></div>
+                            <div class="col-md-8"><label class="fw-bold">Gratuidades</label><input type="text" id="manGrat" class="form-control form-control-sm"></div>
+                            <div class="col-md-4"><label class="fw-bold">Setor Educativo?</label><input type="text" id="manEdu" class="form-control form-control-sm"></div>
+                            <div class="col-md-4"><label class="fw-bold">Museólogo?</label><input type="text" id="manMus" class="form-control form-control-sm"></div>
+                            <div class="col-md-4"><label class="fw-bold">Acervo Predominante</label><input type="text" id="manAcervo" class="form-control form-control-sm"></div>
+                            <div class="col-md-12"><label class="fw-bold">Acessibilidade Universal</label><input type="text" id="manAccess" class="form-control form-control-sm"></div>
+                            <div class="col-md-12"><label class="fw-bold">Histórico do Museu</label><textarea id="manHist" class="form-control form-control-sm" rows="3"></textarea></div>
+                            
+                            <div class="col-12 mt-3"><h6 class="text-primary fw-bold border-bottom pb-1">Geolocalização (Preencha para aparecer no mapa)</h6></div>
+                            <div class="col-md-6"><label class="fw-bold">Latitude (Formato: -22.9068)</label><input type="text" id="manLat" class="form-control form-control-sm"></div>
+                            <div class="col-md-6"><label class="fw-bold">Longitude (Formato: -43.1729)</label><input type="text" id="manLng" class="form-control form-control-sm"></div>
                         </div>
-                        <div class="text-end mt-3"><button class="btn btn-success fw-bold px-4" onclick="saveManualGestor()">Salvar Cadastro</button></div>
+                        <div class="text-end mt-3"><button class="btn btn-success fw-bold px-4" onclick="saveManualGestor()">Salvar Ficha Completa</button></div>
                     </div>
                 </div>
 
                 <div class="tab-pane fade" id="tab-pending">
-                    <p class="text-muted small">Instituições cadastradas cuja coordenada está vazia ou caiu fora do Estado do Rio de Janeiro. Marque no mapa manualmente.</p>
+                    <p class="text-muted small">Instituições cadastradas cuja coordenada está vazia ou falhou. Marque no mapa manualmente.</p>
                     <div id="pending-list" class="pending-list pe-2"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- VIEW HOME (HERO + MAPA RESTAURADOS) -->
+    <!-- VIEW HOME (HERO + MAPA + LISTA LATERALIZADA) -->
     <div id="view-home" class="view-section">
-        <!-- CARROSSEL NO TOPO -->
         <div class="hero-wrapper">
             <div id="heroCarouselBg" class="carousel slide hero-carousel" data-bs-ride="carousel" data-bs-interval="4000" data-bs-pause="false">
                 <div class="carousel-inner">
                     <div class="carousel-item active"><img src="1.jpg" alt="Fundo 1"></div>
                     <div class="carousel-item"><img src="2.jpg" alt="Fundo 2"></div>
                     <div class="carousel-item"><img src="3.jpg" alt="Fundo 3"></div>
-                    <div class="carousel-item"><img src="4.jpg" alt="Fundo 4"></div>
-                    <div class="carousel-item"><img src="5.jpg" alt="Fundo 5"></div>
                 </div>
             </div>
-            <div class="hero-logo-container">
-                <img src="logo-sim.png" alt="SIM-RJ" class="hero-logo-small-static">
-            </div>
+            <div class="hero-logo-container"><img src="logo-sim.png" alt="SIM-RJ" class="hero-logo-small-static"></div>
         </div>
 
-        <div id="map-section" class="bg-primary text-white py-4 text-center shadow-sm border-bottom">
-            <h1 class="fw-bold m-0">Cadastro Fluminense de Museus</h1>
-            <p class="mb-0 text-warning fw-bold mt-1"><span id="count-total">0</span> Instituições Mapeadas</p>
+        <div id="map-section" class="bg-primary text-white py-3 text-center shadow-sm border-bottom">
+            <h2 class="fw-bold m-0">Cadastro Fluminense de Museus</h2>
+            <p class="mb-0 text-warning fw-bold"><span id="count-total">0</span> Instituições Mapeadas</p>
         </div>
         
         <section class="py-4 bg-light">
             <div class="container-fluid px-4">
                 <div class="row">
-                    <!-- FILTROS COMPLEXOS RESTAURADOS -->
+                    <!-- FILTROS COMPLETOS (ESQUERDA) -->
                     <div class="col-lg-3">
-                        <div class="sidebar-filters p-4 mb-4">
+                        <div class="sidebar-filters p-3 mb-4">
                             <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-funnel"></i> Busca Detalhada</h5>
                             
                             <label class="filter-label">Nome da Instituição</label>
@@ -170,15 +195,11 @@
 
                             <label class="filter-label"><i class="bi bi-geo-alt-fill text-warning"></i> Status no Mapa</label>
                             <select id="filterStatusMapa" class="form-select form-select-sm mb-3" onchange="applyFilters()">
-                                <option value="">Exibir Todos</option>
-                                <option value="sim">Apenas com Pino</option>
-                                <option value="nao">Sem Pino (Apenas Lista)</option>
+                                <option value="">Exibir Todos</option><option value="sim">Apenas com Pino</option><option value="nao">Sem Pino</option>
                             </select>
 
                             <label class="filter-label">Município</label>
-                            <select id="filterMunicipio" class="form-select form-select-sm mb-3" onchange="applyFilters()">
-                                <option value="">Todos os Municípios</option>
-                            </select>
+                            <select id="filterMunicipio" class="form-select form-select-sm mb-3" onchange="applyFilters()"><option value="">Todos os Municípios</option></select>
 
                             <label class="filter-label">Região</label>
                             <div class="filter-scroll-box" id="boxRegiao">
@@ -211,35 +232,56 @@
                                 <label><input type="checkbox" value="Ciência" onchange="applyFilters()"> Ciência e Tecnologia</label>
                                 <label><input type="checkbox" value="Histór" onchange="applyFilters()"> Histórico</label>
                                 <label><input type="checkbox" value="Imagem" onchange="applyFilters()"> Imagem e Som</label>
-                                <label><input type="checkbox" value="Virtual" onchange="applyFilters()"> Virtual</label>
                                 <label><input type="checkbox" value="Outros" onchange="applyFilters()"> Outros</label>
                             </div>
 
-                            <!-- Accordions -->
-                            <div class="accordion accordion-flush" id="accordionFiltros">
-                                <div class="accordion-item border mb-2 rounded">
-                                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStatus">Funcionamento e Status</button></h2>
-                                    <div id="collapseStatus" class="accordion-collapse collapse"><div class="accordion-body p-2 bg-white">
+                            <!-- ACCORDION: STATUS E TÉCNICO -->
+                            <div class="accordion accordion-flush border rounded mb-3" id="accordionFiltros">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header"><button class="accordion-button collapsed py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colStatus">Funcionamento e Status</button></h2>
+                                    <div id="colStatus" class="accordion-collapse collapse"><div class="accordion-body p-2">
                                         <label class="filter-label mb-1">Situação</label>
-                                        <div class="filter-scroll-box mb-0" id="boxSituacao">
+                                        <div class="filter-scroll-box mb-2" id="boxSituacao">
                                             <label><input type="checkbox" value="Aberto" onchange="applyFilters()"> Aberto</label>
                                             <label><input type="checkbox" value="Parcial" onchange="applyFilters()"> Aberto Parcial</label>
                                             <label><input type="checkbox" value="implantação" onchange="applyFilters()"> Em implantação</label>
-                                            <label><input type="checkbox" value="Fechado" onchange="applyFilters()"> Fechado/Desativado</label>
+                                            <label><input type="checkbox" value="Desativado" onchange="applyFilters()"> Desativado</label>
+                                        </div>
+                                        <label class="filter-label mb-1">Turno (Funcionamento)</label>
+                                        <div class="filter-scroll-box mb-0" id="boxTurno">
+                                            <label><input type="checkbox" value="Manhã" onchange="applyFilters()"> Manhã</label>
+                                            <label><input type="checkbox" value="Tarde" onchange="applyFilters()"> Tarde</label>
+                                            <label><input type="checkbox" value="Noite" onchange="applyFilters()"> Noite</label>
                                         </div>
                                     </div></div>
                                 </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header"><button class="accordion-button collapsed py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colTec">Técnico e Acessibilidade</button></h2>
+                                    <div id="colTec" class="accordion-collapse collapse"><div class="accordion-body p-2">
+                                        <label class="filter-label mb-1">Valor Ingresso</label>
+                                        <div class="filter-scroll-box mb-2" id="boxIngresso">
+                                            <label><input type="checkbox" value="Gratuit" onchange="applyFilters()"> Gratuito</label>
+                                            <label><input type="checkbox" value="Pago" onchange="applyFilters()"> Pago (Qualquer Valor)</label>
+                                        </div>
+                                        <label class="filter-label mb-1">Busca Específica (Digite)</label>
+                                        <input type="text" id="filterGrat" class="form-control form-control-sm mb-2" placeholder="Gratuidades (ex: idoso)" onkeyup="applyFilters()">
+                                        <input type="text" id="filterAces" class="form-control form-control-sm" placeholder="Acessibilidade (ex: rampa)" onkeyup="applyFilters()">
+                                    </div></div>
+                                </div>
                             </div>
-                            <button class="btn btn-outline-danger btn-sm w-100 mt-3 fw-bold" onclick="resetFilters()"><i class="bi bi-trash"></i> Limpar Filtros</button>
+
+                            <button class="btn btn-outline-danger btn-sm w-100 fw-bold" onclick="resetFilters()"><i class="bi bi-trash"></i> Limpar Filtros</button>
                         </div>
                     </div>
 
+                    <!-- MAPA E LISTA (DIREITA E COMPACTOS) -->
                     <div class="col-lg-9">
-                        <div id="map" style="height: 650px; border-radius: 8px; border: 2px solid #ccc; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background-color: #e9ecef;"></div>
-                        <!-- LISTA DE RESULTADOS ABAIXO DO MAPA -->
-                        <div class="mt-4 bg-white p-3 border rounded shadow-sm">
-                            <h4 class="mb-3 text-purple fw-bold">Resultados Filtrados (<span id="resultCount">0</span>)</h4>
-                            <div id="museum-list-container"></div>
+                        <div id="map" style="height: 500px; border-radius: 8px; border: 2px solid #ccc; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background-color: #e9ecef;"></div>
+                        
+                        <div class="mt-3">
+                            <h5 class="fw-bold text-purple mb-2">Lista de Resultados (<span id="resultCount">0</span>)</h5>
+                            <!-- LISTA COM SCROLL INTERNO PARA NÃO DESCER A TELA -->
+                            <div id="museum-list-container" class="results-scroll-container bg-white shadow-sm"></div>
                         </div>
                     </div>
                 </div>
@@ -247,11 +289,11 @@
         </section>
     </div>
 
-    <!-- EQUIPE COM CARGOS CORRIGIDOS -->
+    <!-- EQUIPE COM CARGOS -->
     <div id="view-equipe" class="view-section" style="display: none;">
         <div class="container py-5 text-center">
             <h2 class="section-title">Equipe Técnica SUPMU</h2>
-            <div class="mt-5 bg-white p-4 rounded shadow-sm border-top border-5 border-success">
+            <div class="mt-4 bg-white p-4 rounded shadow-sm border-top border-5 border-success">
                 <h5 class="fw-bold text-success mb-4">Superintendência de Museus / Planejamento / Assessoria</h5>
                 <div class="row justify-content-center">
                     <div class="col-md-3 col-sm-6 team-member"><img src="lucienne.jpg" class="rounded-circle" onerror="this.src='https://via.placeholder.com/150'"><h6>Lucienne Figueiredo</h6><p class="team-role">Superintendente de Museus</p></div>
@@ -284,13 +326,7 @@
     </div>
 
     <!-- ABAS RESTANTES -->
-    <div id="view-cfm-lista" class="view-section" style="display: none;">
-        <div class="container py-5">
-            <h2 class="section-title">Instituições Cadastradas (Geral)</h2>
-            <div class="row mb-4"><div class="col-md-6 mx-auto"><input type="text" id="searchLista" class="form-control border-primary" placeholder="Buscar instituição..." onkeyup="filterListaTexto()"></div></div>
-            <div class="row" id="container-lista-geral"></div>
-        </div>
-    </div>
+    <div id="view-cfm-lista" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Instituições Cadastradas (Geral)</h2><div class="row mb-4"><div class="col-md-6 mx-auto"><input type="text" id="searchLista" class="form-control border-primary" placeholder="Buscar instituição..." onkeyup="filterListaTexto()"></div></div><div class="row" id="container-lista-geral"></div></div></div>
     <div id="view-apresentacao" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Apresentação</h2></div></div>
     <div id="view-legislacao" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Legislação</h2></div></div>
     <div id="view-comissao" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Comissão</h2></div></div>
@@ -298,43 +334,34 @@
     <div id="view-dados-graficos" class="view-section" style="display: none;"><div class="container py-5"><h2 class="section-title">Gráficos</h2></div></div>
     <div id="view-em-construcao" class="view-section" style="display: none;"><div class="container py-5 text-center"><h2 class="section-title" id="construcao-title">Em Construção</h2></div></div>
 
-    <!-- MODAL DO PÚBLICO (FICHA) -->
+    <!-- MODAL DO PÚBLICO (FICHA COM HISTÓRICO) -->
     <div class="modal fade" id="museumModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
-            <div class="modal-header d-flex align-items-center"><h5 class="modal-title m-0 fw-bold" id="modalTitle">Nome</h5><button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title m-0 fw-bold" id="modalTitle">Nome</h5><button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button></div>
             <div class="modal-body p-4" id="modalPublicBody"></div>
         </div></div>
     </div>
 
-    <!-- NOVO MODAL DO GESTOR (EDIÇÃO, VISIBILIDADE DE CAMPOS E HISTÓRICO) -->
+    <!-- MODAL DO GESTOR (TODOS OS CAMPOS) -->
     <div class="modal fade" id="gestorEditModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
             <div class="modal-header bg-dark text-white"><h5 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square"></i> Editar: <span id="gestorEditTitle"></span></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <div class="modal-body p-4 bg-light">
-                <div class="alert alert-warning small">Desmarque a caixa <input type="checkbox" checked disabled> ao lado de uma informação para torná-la <strong>Oculta/Invisível</strong> para o público, mas mantê-la no banco.</div>
-                
-                <div class="row g-3" id="gestorEditFields">
-                    <!-- Gerado dinamicamente via JS para manter o controle de visibilidade campo a campo -->
-                </div>
-                
-                <hr class="mt-4">
-                <h6 class="text-primary fw-bold"><i class="bi bi-clock-history"></i> Histórico de Edições</h6>
+                <div class="alert alert-warning small">Desmarque a caixa <input type="checkbox" checked disabled> ao lado da informação para torná-la <strong>Invisível ao Público</strong>.</div>
+                <div class="row g-3" id="gestorEditFields"></div>
+                <hr class="mt-4"><h6 class="text-primary fw-bold"><i class="bi bi-clock-history"></i> Histórico de Edições</h6>
                 <div id="gestorHistoryLog" class="history-log mb-3"></div>
-
-                <div class="bg-white p-3 border rounded border-danger shadow-sm mt-3">
-                    <label class="fw-bold text-danger">Seu nome (Responsável pela atualização): *</label>
-                    <input type="text" id="gestorAuthor" class="form-control border-danger" placeholder="Digite seu Nome Completo">
-                </div>
+                <div class="bg-white p-3 border border-danger rounded shadow-sm mt-3"><label class="fw-bold text-danger">Seu nome (Responsável pela atualização): *</label><input type="text" id="gestorAuthor" class="form-control border-danger" placeholder="Digite seu Nome Completo"></div>
             </div>
             <div class="modal-footer justify-content-between">
-                <div><input type="checkbox" id="gestorMuseumVisible" class="form-check-input me-1"> <label class="fw-bold text-danger">Museu Invisível (Esconder Ficha Toda)</label></div>
-                <button class="btn btn-success fw-bold px-4" onclick="saveGestorEdits()"><i class="bi bi-floppy-fill"></i> Salvar Alterações</button>
+                <div><input type="checkbox" id="gestorMuseumVisible" class="form-check-input me-1"> <label class="fw-bold text-danger">Esconder Ficha Inteira</label></div>
+                <button class="btn btn-success fw-bold px-4" onclick="saveGestorEdits()">Salvar Alterações</button>
             </div>
         </div></div>
     </div>
 
     <!-- MODAL MAPA ADMIN -->
-    <div class="modal fade" id="adminMapModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark"><h5 class="modal-title text-white">Forçar Mapeamento Manual</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div class="p-2 bg-light"><input type="text" id="adminMapSearchInput" class="form-control" placeholder="Busca"><button class="btn btn-primary mt-2 w-100" onclick="searchAddressOnAdminMap()">Buscar no Nominatim</button></div><div id="adminLeafletMap" style="height: 450px;"></div></div><div class="modal-footer"><button class="btn btn-success" onclick="saveAdminPin()">Salvar Pin</button></div></div></div></div>
+    <div class="modal fade" id="adminMapModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark"><h5 class="modal-title text-white">Forçar Mapeamento Manual</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="adminLeafletMap" style="height: 450px;"></div></div><div class="modal-footer"><button class="btn btn-success" onclick="saveAdminPin()">Salvar Pin</button></div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>

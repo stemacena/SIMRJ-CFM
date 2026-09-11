@@ -25,14 +25,15 @@ section { scroll-margin-top: 110px; }
 .section-title { color: var(--color-blue); font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
 .section-title::after { content: ''; display: block; width: 80px; height: 4px; background-color: var(--color-yellow); margin: 10px auto 0; }
 
-/* FILTROS COMPLEXOS (Scroll Boxes) */
+/* FILTROS E LAYOUT SCROLL */
 .sidebar-filters { border-top: 4px solid var(--color-cfm-teal); background-color: #fff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 .filter-label { font-size: 0.85rem; font-weight: 700; color: var(--color-cfm-teal); margin-bottom: 5px; display: block; }
-.filter-scroll-box { max-height: 140px; overflow-y: auto; background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 4px; margin-bottom: 1rem; }
+.filter-scroll-box { max-height: 120px; overflow-y: auto; background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 4px; margin-bottom: 1rem; }
 .filter-scroll-box label { display: block; font-size: 0.85rem; color: #495057; margin-bottom: 4px; cursor: pointer; }
 .filter-scroll-box input[type="checkbox"] { margin-right: 6px; }
 .accordion-button { padding: 8px 15px; font-weight: bold; color: var(--color-blue); background-color: #e9ecef; }
-.accordion-button:not(.collapsed) { background-color: #d0e1f9; color: var(--color-blue); }
+.accordion-button:not(.collapsed) { background-color: #d0e1f9; color: var(--color-blue); box-shadow: none; }
+.results-scroll-container { max-height: 400px; overflow-y: auto; background: #fff; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px; }
 
 /* EQUIPE */
 .team-member { text-align: center; margin-bottom: 25px; }
@@ -51,3 +52,4 @@ section { scroll-margin-top: 110px; }
 .gestor-visible { display: block !important; }
 .item-hidden { opacity: 0.6; background-color: #f8d7da !important; border-left: 5px solid #dc3545 !important; }
 .history-log { max-height: 150px; overflow-y: auto; background: #2c3e50; color: #a8e6cf; font-family: monospace; font-size: 0.8rem; padding: 10px; border-radius: 5px; }
+.pending-list { max-height: 450px; overflow-y: auto; }
