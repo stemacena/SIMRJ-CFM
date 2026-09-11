@@ -1,23 +1,6 @@
 let map, markersArray = [], museumsData = [], currentFilteredData = [];
 let profileModal, editModal, isGestor = false, editingMuseumId = null;
-
-// Memória Local (Salva as edições do gestor mesmo se recarregar a página)
 let localEditsMemory = JSON.parse(localStorage.getItem('simrj_edits')) || {};
-
-// TODOS os campos que compõem a planilha/ficha completa
-const ALL_FIELDS = [
-    { id: 'nome', label: 'Nome da Instituição' }, { id: 'sigla', label: 'Sigla' }, { id: 'cnpj', label: 'CNPJ' }, { id: 'documento_criacao', label: 'Doc. Criação' },
-    { id: 'cep', label: 'CEP' }, { id: 'logradouro', label: 'Logradouro' }, { id: 'numero', label: 'Número' }, { id: 'complemento', label: 'Complemento' },
-    { id: 'municipio', label: 'Município' }, { id: 'regiao', label: 'Região' }, { id: 'zona', label: 'Zona (RJ)' },
-    { id: 'telefone', label: 'Telefone' }, { id: 'email_institucional', label: 'E-mail Inst.' }, { id: 'site', label: 'Site' },
-    { id: 'facebook', label: 'Facebook' }, { id: 'instagram', label: 'Instagram' }, { id: 'twitter', label: 'Twitter/X' },
-    { id: 'natureza', label: 'Natureza Adm.' }, { id: 'situacao', label: 'Situação Atual' }, { id: 'funcionamento', label: 'Dias e Turnos' },
-    { id: 'ingresso', label: 'Valor Ingresso' }, { id: 'gratuidades', label: 'Gratuidades' }, { id: 'educativo', label: 'Setor Educativo?' },
-    { id: 'museologo', label: 'Museólogo?' }, { id: 'acervo', label: 'Acervo Predominante' }, { id: 'acessibilidade', label: 'Acessibilidade' },
-    { id: 'historico', label: 'Histórico do Museu', isTextarea: true },
-    { id: 'responsavel_cadastro', label: 'Responsável (Cadastro)' }, { id: 'email_responsavel', label: 'E-mail do Responsável' },
-    { id: 'lat', label: 'Latitude' }, { id: 'lng', label: 'Longitude' }
-];
 
 document.addEventListener('DOMContentLoaded', async function() {
     initMapSystem();
@@ -34,26 +17,24 @@ function initMapSystem() {
 
 const normalizeString = (str) => { if(!str) return ""; return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); };
 
-// --- BLINDAGEM CIRÚRGICA DE COORDENADAS ---
-// Força a transformação de qualquer texto "-22,9" em número puro -22.9
+// --- BLINDAGEM DO RJ (Ajustada para o polígono correto) ---
 function parseCoordinate(val) {
     if (!val) return null;
-    let str = String(val).replace(',', '.').replace(/[^\d.-]/g, '');
-    let num = parseFloat(str);
-    return isNaN(num) ? null : num;
+    let f = parseFloat(String(val).replace(',', '.').replace(/[^0-9.-]/g, ''));
+    return isNaN(f) ? null : f;
 }
-function isWithinRJ(lat, lng) {
-    // Retângulo super generoso que cobre todo o estado do RJ para evitar bloqueios falsos, mas que bloqueia a África e a Antártida.
-    return (lat >= -24.5 && lat <= -20.0) && (lng >= -45.5 && lng <= -39.0);
-}
+function isWithinRJ(lat, lng) { return (lat >= -23.4 && lat <= -20.7) && (lng >= -44.9 && lng <= -40.9); }
 
-// --- CARREGAMENTO DE DADOS DA PLANILHA ---
+// --- CARREGAMENTO DE DADOS (COM TODOS OS CAMPOS) ---
 async function loadInitialCSVData() {
     try {
         const response = await fetch('dados.csv');
         if (!response.ok) throw new Error();
-        Papa.parse(await response.text(), { header: true, skipEmptyLines: true, complete: async function(results) { await processParsedData(results.data); } });
-    } catch(e) { console.warn("Planilha 'dados.csv' ausente."); }
+        Papa.parse(await response.text(), {
+            header: true, skipEmptyLines: true,
+            complete: async function(results) { await processParsedData(results.data); }
+        });
+    } catch(e) { console.warn("Planilha dados.csv não encontrada na raiz."); }
 }
 
 async function processParsedData(rawData) {
@@ -65,48 +46,62 @@ async function processParsedData(rawData) {
 
         let lat = parseCoordinate(row["Lat"] || row["Latitude"]);
         let lng = parseCoordinate(row["Lng"] || row["Longitude"]);
-        
-        // Ativa a Blindagem: Se cair fora do RJ, anula o pino para ele ir para a aba "Sem Geolocalização"
         if (lat && lng && !isWithinRJ(lat, lng)) { lat = null; lng = null; }
 
-        let museumObj = {
+        let mObj = {
             id: i + 1000, 
-            nome: nome, sigla: row["Sigla"], cnpj: row["CNPJ"], documento_criacao: row["Documento de Criação"],
-            cep: row["CEP"], logradouro: row["Endereço"] || row["Logradouro"], numero: row["Número"], complemento: row["Complemento"],
-            municipio: row["Município"] || row["Municipio"], regiao: row["Região"] || row["Regiao"], zona: row["Zona"],
-            telefone: row["Telefone Institucional"] || row["Telefone"], email_institucional: row["E-mail Institucional"], site: row["Site"] || row["Site Oficial"],
-            facebook: row["Facebook"], instagram: row["Instagram"], twitter: row["Twitter"],
-            natureza: row["Natureza Administrativa do Museu"] || row["Natureza Administrativa"], situacao: row["Situação"] || row["Status"],
-            funcionamento: row["Funcionamento"] || row["Horário"], ingresso: row["Valor ingresso"] || row["Ingresso"],
-            gratuidades: row["Gratuidades"] || row["Gratuidade"], educativo: row["Setor Educativo"] || row["Educativo"],
-            museologo: row["Museólogo"] || row["Museologo"], acervo: row["Acervo Predominante"] || row["Acervo"],
-            acessibilidade: row["Acessibilidade"], historico: row["Histórico"] || row["Historico"],
-            responsavel_cadastro: row["Responsável pelo Cadastro"], email_responsavel: row["E-mail do Responsável"],
-            lat: lat, lng: lng, visivel: true, hidden_fields: {}, history: []
+            nome: nome, 
+            sigla: row["Sigla"] || "",
+            cnpj: row["CNPJ"] || "",
+            documento_criacao: row["Documento de Criação"] || "",
+            municipio: row["Município"] || row["Municipio"] || "Não informado", 
+            regiao: row["Região"] || row["Regiao"] || "Não informada", 
+            zona: row["Zona do Rio"] || row["Zona"] || "",
+            endereco: row["Endereço"] || row["Endereco"] || row["Logradouro"] || "",
+            telefone: row["Telefone Institucional"] || row["Telefone"] || "",
+            email: row["E-mail Institucional"] || row["Email"] || "",
+            site: row["Site"] || row["Site Oficial"] || "",
+            facebook: row["Facebook"] || "",
+            instagram: row["Instagram"] || "",
+            twitter: row["Twitter"] || row["Twitter/X"] || "",
+            natureza: row["Natureza Administrativa do Museu"] || row["Natureza Administrativa"] || "Privada", 
+            situacao: row["Situação"] || row["Situacao"] || row["Status"] || "Desconhecido", 
+            funcionamento: row["Funcionamento"] || row["Horário"] || row["Turnos"] || "",
+            ingresso: row["Valor ingresso"] || row["Ingresso"] || "",
+            gratuidades: row["Gratuidades"] || row["Gratuidade"] || "",
+            acervo: row["Acervo Predominante"] || row["Acervo"] || "",
+            educativo: row["Setor Educativo"] || row["Educativo"] || "",
+            museologo: row["Museólogo"] || row["Museologo"] || "",
+            acessibilidade: row["Acessibilidade"] || row["Acessibilidade Universal"] || "",
+            historico_museu: row["Histórico"] || row["Histórico do Museu"] || "", // RESTAURADO O HISTÓRICO DO MUSEU
+            resp_nome: row["Responsável pelo Cadastro"] || "",
+            resp_email: row["E-mail do Responsável"] || "",
+            lat: lat, lng: lng,
+            visivel: true, hidden_fields: {}, history: []
         };
-
-        // Sobrepõe com as edições feitas pelo gestor na memória
-        if (localEditsMemory[museumObj.nome]) museumObj = { ...museumObj, ...localEditsMemory[museumObj.nome] };
-        cleanData.push(museumObj);
+        if (localEditsMemory[mObj.nome]) mObj = { ...mObj, ...localEditsMemory[mObj.nome] };
+        cleanData.push(mObj);
     }
-    museumsData = cleanData; populateCityFilter(); applyFilters();
+    museumsData = cleanData;
+    populateCityFilter(); applyFilters();
 }
 
 function populateCityFilter() {
     const select = document.getElementById('filterMunicipio'); if(!select) return;
     select.innerHTML = '<option value="">Todos os Municípios</option>';
-    [...new Set(museumsData.map(m => m.municipio).filter(Boolean))].sort().forEach(city => { select.innerHTML += `<option value="${city}">${city}</option>`; });
+    [...new Set(museumsData.map(m => m.municipio).filter(Boolean))].sort().forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
 }
 
-// --- FILTROS COMPLETOS (MÚLTIPLOS CHECKBOXES E TEXTO) ---
+// --- FILTROS COMPLETOS ---
 function getCheckedValues(containerId) { return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(el => normalizeString(el.value)); }
 
 window.applyFilters = function() {
     const termo = normalizeString(document.getElementById('filterNome')?.value || '');
     const mapStat = document.getElementById('filterStatusMapa')?.value;
     const muni = normalizeString(document.getElementById('filterMunicipio')?.value || '');
+    const gratuidade = normalizeString(document.getElementById('filterGratuidade')?.value || '');
+    const acesso = normalizeString(document.getElementById('filterAcesso')?.value || '');
     
-    // Checkboxes
     const regioes = getCheckedValues('boxRegiao');
     const naturezas = getCheckedValues('boxNatureza');
     const acervos = getCheckedValues('boxAcervo');
@@ -114,41 +109,25 @@ window.applyFilters = function() {
     const turnos = getCheckedValues('boxTurno');
     const ingressos = getCheckedValues('boxIngresso');
 
-    // Textos Específicos
-    const textGrat = normalizeString(document.getElementById('filterGrat')?.value || '');
-    const textAces = normalizeString(document.getElementById('filterAces')?.value || '');
-
     currentFilteredData = museumsData.filter(m => {
-        if (!m.visivel && !isGestor) return false; 
+        if (!m.visivel && !isGestor) return false;
         
-        let mNome = normalizeString(m.nome); let mMuni = normalizeString(m.municipio); let mReg = normalizeString(m.regiao);
-        let mNat = normalizeString(m.natureza); let mAcer = normalizeString(m.acervo); let mSit = normalizeString(m.situacao);
-        let mFunc = normalizeString(m.funcionamento); let mIng = normalizeString(m.ingresso);
-        let mGrat = normalizeString(m.gratuidades); let mAces = normalizeString(m.acessibilidade);
+        let mNome = normalizeString(m.nome), mMuni = normalizeString(m.municipio), mReg = normalizeString(m.regiao), mNat = normalizeString(m.natureza), mAcer = normalizeString(m.acervo), mSit = normalizeString(m.situacao), mFunc = normalizeString(m.funcionamento), mIng = normalizeString(m.ingresso), mGrat = normalizeString(m.gratuidades), mAcc = normalizeString(m.acessibilidade);
 
         if (termo && !mNome.includes(termo)) return false;
         if (muni && mMuni !== muni) return false;
-        if (textGrat && !mGrat.includes(textGrat)) return false;
-        if (textAces && !mAces.includes(textAces)) return false;
+        if (gratuidade && !mGrat.includes(gratuidade)) return false;
+        if (acesso && !mAcc.includes(acesso)) return false;
         
-        // Regra de OU para checkboxes (Se marcou "Manhã" ou "Tarde", tem que ter algum deles no texto)
         if (regioes.length > 0 && !regioes.some(r => mReg.includes(r))) return false;
         if (naturezas.length > 0 && !naturezas.some(n => mNat.includes(n))) return false;
         if (acervos.length > 0 && !acervos.some(a => mAcer.includes(a))) return false;
         if (situacoes.length > 0 && !situacoes.some(s => mSit.includes(s))) return false;
         if (turnos.length > 0 && !turnos.some(t => mFunc.includes(t))) return false;
-        
-        // Ingresso (Gratuito vs Pago)
-        if (ingressos.length > 0) {
-            let matches = false;
-            if (ingressos.includes("gratuit") && (mIng.includes("gratuit") || mIng.includes("isento") || mIng === "")) matches = true;
-            if (ingressos.includes("pago") && (!mIng.includes("gratuit") && mIng.length > 2)) matches = true;
-            if (!matches) return false;
-        }
+        if (ingressos.length > 0 && !ingressos.some(i => mIng.includes(i))) return false;
 
         if (mapStat === 'sim' && (!m.lat || !m.lng)) return false;
         if (mapStat === 'nao' && (m.lat && m.lng)) return false;
-
         return true;
     });
 
@@ -164,27 +143,22 @@ window.resetFilters = function() {
 
 function renderMuseums(data) {
     markersArray.forEach(m => map.removeLayer(m)); markersArray = [];
-    let publicData = data.filter(m => m.visivel);
+    let pData = data.filter(m => m.visivel);
 
-    document.getElementById('count-total').innerText = publicData.length;
-    document.getElementById('resultCount').innerText = publicData.length;
+    document.getElementById('count-total').innerText = pData.length;
+    document.getElementById('resultCount').innerText = pData.length;
     
     let htmlTable = '<div class="table-responsive"><table class="table table-hover border small"><thead class="table-dark"><tr><th>Nome</th><th>Município</th><th>Ação</th></tr></thead><tbody>';
     let htmlList = '';
 
-    publicData.forEach(m => {
+    pData.forEach(m => {
         let btn = `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openProfile(${m.id})">Ver Ficha</button>`;
         htmlTable += `<tr><td class="fw-bold">${m.nome}</td><td>${m.municipio}</td><td>${btn}</td></tr>`;
-        
-        htmlList += `
-        <div class="p-3 mb-2 bg-white border rounded shadow-sm d-flex justify-content-between align-items-center">
-            <div><h6 class="fw-bold text-primary mb-1">${m.nome}</h6><small class="text-muted">${m.municipio} | ${m.natureza || 'Sem natureza'}</small></div>
-            ${btn}
-        </div>`;
+        htmlList += `<div class="p-3 mb-2 bg-white border rounded shadow-sm d-flex justify-content-between align-items-center"><div><h6 class="fw-bold text-primary mb-1">${m.nome}</h6><small class="text-muted">${m.municipio} | ${m.natureza}</small></div>${btn}</div>`;
 
         if (m.lat && m.lng) {
             const marker = L.marker([m.lat, m.lng]).addTo(map);
-            marker.bindPopup(`<div class="text-center p-1"><h6 class="fw-bold text-primary mb-1">${m.nome}</h6><small class="d-block mb-2">${m.municipio}</small><button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openProfile(${m.id})">Ver Ficha Completa</button></div>`);
+            marker.bindPopup(`<div class="text-center p-1"><h6 class="fw-bold text-primary mb-1">${m.nome}</h6><small class="d-block mb-2">${m.municipio}</small><button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openProfile(${m.id})">Ver Ficha</button></div>`);
             markersArray.push(marker);
         }
     });
@@ -194,63 +168,59 @@ function renderMuseums(data) {
     if(document.getElementById('museum-list-container')) document.getElementById('museum-list-container').innerHTML = htmlList;
 }
 
-window.filterListaTexto = function() {
-    let input = normalizeString(document.getElementById('searchLista').value);
-    document.querySelectorAll('#container-lista-geral tbody tr').forEach(row => { row.style.display = normalizeString(row.innerText).includes(input) ? '' : 'none'; });
-}
+window.filterListaTexto = function() { let input = normalizeString(document.getElementById('searchLista').value); document.querySelectorAll('#container-lista-geral tbody tr').forEach(row => { row.style.display = normalizeString(row.innerText).includes(input) ? '' : 'none'; }); }
 
-// --- FICHA PÚBLICA (COM HISTÓRICO RESTAURADO) ---
+// --- FICHA PÚBLICA (HISTÓRICO DO MUSEU RESTAURADO) ---
 window.openProfile = function(id) {
     const m = museumsData.find(x => x.id === id); if(!m) return;
-    
-    const val = (campoStr, idCampo) => {
-        if(m.hidden_fields && m.hidden_fields[idCampo]) return '<span class="badge bg-danger">Restrito</span>';
-        return (campoStr && campoStr.trim() !== '') ? campoStr : '<span class="text-muted fst-italic">Não informado</span>';
-    };
-
+    const val = (vStr, idC) => { if(m.hidden_fields && m.hidden_fields[idC]) return '<span class="badge bg-danger">Oculto</span>'; return (vStr && vStr.trim() !== '') ? vStr : '<span class="text-muted fst-italic">Não inf.</span>'; };
     document.getElementById('modalTitle').innerText = m.nome;
     
     let html = `
         <div class="row mb-3 border-bottom pb-3">
             <div class="col-md-8">
-                <p class="mb-1 text-primary fw-bold"><i class="bi bi-geo-alt-fill"></i> ${val(m.logradouro, 'logradouro')}, ${val(m.numero, 'numero')} - ${val(m.cep, 'cep')}</p>
+                <p class="mb-1 text-primary fw-bold"><i class="bi bi-geo-alt-fill"></i> ${val(m.endereco, 'endereco')}</p>
                 <p class="mb-1 text-muted small">Município: ${val(m.municipio, 'municipio')} | Região: ${val(m.regiao, 'regiao')}</p>
-                <p class="mt-2 mb-0 small"><strong>Tel:</strong> ${val(m.telefone, 'telefone')} | <strong>Email:</strong> ${val(m.email_institucional, 'email_institucional')}</p>
-                <p class="mt-1 mb-0 small"><strong>Site/Redes:</strong> ${val(m.site, 'site')} | ${val(m.instagram, 'instagram')}</p>
+                <p class="mt-2 mb-0 small"><strong>Tel:</strong> ${val(m.telefone, 'telefone')} | <strong>Site:</strong> ${val(m.site, 'site')} | <strong>E-mail:</strong> ${val(m.email, 'email')}</p>
             </div>
-            <div class="col-md-4 text-md-end">
-                <span class="badge bg-secondary mb-1">${val(m.natureza, 'natureza')}</span><br>
-                <span class="badge bg-info text-dark">${val(m.situacao, 'situacao')}</span>
-            </div>
+            <div class="col-md-4 text-md-end"><span class="badge bg-secondary mb-1">${val(m.natureza, 'natureza')}</span><br><span class="badge bg-info text-dark">${val(m.situacao, 'situacao')}</span></div>
         </div>
-        <h6 class="text-primary fw-bold border-bottom pb-1">Técnico e Acervo</h6>
+        <h6 class="text-primary fw-bold border-bottom pb-1">Técnico, Acesso e Acervo</h6>
         <div class="row small mb-3">
             <div class="col-12 mb-2"><strong>Acervo:</strong> ${val(m.acervo, 'acervo')}</div>
             <div class="col-sm-6 mb-2"><strong>Horário:</strong> ${val(m.funcionamento, 'funcionamento')}</div>
             <div class="col-sm-6 mb-2"><strong>Ingresso:</strong> ${val(m.ingresso, 'ingresso')}</div>
-            <div class="col-sm-6 mb-2"><strong>Gratuidades:</strong> ${val(m.gratuidades, 'gratuidades')}</div>
+            <div class="col-12 mb-2"><strong>Gratuidades:</strong> ${val(m.gratuidades, 'gratuidades')}</div>
+            <div class="col-sm-6 mb-2"><strong>Setor Educativo:</strong> ${val(m.educativo, 'educativo')}</div>
             <div class="col-sm-6 mb-2"><strong>Museólogo:</strong> ${val(m.museologo, 'museologo')}</div>
-            <div class="col-12 mt-2"><strong>Acessibilidade:</strong> ${val(m.acessibilidade, 'acessibilidade')}</div>
+            <div class="col-12 mb-2"><strong>Acessibilidade:</strong> ${val(m.acessibilidade, 'acessibilidade')}</div>
         </div>
         <h6 class="text-primary fw-bold border-bottom pb-1">Histórico da Instituição</h6>
-        <p class="small text-muted" style="text-align:justify;">${val(m.historico, 'historico')}</p>
+        <p class="small text-muted" style="text-align: justify;">${val(m.historico_museu, 'historico_museu')}</p>
     `;
     document.getElementById('modalPublicBody').innerHTML = html;
     profileModal.show();
 }
 
-// --- CONTROLE DE PÁGINAS (ABAS) ---
+// =====================================================================
+// NAVEGAÇÃO SUPERIOR (Evita o pulo da tela e ativa abas)
+// =====================================================================
 window.switchView = function(viewId) {
+    event.preventDefault(); // Previne o erro do botão não clicar
     document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
     const target = document.getElementById('view-' + viewId);
     if(target) target.style.display = 'block';
     if(viewId === 'home' && map) { setTimeout(() => { map.invalidateSize(); }, 200); }
-    window.scrollTo(0,0);
 }
-window.showPlaceholder = function(titleText) { switchView('em-construcao'); document.getElementById('construcao-title').innerText = titleText; }
+window.showPlaceholder = function(titleText) {
+    event.preventDefault();
+    document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+    document.getElementById('view-em-construcao').style.display = 'block';
+    document.getElementById('construcao-title').innerText = titleText;
+}
 
 // =====================================================================
-// MÓDULO GESTOR (CADASTRO MANUAL, EDIÇÃO DINÂMICA E ROBÔ)
+// GESTOR (TODOS OS CAMPOS)
 // =====================================================================
 window.openAdminOrLogin = function() { if(isGestor) { document.getElementById('admin-panel').style.display = 'block'; applyFilters(); } else document.getElementById('login-overlay').style.display = 'flex'; }
 window.closeLogin = function() { document.getElementById('login-overlay').style.display = 'none'; }
@@ -262,90 +232,85 @@ window.renderVisibilityList = function() {
     const term = normalizeString(document.getElementById('searchVisibility')?.value || '');
     const list = document.getElementById('visibility-list'); if(!list) return; list.innerHTML = '';
     document.getElementById('gestaoCount').innerText = museumsData.length;
-
     museumsData.forEach(m => {
         if(term && !normalizeString(m.nome).includes(term)) return;
         let bgClass = m.visivel ? "bg-white border shadow-sm" : "item-hidden";
-        list.innerHTML += `<div class="d-flex justify-content-between align-items-center mb-2 p-3 rounded ${bgClass}"><div><h6 class="fw-bold mb-0 text-primary">${m.nome}</h6><small class="text-dark">${m.municipio || '-'} | Edições no Histórico: <b>${m.history ? m.history.length : 0}</b></small></div><button class="btn btn-sm btn-primary fw-bold px-3" onclick="openGestorEdit(${m.id})">Editar Ficha Completa</button></div>`;
+        list.innerHTML += `<div class="d-flex justify-content-between align-items-center mb-2 p-3 rounded ${bgClass}"><div><h6 class="fw-bold mb-0 text-primary">${m.nome}</h6><small class="text-dark">${m.municipio} | <b>Edições: ${m.history ? m.history.length : 0}</b></small></div><button class="btn btn-sm btn-primary fw-bold px-3" onclick="openGestorEdit(${m.id})"><i class="bi bi-pencil-square"></i> Editar Ficha Completa</button></div>`;
     });
 }
 
-// Gera a tela de edição iterando sobre a ALL_FIELDS global
+// O Gestor agora vê e edita todos os campos da planilha + Lat e Lng
 window.openGestorEdit = function(id) {
     editingMuseumId = id; const m = museumsData.find(x => x.id === id); if(!m) return;
     document.getElementById('gestorEditTitle').innerText = m.nome;
-    document.getElementById('gestorMuseumVisible').checked = !m.visivel; 
-    document.getElementById('gestorAuthor').value = ""; 
+    document.getElementById('gestorMuseumVisible').checked = !m.visivel;
+    document.getElementById('gestorAuthor').value = "";
+
+    const fields = [
+        { id: 'nome', label: 'Nome' }, { id: 'sigla', label: 'Sigla' }, { id: 'cnpj', label: 'CNPJ' }, { id: 'documento_criacao', label: 'Doc de Criação' },
+        { id: 'municipio', label: 'Município' }, { id: 'regiao', label: 'Região' }, { id: 'zona', label: 'Zona' }, { id: 'endereco', label: 'Endereço' },
+        { id: 'telefone', label: 'Telefone' }, { id: 'email', label: 'E-mail' }, { id: 'site', label: 'Site' }, { id: 'facebook', label: 'Facebook' }, { id: 'instagram', label: 'Instagram' }, { id: 'twitter', label: 'Twitter' },
+        { id: 'natureza', label: 'Natureza' }, { id: 'situacao', label: 'Situação' }, { id: 'funcionamento', label: 'Turnos/Dias' }, { id: 'ingresso', label: 'Valor Ingresso' }, { id: 'gratuidades', label: 'Gratuidades' },
+        { id: 'educativo', label: 'Educativo?' }, { id: 'museologo', label: 'Museólogo?' }, { id: 'acervo', label: 'Acervo Predom.' }, { id: 'acessibilidade', label: 'Acessibilidade Universal' }, { id: 'historico_museu', label: 'Histórico do Museu' },
+        { id: 'resp_nome', label: 'Resp. Cadastro' }, { id: 'resp_email', label: 'E-mail Resp.' },
+        { id: 'lat', label: 'Latitude' }, { id: 'lng', label: 'Longitude' }
+    ];
 
     let html = '';
-    ALL_FIELDS.forEach(f => {
+    fields.forEach(f => {
         let isHidden = m.hidden_fields && m.hidden_fields[f.id];
-        let val = m[f.id] || '';
-        let inputHtml = f.isTextarea ? `<textarea class="form-control form-control-sm" id="edit_${f.id}" rows="3">${val}</textarea>` : `<input type="text" class="form-control form-control-sm" id="edit_${f.id}" value="${val}">`;
-        
-        html += `
-            <div class="${f.isTextarea ? 'col-12' : 'col-md-6'} border-bottom pb-2">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label class="fw-bold text-primary small m-0">${f.label}</label>
-                    <div class="form-check form-switch m-0"><input class="form-check-input check-vis" type="checkbox" id="vis_${f.id}" ${!isHidden ? 'checked' : ''}> <small class="text-muted" style="font-size:0.7rem;">Visível</small></div>
-                </div>
-                ${inputHtml}
-            </div>
-        `;
+        html += `<div class="col-md-6 border-bottom pb-2"><div class="d-flex justify-content-between"><label class="fw-bold text-primary small">${f.label}</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="vis_${f.id}" ${!isHidden ? 'checked' : ''}> <small class="text-muted" style="font-size:0.7rem;">Visível</small></div></div><input type="text" class="form-control form-control-sm" id="edit_${f.id}" value="${m[f.id] || ''}"></div>`;
     });
     document.getElementById('gestorEditFields').innerHTML = html;
-
-    // Carrega o Histórico
-    let hLog = document.getElementById('gestorHistoryLog');
-    hLog.innerHTML = m.history && m.history.length > 0 ? m.history.map(h => `> [${h.date}] Atualizado por: <b>${h.user}</b>`).join('<br>') : '> Nenhum histórico de edição registrado.';
     
+    let hLog = document.getElementById('gestorHistoryLog');
+    hLog.innerHTML = m.history && m.history.length > 0 ? m.history.map(h => `> [${h.date}] Atualizado por: <b>${h.user}</b>`).join('<br>') : '> Sem histórico.';
     editModal.show();
 }
 
 window.saveGestorEdits = function() {
     const author = document.getElementById('gestorAuthor').value.trim();
-    if(!author || author.length < 3) return alert("Erro: O nome do Responsável pela atualização é obrigatório para manter o histórico.");
-
+    if(!author || author.length < 3) return alert("Erro: O nome do Responsável é obrigatório para o histórico.");
     let m = museumsData.find(x => x.id === editingMuseumId); if(!m) return;
+
     m.hidden_fields = {};
+    const fields = ['nome', 'sigla', 'cnpj', 'documento_criacao', 'municipio', 'regiao', 'zona', 'endereco', 'telefone', 'email', 'site', 'facebook', 'instagram', 'twitter', 'natureza', 'situacao', 'funcionamento', 'ingresso', 'gratuidades', 'educativo', 'museologo', 'acervo', 'acessibilidade', 'historico_museu', 'resp_nome', 'resp_email', 'lat', 'lng'];
     
-    ALL_FIELDS.forEach(f => {
-        m[f.id] = document.getElementById(`edit_${f.id}`).value;
-        if(!document.getElementById(`vis_${f.id}`).checked) m.hidden_fields[f.id] = true;
+    fields.forEach(f => {
+        m[f] = document.getElementById(`edit_${f}`).value;
+        if(!document.getElementById(`vis_${f}`).checked) m.hidden_fields[f] = true;
     });
 
-    m.lat = parseCoordinate(m.lat); m.lng = parseCoordinate(m.lng); // Blindagem na hora de salvar
+    m.lat = parseCoordinate(m.lat); m.lng = parseCoordinate(m.lng); // Garante a formatação exata da lat/lng digitada na mão
     m.visivel = !document.getElementById('gestorMuseumVisible').checked;
-
-    if(!m.history) m.history = [];
+    
     m.history.push({ date: new Date().toLocaleString('pt-BR'), user: author });
-
     localEditsMemory[m.nome] = m; localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
-    applyFilters(); editModal.hide(); alert("Ficha atualizada e histórico registrado!");
+    applyFilters(); editModal.hide(); alert("Ficha atualizada com sucesso!");
 }
 
 window.saveManualGestor = function() {
-    const nome = document.getElementById('manNome').value; if(!nome) return alert("O Nome é obrigatório.");
-    let newM = { id: Date.now(), visivel: true, hidden_fields: {}, history: [{ date: new Date().toLocaleString('pt-BR'), user: "Cadastro Manual (Gestor)" }] };
-    
-    ALL_FIELDS.forEach(f => { 
-        let el = document.getElementById('man' + f.id.substring(0,4).charAt(0).toUpperCase() + f.id.substring(1,4)); // Mapeamento rápido de IDs do HTML
-        if(el) newM[f.id] = el.value; 
-    });
-    // Pega manualmente os que os IDs ficaram diferentes
-    newM.nome = nome; newM.municipio = document.getElementById('manMuni').value; newM.logradouro = document.getElementById('manLogradouro').value;
-    newM.cep = document.getElementById('manCEP').value; newM.documento_criacao = document.getElementById('manDoc').value;
-    newM.lat = parseCoordinate(document.getElementById('manLat').value); newM.lng = parseCoordinate(document.getElementById('manLng').value);
-
+    const nome = document.getElementById('man_nome').value; if(!nome) return alert("O Nome é obrigatório.");
+    let newM = {
+        id: Date.now(), nome: nome, sigla: document.getElementById('man_sigla').value, cnpj: document.getElementById('man_cnpj').value, documento_criacao: document.getElementById('man_documento_criacao').value,
+        municipio: document.getElementById('man_municipio').value, regiao: document.getElementById('man_regiao').value, zona: document.getElementById('man_zona').value, endereco: document.getElementById('man_endereco').value + " " + document.getElementById('man_numero').value,
+        telefone: document.getElementById('man_telefone').value, email: document.getElementById('man_email').value, site: document.getElementById('man_site').value, facebook: document.getElementById('man_facebook').value, instagram: document.getElementById('man_instagram').value, twitter: document.getElementById('man_twitter').value,
+        natureza: document.getElementById('man_natureza').value, situacao: document.getElementById('man_situacao').value, funcionamento: document.getElementById('man_funcionamento').value, ingresso: document.getElementById('man_ingresso').value, gratuidades: document.getElementById('man_gratuidades').value,
+        educativo: document.getElementById('man_educativo').value, museologo: document.getElementById('man_museologo').value, acervo: document.getElementById('man_acervo').value, acessibilidade: document.getElementById('man_acessibilidade').value, historico_museu: document.getElementById('man_historico').value,
+        resp_nome: document.getElementById('man_resp_nome').value, resp_email: document.getElementById('man_resp_email').value,
+        lat: parseCoordinate(document.getElementById('man_lat').value), lng: parseCoordinate(document.getElementById('man_lng').value),
+        visivel: true, hidden_fields: {}, history: [{ date: new Date().toLocaleString('pt-BR'), user: "Cadastro Manual (Gestor)" }]
+    };
     museumsData.push(newM); localEditsMemory[nome] = newM; localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
     applyFilters(); alert("Museu cadastrado com sucesso!"); document.querySelectorAll('#formManualGestor input, #formManualGestor textarea').forEach(el => el.value = '');
 }
 
+// --- SEM GEOLOCALIZAÇÃO ---
 function updatePendingList() {
     const list = document.getElementById('pending-list'); if(!list) return; list.innerHTML = '';
     const pendings = museumsData.filter(m => !m.lat || !m.lng); 
     document.getElementById('pendingCount').innerText = pendings.length;
-    pendings.forEach(m => { list.innerHTML += `<div class="p-3 mb-2 bg-white border shadow-sm d-flex justify-content-between align-items-center"><div><strong class="text-danger">${m.nome}</strong><br><small>${m.municipio || 'Sem município'}</small></div><button class="btn btn-sm btn-warning fw-bold" onclick="openAdminMapPicker(${m.id})">Marcar no Mapa</button></div>`; });
+    pendings.forEach(m => { list.innerHTML += `<div class="p-3 mb-2 bg-white border shadow-sm d-flex justify-content-between align-items-center"><div><strong class="text-danger">${m.nome}</strong><br><small>${m.municipio}</small></div><button class="btn btn-sm btn-warning fw-bold" onclick="openAdminMapPicker(${m.id})">Marcar no Mapa</button></div>`; });
 }
 
 let adminMapInstance, adminTempMarker;
@@ -353,49 +318,19 @@ window.openAdminMapPicker = function(id) {
     editingMuseumId = id; new bootstrap.Modal(document.getElementById('adminMapModal')).show();
     setTimeout(() => {
         if (!adminMapInstance) { 
-            adminMapInstance = L.map('adminLeafletMap').setView([-22.9068, -43.1729], 8); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMapInstance);
+            adminMapInstance = L.map('adminLeafletMap').setView([-22.9068, -43.1729], 8);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMapInstance);
             adminMapInstance.on('click', e => { if (adminTempMarker) adminMapInstance.removeLayer(adminTempMarker); adminTempMarker = L.marker(e.latlng).addTo(adminMapInstance); }); 
-        } adminMapInstance.invalidateSize();
+        }
+        adminMapInstance.invalidateSize();
     }, 400);
 }
 window.saveAdminPin = function() {
     if (!adminTempMarker) return alert("Clique no mapa.");
     let m = museumsData.find(x => x.id === editingMuseumId);
-    if(m) { m.lat = adminTempMarker.getLatLng().lat; m.lng = adminTempMarker.getLatLng().lng; localEditsMemory[m.nome] = m; localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory)); applyFilters(); bootstrap.Modal.getInstance(document.getElementById('adminMapModal')).hide(); }
-}
-
-// --- ROBÔ GEOCODIFICADOR (BLINDADO) ---
-window.startRobotProcessing = function() {
-    const file = document.getElementById('csvFileRobot').files[0]; if(!file) return alert("Selecione uma planilha primeiro!");
-    document.getElementById('btnRobot').disabled = true; document.getElementById('robotProgressContainer').classList.remove('d-none'); document.getElementById('robotLog').classList.remove('d-none');
-    const log = msg => { let el = document.getElementById('robotLog'); el.innerHTML += `<br>> ${msg}`; el.scrollTop = el.scrollHeight; };
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-    Papa.parse(file, {
-        header: true, skipEmptyLines: true,
-        complete: async function(results) {
-            let data = results.data;
-            for (let i = 0; i < data.length; i++) {
-                let row = data[i]; let nome = row["Nome da Instituição"] || row["Nome"];
-                if(!row["Lat"] && !row["Lng"] && nome) {
-                    log(`Buscando: ${nome}...`);
-                    let query = `${row["Endereço"]||row["Logradouro"]||''}, ${row["Município"]||''}, RJ, Brasil`.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
-                    try {
-                        let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
-                        let d = await res.json();
-                        if(d && d.length > 0 && isWithinRJ(parseFloat(d[0].lat), parseFloat(d[0].lon))) {
-                            // AQUI GARANTE QUE O ROBÔ GRAVA COM PONTO E NÃO VÍRGULA!
-                            row["Lat"] = parseFloat(d[0].lat).toFixed(6); row["Lng"] = parseFloat(d[0].lon).toFixed(6); log(`   -> OK!`);
-                        } else log(`   -> Falhou (Fora do RJ ou Não Achou)`);
-                    } catch(e) { log(`   -> Erro API.`); }
-                    await sleep(1100);
-                }
-                document.getElementById('robotProgressBar').style.width = `${Math.round(((i+1)/data.length)*100)}%`;
-            }
-            log(`Concluído! Baixando CSV...`);
-            let csv = Papa.unparse(data); let blob = new Blob(["\uFEFF"+csv], { type: 'text/csv;charset=utf-8;' });
-            let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "dados_geocodificados.csv"; link.click();
-            document.getElementById('btnRobot').disabled = false;
-        }
-    });
+    if(m) { 
+        m.lat = adminTempMarker.getLatLng().lat; m.lng = adminTempMarker.getLatLng().lng; 
+        localEditsMemory[m.nome] = m; localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
+        applyFilters(); bootstrap.Modal.getInstance(document.getElementById('adminMapModal')).hide(); 
+    }
 }
