@@ -114,13 +114,12 @@
                         </ul>
                     </li>
 
-                    <!-- Menu Diretrizes do Campo (Antigo Publicações) -->
+                    <!-- Menu Diretrizes do Campo (Sem a aba Marco Legal) -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Diretrizes do campo</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('diretrizes-ibram')"><i class="fa-solid fa-file-shield me-2 text-primary"></i>Diretrizes e Documentos IBRAM</a></li>
                             <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('caixa-ferramentas')"><i class="fa-solid fa-toolbox me-2 text-success"></i>Caixa de Ferramentas</a></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="switchView('legislacao')"><i class="fa-solid fa-gavel me-2 text-secondary"></i>Marco Legal Fluminense</a></li>
                         </ul>
                     </li>
 
@@ -156,31 +155,31 @@
 
             <nav class="admin-sidebar-nav" aria-label="Menu Administrativo">
                 <div class="sidebar-section-label">Principal</div>
-                <button class="admin-nav-link active" onclick="switchAdminTab('visibility', 'Gestão e Edição de Fichas', 'Controle individual de registros e auditoria')">
+                <button class="admin-nav-link active" onclick="switchAdminTab('visibility', 'Gestão e Edição de Fichas', 'Controle individual de registros e auditoria', this)">
                     <i class="fa-solid fa-pen-to-square"></i>
                     <span class="sidebar-text">Gestão de Fichas (<span id="gestaoCount">0</span>)</span>
                 </button>
-                <button class="admin-nav-link" onclick="switchAdminTab('bulk', 'Edição em Bloco de Campos', 'Controle global de visibilidade pública por atributo')">
+                <button class="admin-nav-link" onclick="switchAdminTab('bulk', 'Edição em Bloco de Campos', 'Controle global de visibilidade pública por atributo', this)">
                     <i class="fa-solid fa-sliders"></i>
                     <span class="sidebar-text">Edição em Bloco</span>
                 </button>
-                <button class="admin-nav-link" onclick="switchAdminTab('pending', 'Instituições Sem Geolocalização', 'Registros virtuais ou pendentes de coordenada geográfica')">
+                <button class="admin-nav-link" onclick="switchAdminTab('pending', 'Instituições Sem Geolocalização', 'Registros com acervo digital/virtual ou pendentes de coordenada geográfica', this)">
                     <i class="fa-solid fa-location-crosshairs"></i>
                     <span class="sidebar-text">Sem Geolocalização (<span id="pendingCount">0</span>)</span>
                 </button>
 
                 <div class="sidebar-section-label mt-3">Dados e Integração</div>
-                <button class="admin-nav-link" onclick="switchAdminTab('import', 'Importação e Robô Geocodificador', 'Atualização em massa via CSV e geocodificação automatizada')">
+                <button class="admin-nav-link" onclick="switchAdminTab('import', 'Importação e Robô Geocodificador', 'Atualização em massa via CSV e geocodificação automatizada', this)">
                     <i class="fa-solid fa-file-csv"></i>
                     <span class="sidebar-text">Importação e Robô</span>
                 </button>
-                <button class="admin-nav-link" onclick="switchAdminTab('manual', 'Cadastro Manual Oficial', 'Inserção direta de instituição na base consolidada')">
+                <button class="admin-nav-link" onclick="switchAdminTab('manual', 'Cadastro Manual Oficial', 'Inserção direta de instituição na base consolidada', this)">
                     <i class="fa-solid fa-circle-plus"></i>
                     <span class="sidebar-text">Cadastro Manual</span>
                 </button>
 
                 <div class="sidebar-section-label mt-3">Administração</div>
-                <button class="admin-nav-link" onclick="switchAdminTab('feedbacks', 'Manifestações e FAQ Recebidos', 'Dúvidas, críticas e sugestões registradas pelo público')">
+                <button class="admin-nav-link" onclick="switchAdminTab('feedbacks', 'Manifestações e FAQ Recebidos', 'Dúvidas, críticas e sugestões registradas pelo público', this)">
                     <i class="fa-solid fa-inbox"></i>
                     <span class="sidebar-text">Dúvidas / Sugestões (<span id="feedbackCount">0</span>)</span>
                 </button>
@@ -191,7 +190,7 @@
             </nav>
 
             <div class="admin-sidebar-footer">
-                <div class="sidebar-footer-text">v2.4.0 • Protocolo TI-SECEC</div>
+                <div class="sidebar-footer-text">v2.5.0 • Protocolo TI-SECEC</div>
             </div>
         </aside>
 
@@ -216,7 +215,7 @@
 
                     <!-- Área Obrigatória do Usuário com Dropdown (Seção 1.4.2) -->
                     <div class="dropdown">
-                        <div class="admin-user-trigger" data-bs-toggle="dropdown" aria-expanded="false" role="button">
+                        <div class="admin-user-trigger" id="adminUserDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" role="button">
                             <div class="admin-avatar" id="adminUserInitials">GS</div>
                             <div class="d-none d-sm-block text-start lh-sm">
                                 <div class="fw-bold text-dark" style="font-size: 0.82rem;" id="adminUserDisplayName">Gestor SUPMU</div>
@@ -233,7 +232,7 @@
                             <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="openAdminPasswordModal()"><i class="fa-solid fa-key me-2"></i>Trocar senha</a></li>
                             <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="minimizarPainelGestor(); switchView('manual-gestores');"><i class="fa-regular fa-circle-question me-2"></i>Manual do Gestor</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item py-2 text-danger fw-bold" href="javascript:void(0)" onclick="logoutGestor()"><i class="fa-solid fa-right-from-bracket me-2"></i>Sair (logout)</a></li>
+                            <li><a class="dropdown-item py-2 text-danger fw-bold" href="javascript:void(0)" onclick="logoutGestor(event)"><i class="fa-solid fa-right-from-bracket me-2"></i>Sair (logout)</a></li>
                         </ul>
                     </div>
                 </div>
@@ -318,17 +317,25 @@
                             </div>
                         </div>
 
-                        <div class="row g-3" id="bulkFieldsContainer">
-                            <!-- Preenchido dinamicamente via app.js -->
-                        </div>
+                        <div class="row g-3" id="bulkFieldsContainer"></div>
                     </div>
                 </div>
 
                 <!-- ABA 3: SEM GEOLOCALIZAÇÃO -->
                 <div id="admin-tab-pending" class="admin-tab-pane" style="display: none;">
                     <div class="admin-card">
-                        <h6 class="fw-bold mb-1">Instituições Sem Geolocalização Específica</h6>
-                        <p class="text-secondary small mb-3">Lista de museus virtuais ou registros cujo endereço não pôde ser geocodificado automaticamente. Clique em "Marcar no Mapa" para definir a coordenada exata.</p>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-1">Instituições Sem Geolocalização no Mapa</h6>
+                                <p class="text-secondary small mb-0">Inclui instituições com <strong>acervo predominantemente digital/virtual</strong> (que não exibem pino por regra de negócio) e registros com endereço pendente de coordenada exata.</p>
+                            </div>
+                            <div class="w-100" style="max-width: 340px;">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                                    <input type="text" id="searchPendingGeo" class="form-control" placeholder="Filtrar lista sem geolocalização..." onkeyup="updatePendingList()">
+                                </div>
+                            </div>
+                        </div>
                         <div id="pending-list" style="max-height: 520px; overflow-y: auto;"></div>
                     </div>
                 </div>
@@ -350,7 +357,7 @@
                         <div class="col-lg-6">
                             <div class="admin-card h-100">
                                 <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-robot me-2"></i>Robô Geocodificador Fluminense</h6>
-                                <p class="small text-secondary">Processa planilhas sem coordenadas aplicando o funil de busca restrito ao Estado do Rio de Janeiro e gera um novo arquivo <code>dados.csv</code> padronizado.</p>
+                                <p class="small text-secondary">Processa planilhas sem coordenadas aplicando o funil de busca por logradouro e bairro no Estado do Rio de Janeiro, mantendo acervos digitais sem pino físico.</p>
                                 <input class="form-control form-control-sm mb-3" type="file" id="csvFileRobot" accept=".csv">
                                 <button class="btn btn-success btn-sm w-100 fw-bold py-2" id="btnRobot" onclick="startRobotProcessing()">
                                     <i class="fa-solid fa-gears me-1"></i> Processar Coordenadas e Baixar CSV
@@ -435,7 +442,7 @@
                             <div class="col-md-9"><label class="fw-bold">Gratuidades</label><input type="text" id="man_gratuidades" class="form-control form-control-sm"></div>
                             <div class="col-md-3"><label class="fw-bold">Setor Educativo?</label><select id="man_educativo" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
                             <div class="col-md-3"><label class="fw-bold">Museólogo?</label><select id="man_museologo" class="form-select form-select-sm"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
-                            <div class="col-md-6"><label class="fw-bold">Acervo Predominante</label><input type="text" id="man_acervo" class="form-control form-control-sm"></div>
+                            <div class="col-md-6"><label class="fw-bold">Acervo Predominante</label><input type="text" id="man_acervo" class="form-control form-control-sm" placeholder="Ex: Histórico, Artes Visuais, Virtual/Digital..."></div>
                             <div class="col-md-12"><label class="fw-bold">Acessibilidade Universal</label><textarea id="man_acessibilidade" class="form-control form-control-sm" rows="1"></textarea></div>
                             <div class="col-md-12"><label class="fw-bold">Histórico do Museu</label><textarea id="man_historico" class="form-control form-control-sm" rows="2"></textarea></div>
 
@@ -509,7 +516,7 @@
                                 <select id="filterStatusMapa" class="form-select form-select-sm mb-3" onchange="applyFilters()">
                                     <option value="">Exibir Todos</option>
                                     <option value="sim">Com Localização (Pin no Mapa)</option>
-                                    <option value="nao">Sem Localização Física / Virtuais</option>
+                                    <option value="nao">Instituições Sem Geolocalização / Digitais</option>
                                 </select>
 
                                 <label class="filter-label" for="filterMunicipio">Município</label>
@@ -517,18 +524,18 @@
                                     <option value="">Todos os Municípios</option>
                                 </select>
 
-                                <label class="filter-label">Região</label>
+                                <label class="filter-label">Região (Cor do Pin no Mapa)</label>
                                 <div class="filter-scroll-box" id="boxRegiao">
-                                    <label><input type="checkbox" value="Baixadas Litorâneas" onchange="applyFilters()"> Baixadas Litorâneas</label>
-                                    <label><input type="checkbox" value="Centro-Sul" onchange="applyFilters()"> Centro-Sul</label>
-                                    <label><input type="checkbox" value="Costa Verde" onchange="applyFilters()"> Costa Verde</label>
-                                    <label><input type="checkbox" value="Médio Paraíba" onchange="applyFilters()"> Médio Paraíba</label>
-                                    <label><input type="checkbox" value="Metropolitana I" onchange="applyFilters()"> Metropolitana I</label>
-                                    <label><input type="checkbox" value="Metropolitana II" onchange="applyFilters()"> Metropolitana II</label>
-                                    <label><input type="checkbox" value="Metropolitana III" onchange="applyFilters()"> Metropolitana III</label>
-                                    <label><input type="checkbox" value="Noroeste Fluminense" onchange="applyFilters()"> Noroeste Fluminense</label>
-                                    <label><input type="checkbox" value="Norte Fluminense" onchange="applyFilters()"> Norte Fluminense</label>
-                                    <label><input type="checkbox" value="Serrana" onchange="applyFilters()"> Serrana</label>
+                                    <label><input type="checkbox" value="Baixadas Litorâneas" onchange="applyFilters()"><span class="region-color-dot" style="background:#aabddb;"></span>Baixadas Litorâneas</label>
+                                    <label><input type="checkbox" value="Centro-Sul" onchange="applyFilters()"><span class="region-color-dot" style="background:#ef8739;"></span>Centro-Sul</label>
+                                    <label><input type="checkbox" value="Costa Verde" onchange="applyFilters()"><span class="region-color-dot" style="background:#0d6b2a;"></span>Costa Verde</label>
+                                    <label><input type="checkbox" value="Médio Paraíba" onchange="applyFilters()"><span class="region-color-dot" style="background:#58cfa5;"></span>Médio Paraíba</label>
+                                    <label><input type="checkbox" value="Metropolitana I" onchange="applyFilters()"><span class="region-color-dot" style="background:#af8447;"></span>Metropolitana I</label>
+                                    <label><input type="checkbox" value="Metropolitana II" onchange="applyFilters()"><span class="region-color-dot" style="background:#af8447;"></span>Metropolitana II</label>
+                                    <label><input type="checkbox" value="Metropolitana III" onchange="applyFilters()"><span class="region-color-dot" style="background:#af8447;"></span>Metropolitana III</label>
+                                    <label><input type="checkbox" value="Noroeste Fluminense" onchange="applyFilters()"><span class="region-color-dot" style="background:#edeb40;"></span>Noroeste Fluminense</label>
+                                    <label><input type="checkbox" value="Norte Fluminense" onchange="applyFilters()"><span class="region-color-dot" style="background:#d69f9d;"></span>Norte Fluminense</label>
+                                    <label><input type="checkbox" value="Serrana" onchange="applyFilters()"><span class="region-color-dot" style="background:#0d92df;"></span>Serrana</label>
                                 </div>
 
                                 <label class="filter-label">Natureza Administrativa</label>
@@ -549,7 +556,7 @@
                                     <label><input type="checkbox" value="Histór" onchange="applyFilters()"> Histórico</label>
                                     <label><input type="checkbox" value="Imagem" onchange="applyFilters()"> Imagem e Som</label>
                                     <label><input type="checkbox" value="Patrimônio Científico" onchange="applyFilters()"> Patrimônio Científico</label>
-                                    <label><input type="checkbox" value="Virtual" onchange="applyFilters()"> Virtual</label>
+                                    <label><input type="checkbox" value="Virtual" onchange="applyFilters()"> Virtual / Digital</label>
                                     <label><input type="checkbox" value="Outros" onchange="applyFilters()"> Outros</label>
                                 </div>
 
@@ -655,12 +662,11 @@
             </section>
         </div>
 
-        <!-- VIEW 2: APRESENTAÇÃO INSTITUCIONAL (TEXTO ATUALIZADO) -->
+        <!-- VIEW 2: APRESENTAÇÃO INSTITUCIONAL -->
         <div id="view-apresentacao" class="view-section" style="display: none;">
             <div class="container py-5">
                 <h2 class="section-title">Apresentação Institucional</h2>
 
-                <!-- INTRO EM DESTAQUE -->
                 <div class="row justify-content-center mt-4 mb-5">
                     <div class="col-lg-10">
                         <div class="surface-card p-4 border-start border-5 border-primary bg-white">
@@ -671,7 +677,6 @@
                     </div>
                 </div>
 
-                <!-- MISSÃO, VISÃO E VALORES -->
                 <div class="row g-4 mb-5">
                     <div class="col-md-4">
                         <div class="surface-card h-100 p-4 border-top border-4 border-primary text-center">
@@ -702,7 +707,6 @@
                     </div>
                 </div>
 
-                <!-- DESCRIÇÃO HISTÓRICA E NORMATIVA -->
                 <div class="row justify-content-center">
                     <div class="col-lg-10 surface-card p-4 p-md-5 text-secondary" style="text-align: justify; font-size: 0.98rem;">
                         <p>O Sistema Estadual de Museus do Rio de Janeiro foi criado pelo Decreto nº 42.306, de 2010, em conformidade com o Sistema Brasileiro de Museus com o objetivo de promover políticas públicas para o setor museal fluminense.</p>
@@ -716,11 +720,11 @@
             </div>
         </div>
 
-        <!-- VIEW 3: LEGISLAÇÃO (COM PORTARIA DA COMISSÃO CONSULTIVA) -->
+        <!-- VIEW 3: LEGISLAÇÃO (SEM A PORTARIA DA COMISSÃO) -->
         <div id="view-legislacao" class="view-section" style="display: none;">
             <div class="container py-5 text-center">
                 <h2 class="section-title">Legislação e Atos Normativos</h2>
-                <p class="text-secondary mb-4">Marco legal de criação, regimento e nomeação do Sistema Estadual de Museus do Rio de Janeiro.</p>
+                <p class="text-secondary mb-4">Marco legal de criação e regimento do Sistema Estadual de Museus do Rio de Janeiro.</p>
                 <div class="row justify-content-center mt-4">
                     <div class="col-md-7 col-lg-6">
                         <a href="https://drive.google.com/file/d/1dZvf4dowCg6zwPjqJ8txD8UnQJlB9YCZ/view?usp=drive_link" target="_blank" rel="noopener" class="btn btn-outline-primary w-100 mb-3 py-3 text-start fw-bold shadow-sm d-flex align-items-center">
@@ -744,19 +748,12 @@
                                 <small class="text-muted fw-normal">Normas de funcionamento e diretrizes operacionais</small>
                             </div>
                         </a>
-                        <a href="NOMEAÇÃO DOS MEMBROS DA COMISSÃO - D.O..pdf" target="_blank" rel="noopener" class="btn btn-outline-primary w-100 mb-3 py-3 text-start fw-bold shadow-sm d-flex align-items-center">
-                            <i class="fa-solid fa-file-contract fs-3 me-3 text-primary"></i>
-                            <div>
-                                <div>Portaria de Nomeação da Comissão Consultiva (D.O.)</div>
-                                <small class="text-muted fw-normal">Publicação em Diário Oficial — Nomeação dos Membros da Comissão</small>
-                            </div>
-                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- VIEW 4: COMISSÃO CONSULTIVA -->
+        <!-- VIEW 4: COMISSÃO CONSULTIVA (COM A PORTARIA DE NOMEAÇÃO D.O.) -->
         <div id="view-comissao" class="view-section" style="display: none;">
             <div class="container py-5">
                 <h2 class="section-title">Comissão Consultiva</h2>
@@ -770,11 +767,11 @@
 
                         <div class="my-4 p-3 bg-light rounded border d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <div>
-                                <strong class="text-dark"><i class="fa-solid fa-file-signature text-primary me-2"></i>Ato Oficial de Nomeação</strong>
-                                <div class="small text-muted">Consulte a portaria publicada em Diário Oficial com a relação de membros nomeados.</div>
+                                <strong class="text-dark"><i class="fa-solid fa-file-signature text-primary me-2"></i>Portaria de Nomeação da Comissão Consultiva</strong>
+                                <div class="small text-muted">Consulte a publicação oficial em Diário Oficial com a nomeação dos membros da Comissão Consultiva.</div>
                             </div>
                             <a href="NOMEAÇÃO DOS MEMBROS DA COMISSÃO - D.O..pdf" target="_blank" rel="noopener" class="btn btn-sm btn-primary fw-bold">
-                                <i class="fa-solid fa-download me-1"></i> Abrir Portaria (D.O.)
+                                <i class="fa-solid fa-file-pdf me-1"></i> Abrir Portaria de Nomeação (D.O.)
                             </a>
                         </div>
 
@@ -796,7 +793,7 @@
             </div>
         </div>
 
-        <!-- VIEW 5: EQUIPE TÉCNICA SUPMU -->
+        <!-- VIEW 5: EQUIPE TÉCNICA SUPMU (ATUALIZADA COM CATHARYNA REIMOL) -->
         <div id="view-equipe" class="view-section" style="display: none;">
             <div class="container py-5 text-center">
                 <h2 class="section-title">Equipe Técnica SUPMU</h2>
@@ -826,20 +823,25 @@
                         <div class="surface-card p-4 border-top border-5 border-primary">
                             <h5 class="fw-bold text-primary mb-4">Coordenação do Sistema Estadual de Museus</h5>
                             <div class="row justify-content-center">
-                                <div class="col-md-4 team-member">
+                                <div class="col-md-3 col-sm-6 team-member">
                                     <img src="arthur.jpg" class="rounded-circle" alt="Arthur Medeiros" onerror="this.src='https://via.placeholder.com/150'">
                                     <h6>Arthur Medeiros</h6>
                                     <p class="team-role">Assistente</p>
                                 </div>
-                                <div class="col-md-4 team-member">
+                                <div class="col-md-3 col-sm-6 team-member">
                                     <img src="pedro.jpg" class="rounded-circle" alt="Pedro Dias" onerror="this.src='https://via.placeholder.com/150'">
                                     <h6>Pedro Dias</h6>
                                     <p class="team-role">Assistente</p>
                                 </div>
-                                <div class="col-md-4 team-member">
+                                <div class="col-md-3 col-sm-6 team-member">
                                     <img src="beatriz.jpg" class="rounded-circle" alt="Beatriz Barcelos" onerror="this.src='https://via.placeholder.com/150'">
                                     <h6>Beatriz Barcelos</h6>
                                     <p class="team-role">Assistente</p>
+                                </div>
+                                <div class="col-md-3 col-sm-6 team-member">
+                                    <img src="catharyna.jpeg" class="rounded-circle" alt="Catharyna Reimol" onerror="this.src='https://via.placeholder.com/150'">
+                                    <h6>Catharyna Reimol</h6>
+                                    <p class="team-intern">Estagiária</p>
                                 </div>
                             </div>
                         </div>
@@ -849,24 +851,19 @@
                 <div class="mt-4 surface-card p-4 border-top border-5 border-danger">
                     <h5 class="fw-bold text-danger mb-4">Coordenação de Museologia</h5>
                     <div class="row justify-content-center">
-                        <div class="col-md-3 team-member">
+                        <div class="col-md-4 col-sm-6 team-member">
                             <img src="ingrid.jpg" class="rounded-circle" alt="Ingrid Fiorante" onerror="this.src='https://via.placeholder.com/150'">
                             <h6>Ingrid Fiorante</h6>
                             <p class="team-role">Coordenadora de Museologia</p>
                         </div>
-                        <div class="col-md-3 team-member">
+                        <div class="col-md-4 col-sm-6 team-member">
                             <img src="stephannie.jpg" class="rounded-circle" alt="Stephannie Macena" onerror="this.src='https://via.placeholder.com/150'">
                             <h6>Stephannie Macena</h6>
                             <p class="team-role">Assistente</p>
                         </div>
-                        <div class="col-md-3 team-member">
+                        <div class="col-md-4 col-sm-6 team-member">
                             <img src="wanessa.jpg" class="rounded-circle" alt="Wanessa Arão" onerror="this.src='https://via.placeholder.com/150'">
                             <h6>Wanessa Arão</h6>
-                            <p class="team-intern">Estagiária</p>
-                        </div>
-                        <div class="col-md-3 team-member">
-                            <img src="alice.jpg" class="rounded-circle" alt="Alice Araújo" onerror="this.src='https://via.placeholder.com/150'">
-                            <h6>Alice Araújo</h6>
                             <p class="team-intern">Estagiária</p>
                         </div>
                     </div>
@@ -874,7 +871,7 @@
             </div>
         </div>
 
-        <!-- VIEW 6: O QUE É O CFM? (TEXTO COMPLETO ATUALIZADO) -->
+        <!-- VIEW 6: O QUE É O CFM? -->
         <div id="view-cfm-sobre" class="view-section" style="display: none;">
             <div class="container py-5">
                 <h2 class="section-title">O que é o CFM?</h2>
@@ -930,21 +927,21 @@
                         <div class="surface-card p-4 h-100">
                             <span class="badge-secec badge-secec-blue mb-2">Etapa 1</span>
                             <h5 class="fw-bold text-dark"><i class="fa-solid fa-magnifying-glass-location text-primary me-2"></i>Consulta e Filtros</h5>
-                            <p class="small text-secondary mb-0">Utilize a barra lateral de <strong>Busca Detalhada</strong> na página inicial para cruzar informações por Município, Região Hidrográfica/Administrativa, Natureza, Tipologia de Acervo, Turno e Acessibilidade.</p>
+                            <p class="small text-secondary mb-0">Utilize a barra lateral de <strong>Busca Detalhada</strong> na página inicial para cruzar informações por Município, Região (identificada pela cor do pino no mapa), Natureza, Tipologia de Acervo, Turno e Acessibilidade.</p>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-3">
                         <div class="surface-card p-4 h-100">
                             <span class="badge-secec badge-secec-green mb-2">Etapa 2</span>
                             <h5 class="fw-bold text-dark"><i class="fa-solid fa-id-card text-success me-2"></i>Fichas Institucionais</h5>
-                            <p class="small text-secondary mb-0">Ao clicar sobre o pino no mapa ou no botão <strong>Ver Ficha</strong> na lista lateral, são apresentados os dados públicos de serviço, endereço, contato, horário de visitação, acervo e histórico institucional.</p>
+                            <p class="small text-secondary mb-0">Ao clicar sobre o pino colorido no mapa ou no botão <strong>Ver Ficha</strong> na lista lateral, são apresentados os dados públicos de serviço, endereço, contato, horário de visitação, acervo e histórico institucional.</p>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-3">
                         <div class="surface-card p-4 h-100">
                             <span class="badge-secec badge-secec-amber mb-2">Etapa 3</span>
                             <h5 class="fw-bold text-dark"><i class="fa-solid fa-sliders text-warning me-2"></i>Gestão e Visibilidade</h5>
-                            <p class="small text-secondary mb-0">Na <strong>Área do Gestor</strong>, a equipe técnica da SUPMU gerencia a visibilidade de campos sensíveis (individualmente ou em bloco), audita o histórico de edições por operador e corrige coordenadas geográficas.</p>
+                            <p class="small text-secondary mb-0">Na <strong>Área do Gestor</strong>, a equipe técnica da SUPMU gerencia a visibilidade de campos sensíveis (individualmente ou em bloco), audita o histórico de edições por operador e gerencia as instituições sem geolocalização.</p>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-3">
@@ -981,7 +978,6 @@
                             O Fórum Estadual de Museus do Rio de Janeiro, planejado e coordenado pelo SIM-RJ / Superintendência de Museus da SECEC-RJ, constitui a principal instância de encontro, articulação, debate técnico e deliberação democrática do setor museológico fluminense. Durante o Fórum, profissionais, pesquisadores, estudantes, gestores culturais e representantes de museus públicos, privados e comunitários avaliam diretrizes para as políticas públicas de memória e realizam o processo eleitoral da Comissão Consultiva do SIM-RJ.
                         </p>
 
-                        <!-- ESTRUTURA DE MEMORIAL PARA ATUALIZAÇÃO DAS EDIÇÕES -->
                         <h6 class="fw-bold text-dark mt-4 mb-3 border-bottom pb-2">Memorial de Edições (Histórico de Encontros)</h6>
 
                         <div class="forum-timeline-item">
@@ -1023,7 +1019,6 @@
                                 Diálogos, entrevistas, experiências de gestão de acervos, educação museal e patrimônio cultural nas diferentes regiões do Estado do Rio de Janeiro.
                             </p>
 
-                            <!-- Embed Oficial do Spotify -->
                             <div class="mb-4">
                                 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/show/2qFj3CPUxixGNkfgkOvDmc?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Podcast Museus RJ no Spotify"></iframe>
                             </div>
@@ -1160,7 +1155,6 @@
                 <p class="text-center text-secondary mb-5">Perguntas frequentes sobre o Sistema Estadual de Museus e canal direto de comunicação com a Superintendência de Museus.</p>
 
                 <div class="row g-4">
-                    <!-- Coluna de Perguntas Frequentes -->
                     <div class="col-lg-7">
                         <div class="surface-card p-4 h-100">
                             <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-circle-question me-2"></i>Perguntas Frequentes (FAQ)</h5>
@@ -1204,12 +1198,12 @@
                                 <div class="accordion-item">
                                     <h2 class="accordion-header">
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                            4. Como solicitar apoio técnico ou capacitação para meu museu?
+                                            4. Por que museus com acervo digital ou virtual não possuem pino no mapa?
                                         </button>
                                     </h2>
                                     <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                         <div class="accordion-body small text-secondary">
-                                            As instituições cadastradas no CFM têm acesso prioritário às oficinas de capacitação, visitas técnicas e orientações museológicas promovidas pela SUPMU/SECEC-RJ. As demandas podem ser encaminhadas diretamente pelo telefone ou e-mail institucional.
+                                            Instituições de natureza ou acervo predominantemente digital/virtual não possuem sede física de visitação presencial. Elas integram a base oficial do CFM e podem ser consultadas na lista lateral selecionando o filtro <strong>"Instituições Sem Geolocalização / Digitais"</strong>.
                                         </div>
                                     </div>
                                 </div>
@@ -1217,7 +1211,6 @@
                         </div>
                     </div>
 
-                    <!-- Coluna de Contato Oficial e Envio de Manifestação -->
                     <div class="col-lg-5">
                         <div class="surface-card p-4 h-100 border-top border-4 border-primary">
                             <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-envelope-open-text text-primary me-2"></i>Envie sua Dúvida, Crítica ou Sugestão</h5>
@@ -1300,7 +1293,7 @@
                 <div class="modal-body p-4 bg-light">
                     <div class="alert alert-warning small d-flex align-items-center gap-2">
                         <i class="fa-solid fa-circle-info fs-5"></i>
-                        <span>Utilize a chave <strong>Visível</strong> ao lado de cada campo para ocultar ou exibir o atributo especificamente nesta ficha.</span>
+                        <span>Utilize a chave <strong>Visível</strong> ao lado de cada campo para ocultar ou exibir o atributo especificamente nesta ficha. Instituições com acervo predominantemente Digital/Virtual permanecem sem pino físico no mapa.</span>
                     </div>
                     <div class="row g-3" id="gestorEditFields"></div>
                     <hr class="mt-4">

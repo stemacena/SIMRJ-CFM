@@ -16,6 +16,16 @@
     --color-surface: #ffffff;
     --color-border: #d7dee8;
 
+    /* Cores Oficiais das Regiões no Mapa */
+    --reg-centro-sul: #ef8739;
+    --reg-serrana: #0d92df;
+    --reg-medio-paraiba: #58cfa5;
+    --reg-costa-verde: #0d6b2a;
+    --reg-metropolitanas: #af8447;
+    --reg-baixadas-litoraneas: #aabddb;
+    --reg-norte-fluminense: #d69f9d;
+    --reg-noroeste-fluminense: #edeb40;
+
     /* Filete e Assinatura Institucional SECEC-RJ (Seção 2.5) */
     --marca-acento-1: #0034bb;
     --marca-acento-2: #006666;
@@ -67,7 +77,6 @@ section {
     scroll-margin-top: 110px;
 }
 
-/* Acessibilidade de Foco Visível (Seção 2.10 e 2.13) */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -91,7 +100,7 @@ textarea:focus-visible {
     font-size: 0.8rem;
     font-weight: 500;
     position: relative;
-    z-index: 1060;
+    z-index: 1030;
 }
 
 .gov-bar a {
@@ -120,7 +129,7 @@ textarea:focus-visible {
     background-color: #e5e9b0;
     border-bottom: 4px solid var(--color-green-olive);
     position: relative;
-    z-index: 1050;
+    z-index: 1025;
 }
 
 .header-logo-secec {
@@ -258,7 +267,7 @@ textarea:focus-visible {
 }
 
 /* ==========================================================================
-   4. FILTROS, MAPA E LISTA DE RESULTADOS (CFM)
+   4. FILTROS, PINOS COLORIDOS POR REGIÃO E LISTA DE RESULTADOS
    ========================================================================== */
 .sidebar-filters {
     border-top: 4px solid var(--color-cfm-teal);
@@ -276,7 +285,7 @@ textarea:focus-visible {
 }
 
 .filter-scroll-box {
-    max-height: 140px;
+    max-height: 155px;
     overflow-y: auto;
     background-color: #f8fafc;
     border: 1px solid var(--admin-border);
@@ -286,15 +295,32 @@ textarea:focus-visible {
 }
 
 .filter-scroll-box label {
-    display: block;
-    font-size: 0.84rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.83rem;
     color: #334155;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     cursor: pointer;
 }
 
 .filter-scroll-box input[type="checkbox"] {
+    margin-right: 7px;
+    flex-shrink: 0;
+}
+
+.region-color-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    display: inline-block;
     margin-right: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.custom-region-pin {
+    background: transparent !important;
+    border: none !important;
 }
 
 .accordion-button {
@@ -443,6 +469,7 @@ textarea:focus-visible {
     box-shadow: var(--shadow-elevated);
 }
 
+/* Z-index 1040 garante que os Modais Bootstrap (2100) abram sempre à frente do painel */
 .admin-panel-wrapper {
     position: fixed;
     top: 0;
@@ -450,13 +477,12 @@ textarea:focus-visible {
     width: 100vw;
     height: 100vh;
     background-color: var(--admin-bg);
-    z-index: 1080;
+    z-index: 1040;
     display: flex;
     overflow: hidden;
     color: var(--admin-text-main);
 }
 
-/* 1.4.1 Menu Lateral Fixo (Sidebar) */
 .admin-sidebar {
     width: 260px;
     background-color: var(--admin-sidebar);
@@ -465,7 +491,7 @@ textarea:focus-visible {
     flex-direction: column;
     flex-shrink: 0;
     transition: width 0.25s ease, transform 0.25s ease;
-    z-index: 1090;
+    z-index: 1045;
 }
 
 .admin-sidebar.collapsed {
@@ -554,7 +580,6 @@ textarea:focus-visible {
     color: var(--admin-text-muted);
 }
 
-/* 1.4.2 Barra Superior Fixa (Topbar) e Conteúdo */
 .admin-main {
     flex: 1;
     display: flex;
@@ -621,7 +646,6 @@ textarea:focus-visible {
     overflow-y: auto;
 }
 
-/* 1.8 Componentes Administrativos (KPIs, Cards, Botões) */
 .admin-kpi-card {
     background-color: var(--admin-card);
     border: 1px solid var(--admin-border);
@@ -712,13 +736,12 @@ textarea:focus-visible {
     border-radius: var(--radius-sm);
 }
 
-/* 1.4.3 e 1.10 Responsividade Mobile Off-Canvas (<= 991px) */
 .admin-sidebar-backdrop {
     display: none;
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.5);
-    z-index: 1085;
+    z-index: 1042;
 }
 
 @media (max-width: 991px) {
@@ -741,8 +764,16 @@ textarea:focus-visible {
 }
 
 /* ==========================================================================
-   8. MODAIS E RODAPÉ INSTITUCIONAL (Seção 2.14)
+   8. MODAIS (CAMADA SUPERIOR GARANTIDA) E RODAPÉ INSTITUCIONAL
    ========================================================================== */
+.modal-backdrop {
+    z-index: 2050 !important;
+}
+
+.modal {
+    z-index: 2100 !important;
+}
+
 .modal-header {
     background-color: var(--color-cfm-teal);
     color: white;

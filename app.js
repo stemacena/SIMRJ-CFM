@@ -1,7 +1,7 @@
 /**
  * SISTEMA ESTADUAL DE MUSEUS DO RIO DE JANEIRO (SIM-RJ)
  * CADASTRO FLUMINENSE DE MUSEUS (CFM)
- * Script Principal de Controle, Geoprocessamento e Governança de Dados
+ * Script Principal de Controle, Geoprocessamento por Bairro/Município e Governança de Dados
  */
 
 let map;
@@ -14,11 +14,25 @@ let isGestor = false;
 let editingMuseumId = null;
 let currentOperatorName = "Gestor SUPMU";
 
-// Persistência local de edições, visibilidade em bloco, manifestações e senha administrativa
+// Persistência local de edições, visibilidade em bloco, manifestações e credencial administrativa
 let localEditsMemory = JSON.parse(localStorage.getItem('simrj_edits')) || {};
 let globalHiddenFields = JSON.parse(localStorage.getItem('simrj_bulk_hidden_fields')) || {};
 let publicFeedbacks = JSON.parse(localStorage.getItem('simrj_feedbacks')) || [];
 let adminSavedPassword = localStorage.getItem('simrj_admin_pass') || 'simrj';
+
+// Paleta Oficial de Cores dos Pinos por Região do Estado do Rio de Janeiro
+const CORES_REGIOES_RJ = {
+    "centro sul": "#ef8739",
+    "serrana": "#0d92df",
+    "medio paraiba": "#58cfa5",
+    "costa verde": "#0d6b2a",
+    "metropolitana i": "#af8447",
+    "metropolitana ii": "#af8447",
+    "metropolitana iii": "#af8447",
+    "baixadas litoraneas": "#aabddb",
+    "norte fluminense": "#d69f9d",
+    "noroeste fluminense": "#edeb40"
+};
 
 // Catálogo de atributos institucionais gerenciáveis (Individual e em Bloco)
 const CATALOGO_CAMPOS_CFM = [
@@ -49,7 +63,7 @@ const CATALOGO_CAMPOS_CFM = [
     { id: 'resp_email', label: 'E-mail do Responsável' }
 ];
 
-// Lista oficial dos 92 municípios fluminenses para higienização e unificação nominal
+// Lista oficial dos 92 municípios fluminenses
 const MUNICIPIOS_OFICIAIS_RJ = [
     "Angra dos Reis", "Aperibé", "Araruama", "Areal", "Armação dos Búzios", "Arraial do Cabo",
     "Barra do Piraí", "Barra Mansa", "Belford Roxo", "Bom Jardim", "Bom Jesus do Itabapoana",
@@ -69,7 +83,95 @@ const MUNICIPIOS_OFICIAIS_RJ = [
     "Trajano de Moraes", "Três Rios", "Valença", "Varre-Sai", "Vassouras", "Volta Redonda"
 ];
 
-// Coordenadas de referência municipal do Estado do RJ para garantia de plotagem geográfica
+// Mapeamento oficial de Municípios -> Regiões do SIM-RJ (Decreto nº 45.419/2015)
+const MAPA_REGIAO_POR_MUNICIPIO = {
+    "rio de janeiro": "Metropolitana I",
+    "belford roxo": "Metropolitana II", "duque de caxias": "Metropolitana II", "japeri": "Metropolitana II",
+    "mage": "Metropolitana II", "mesquita": "Metropolitana II", "nilopolis": "Metropolitana II",
+    "nova iguacu": "Metropolitana II", "paracambi": "Metropolitana II", "queimados": "Metropolitana II",
+    "sao joao de meriti": "Metropolitana II", "seropedica": "Metropolitana II",
+    "itaborai": "Metropolitana III", "marica": "Metropolitana III", "niteroi": "Metropolitana III",
+    "rio bonito": "Metropolitana III", "sao goncalo": "Metropolitana III", "tangua": "Metropolitana III",
+    "aperibe": "Noroeste Fluminense", "bom jesus do itabapoana": "Noroeste Fluminense", "cambuci": "Noroeste Fluminense",
+    "italva": "Noroeste Fluminense", "itaocara": "Noroeste Fluminense", "itaperuna": "Noroeste Fluminense",
+    "laje do muriae": "Noroeste Fluminense", "miracema": "Noroeste Fluminense", "natividade": "Noroeste Fluminense",
+    "porciuncula": "Noroeste Fluminense", "santo antonio de padua": "Noroeste Fluminense",
+    "sao jose de uba": "Noroeste Fluminense", "varre sai": "Noroeste Fluminense",
+    "campos dos goytacazes": "Norte Fluminense", "carapebus": "Norte Fluminense", "cardoso moreira": "Norte Fluminense",
+    "conceicao de macabu": "Norte Fluminense", "macae": "Norte Fluminense", "quissama": "Norte Fluminense",
+    "sao fidelis": "Norte Fluminense", "sao francisco de itabapoana": "Norte Fluminense",
+    "sao francisco do itabapoana": "Norte Fluminense", "sao joao da barra": "Norte Fluminense",
+    "bom jardim": "Serrana", "cachoeiras de macacu": "Serrana", "cantagalo": "Serrana", "carmo": "Serrana",
+    "cordeiro": "Serrana", "duas barras": "Serrana", "guapimirim": "Serrana", "macuco": "Serrana",
+    "nova friburgo": "Serrana", "petropolis": "Serrana", "santa maria madalena": "Serrana",
+    "sao jose do vale do rio preto": "Serrana", "sao sebastiao do alto": "Serrana", "sumidouro": "Serrana",
+    "teresopolis": "Serrana", "trajano de moraes": "Serrana",
+    "araruama": "Baixadas Litorâneas", "armacao dos buzios": "Baixadas Litorâneas", "arraial do cabo": "Baixadas Litorâneas",
+    "cabo frio": "Baixadas Litorâneas", "casimiro de abreu": "Baixadas Litorâneas", "iguaba grande": "Baixadas Litorâneas",
+    "rio das ostras": "Baixadas Litorâneas", "sao pedro da aldeia": "Baixadas Litorâneas",
+    "saquarema": "Baixadas Litorâneas", "silva jardim": "Baixadas Litorâneas",
+    "barra do pirai": "Médio Paraíba", "barra mansa": "Médio Paraíba", "itatiaia": "Médio Paraíba",
+    "pinheiral": "Médio Paraíba", "pirai": "Médio Paraíba", "porto real": "Médio Paraíba",
+    "quatis": "Médio Paraíba", "resende": "Médio Paraíba", "rio claro": "Médio Paraíba",
+    "rio das flores": "Médio Paraíba", "valenca": "Médio Paraíba", "volta redonda": "Médio Paraíba",
+    "areal": "Centro-Sul", "comendador levy gasparian": "Centro-Sul", "engenheiro paulo de frontin": "Centro-Sul",
+    "mendes": "Centro-Sul", "miguel pereira": "Centro-Sul", "paraiba do sul": "Centro-Sul",
+    "paty do alferes": "Centro-Sul", "sapucaia": "Centro-Sul", "tres rios": "Centro-Sul", "vassouras": "Centro-Sul",
+    "angra dos reis": "Costa Verde", "itaguai": "Costa Verde", "mangaratiba": "Costa Verde", "paraty": "Costa Verde"
+};
+
+// Dicionário geográfico de bairros e subcentros históricos da Capital (Rio de Janeiro)
+// Evita que instituições da Metropolitana I caiam em uma coordenada genérica única no Centro
+const COORDENADAS_BAIRROS_RIO = [
+    { termos: ["vidigal", "av niemeyer", "avenida niemeyer"], lat: -22.9936, lng: -43.2339, zona: "Sul" },
+    { termos: ["rocinha"], lat: -22.9888, lng: -43.2482, zona: "Sul" },
+    { termos: ["sao conrado"], lat: -22.9931, lng: -43.2667, zona: "Sul" },
+    { termos: ["leblon"], lat: -22.9844, lng: -43.2231, zona: "Sul" },
+    { termos: ["ipanema"], lat: -22.9838, lng: -43.2045, zona: "Sul" },
+    { termos: ["copacabana", "forte de copacabana", "atlantica"], lat: -22.9711, lng: -43.1852, zona: "Sul" },
+    { termos: ["leme"], lat: -22.9632, lng: -43.1668, zona: "Sul" },
+    { termos: ["gavea", "planetario", "marques de sao vicente"], lat: -22.9785, lng: -43.2292, zona: "Sul" },
+    { termos: ["jardim botanico", "jache", "pacheco leao"], lat: -22.9669, lng: -43.2248, zona: "Sul" },
+    { termos: ["lagoa", "epitacio pessoa"], lat: -22.9723, lng: -43.2095, zona: "Sul" },
+    { termos: ["humaita"], lat: -22.9554, lng: -43.1989, zona: "Sul" },
+    { termos: ["botafogo", "sao clemente", "rui barbosa", "voluntarios da patria"], lat: -22.9511, lng: -43.1865, zona: "Sul" },
+    { termos: ["urca", "pasteur", "ciencias da terra", "pao de acucar"], lat: -22.9544, lng: -43.1675, zona: "Sul" },
+    { termos: ["flamengo", "infante dom henrique", "aterro", "dois de dezembro", "catete", "palacio do catete"], lat: -22.9259, lng: -43.1764, zona: "Sul" },
+    { termos: ["laranjeiras", "cosme velho", "corcovado"], lat: -22.9367, lng: -43.1925, zona: "Sul" },
+    { termos: ["gloria", "outeiro da gloria", "russell"], lat: -22.9208, lng: -43.1752, zona: "Sul" },
+    { termos: ["santa teresa", "chacara do ceu", "parque das ruinas", "almirante alexandrino", "bondinho"], lat: -22.9216, lng: -43.1878, zona: "Centro" },
+    { termos: ["lapa", "arcos da lapa", "mem de sa", "riachuelo", "lavradio"], lat: -22.9134, lng: -43.1818, zona: "Centro" },
+    { termos: ["cinelandia", "floriano", "teatro municipal", "biblioteca nacional", "belas artes"], lat: -22.9106, lng: -43.1757, zona: "Centro" },
+    { termos: ["praca xv", "praca quinze", "paco imperial", "primeiro de marco", "ouvidor", "alfandega", "sete de setembro"], lat: -22.9035, lng: -43.1744, zona: "Centro" },
+    { termos: ["praca maua", "museu do amanha", "museu de arte do rio", "boulevard olimpico"], lat: -22.8961, lng: -43.1819, zona: "Centro" },
+    { termos: ["gamboa", "pretos novos", "pedra do sal", "saude", "santo cristo", "porto maravilha", "cais do valongo"], lat: -22.8969, lng: -43.1925, zona: "Centro" },
+    { termos: ["praca tiradentes", "carioca", "republica", "campo de santana", "moncorvo filho"], lat: -22.9069, lng: -43.1842, zona: "Centro" },
+    { termos: ["castelo", "marechal ancora", "historico nacional", "presidente vargas"], lat: -22.9056, lng: -43.1695, zona: "Centro" },
+    { termos: ["paqueta", "ilha de paqueta"], lat: -22.7618, lng: -43.1075, zona: "Centro" },
+    { termos: ["sao cristovao", "quinta da boa vista", "museu nacional", "astronomia", "imperial de sao cristovao", "caju", "benfica", "mangueira"], lat: -22.9055, lng: -43.2248, zona: "Centro" },
+    { termos: ["estacio", "rio comprido", "catumbi", "cidade nova"], lat: -22.9168, lng: -43.2045, zona: "Centro" },
+    { termos: ["maracana", "radial oeste", "uerj"], lat: -22.9121, lng: -43.2302, zona: "Norte" },
+    { termos: ["tijuca", "praca saens pena", "conde de bonfim", "alto da boa vista", "floresta da tijuca", "acude"], lat: -22.9329, lng: -43.2435, zona: "Norte" },
+    { termos: ["vila isabel", "boulevard 28 de setembro", "andarai", "grajau"], lat: -22.9165, lng: -43.2512, zona: "Norte" },
+    { termos: ["engenho de dentro", "nilton santos", "museu imagens do inconsciente", "ramiro magalhaes"], lat: -22.8975, lng: -43.2965, zona: "Norte" },
+    { termos: ["meier", "dias da cruz", "imperator", "cachambi", "engenho novo", "lins de vasconcelos"], lat: -22.9022, lng: -43.2815, zona: "Norte" },
+    { termos: ["piedade", "quintino", "cascadura", "abolicao", "pilares"], lat: -22.8895, lng: -43.3145, zona: "Norte" },
+    { termos: ["madureira", "parque de madureira", "portela", "império serrano", "oswaldo cruz", "campinho", "bento ribeiro"], lat: -22.8725, lng: -43.3408, zona: "Norte" },
+    { termos: ["marechal hermes", "guadalupe", "honorio gurgel", "rocha miranda"], lat: -22.8595, lng: -43.3702, zona: "Norte" },
+    { termos: ["mare", "complexo da mare", "bonsucesso", "manguinhos", "fiocruz", "brasil 4365"], lat: -22.8758, lng: -43.2435, zona: "Norte" },
+    { termos: ["ilha do governador", "galeao", "freguesia ilha", "jardim guanabara", "cocota", "ribeira", "fundao", "cidade universitaria", "ufrj"], lat: -22.8185, lng: -43.2085, zona: "Norte" },
+    { termos: ["penha", "igreja da penha", "olaria", "ramos", "bras de pina", "cordovil"], lat: -22.8428, lng: -43.2785, zona: "Norte" },
+    { termos: ["iraja", "vicente de carvalho", "vila da penha", "vista alegre", "pavuna", "anchieta", "acari"], lat: -22.8315, lng: -43.3268, zona: "Norte" },
+    { termos: ["campo dos afonsos", "aeroespacial", "musal", "marechal fontenelle", "sulacap", "vila militar", "deodoro", "realengo", "magalhaes bastos"], lat: -22.8825, lng: -43.3895, zona: "Oeste" },
+    { termos: ["bangu", "fabrica bangu", "padre miguel", "senador camara", "santissimo"], lat: -22.8758, lng: -43.4655, zona: "Oeste" },
+    { termos: ["campo grande", "west shopping", "mendanha"], lat: -22.9028, lng: -43.5592, zona: "Oeste" },
+    { termos: ["santa cruz", "fazenda imperial", "ecopolo", "sepetiba", "paciencia", "cosmos"], lat: -22.9185, lng: -43.6845, zona: "Oeste" },
+    { termos: ["guaratiba", "barra de guaratiba", "burle marx", "pedra de guaratiba"], lat: -23.0185, lng: -43.5515, zona: "Oeste" },
+    { termos: ["barra da tijuca", "cidade das artes", "alvorada", "recreio", "pontal", "prainha", "grumari"], lat: -23.0005, lng: -43.3658, zona: "Oeste" },
+    { termos: ["jacarepagua", "taquara", "colonia juliano moreira", "bispo do rosario", "curicica", "freguesia", "pechincha", "tanque", "praca seca", "vila valqueire", "cidade de deus", "vargem grande", "vargem pequena"], lat: -22.9315, lng: -43.3855, zona: "Oeste" }
+];
+
+// Coordenadas de referência para os demais 91 municípios fluminenses
 const COORDENADAS_MUNICIPIOS_RJ = {
     "angra dos reis": { lat: -23.0067, lng: -44.3181 },
     "aperibe": { lat: -21.6214, lng: -42.1039 },
@@ -138,7 +240,6 @@ const COORDENADAS_MUNICIPIOS_RJ = {
     "rio claro": { lat: -22.7231, lng: -44.1356 },
     "rio das flores": { lat: -22.1681, lng: -43.5858 },
     "rio das ostras": { lat: -22.5269, lng: -41.9450 },
-    "rio de janeiro": { lat: -22.9068, lng: -43.1729 },
     "santa maria madalena": { lat: -21.9547, lng: -42.0081 },
     "santo antonio de padua": { lat: -21.5394, lng: -42.1803 },
     "sao fidelis": { lat: -21.6461, lng: -41.7469 },
@@ -166,16 +267,8 @@ const COORDENADAS_MUNICIPIOS_RJ = {
     "volta redonda": { lat: -22.5231, lng: -44.1042 }
 };
 
-// Dicionário de bairros da Capital para classificação automática de Zona
-const ZONAS_CAPITAL_RJ = {
-    "Centro": ["centro", "lapa", "cidade nova", "gamboa", "saude", "santo cristo", "rio comprido", "catumbi", "estacio", "santa teresa", "sao cristovao", "benfica", "mangueira", "vasco da gama", "caju", "paqueta", "praca maua"],
-    "Sul": ["botafogo", "copacabana", "ipanema", "leblon", "leme", "urca", "flamengo", "gloria", "laranjeiras", "catete", "cosme velho", "humaita", "jardim botanico", "lagoa", "gavea", "sao conrado", "rocinha", "vidigal"],
-    "Norte": ["tijuca", "vila isabel", "maracana", "grajau", "andarai", "engenho novo", "meier", "cachambi", "lins", "engenho de dentro", "piedade", "madureira", "cascadura", "oswaldo cruz", "campinho", "marechal hermes", "bonsucesso", "ramos", "olaria", "penha", "iraja", "pavuna", "ilha do governador", "alto da boa vista", "jacarezinho"],
-    "Oeste": ["barra da tijuca", "recreio", "vargem grande", "vargem pequena", "jacarepagua", "cidade de deus", "freguesia", "taquara", "vila valqueire", "bangu", "padre miguel", "realengo", "deodoro", "campo grande", "santa cruz", "guaratiba", "sepetiba"]
-};
-
 // ============================================================================
-// 1. INICIALIZAÇÃO E FUNÇÕES UTILITÁRIAS DE NORMALIZAÇÃO
+// 1. INICIALIZAÇÃO E PADRONIZAÇÃO DE DADOS
 // ============================================================================
 document.addEventListener('DOMContentLoaded', async function() {
     initMapSystem();
@@ -204,10 +297,6 @@ const normalizeString = (str) => {
         .trim();
 };
 
-/**
- * Higieniza e padroniza o nome do município (Ex: converte "NIterói" ou "niteroi " em "Niterói"),
- * impedindo repetições na lista suspensa de filtros.
- */
 function canonicalizeMunicipality(rawCity) {
     if (!rawCity) return "Não informado";
     const normInput = normalizeString(rawCity);
@@ -218,15 +307,39 @@ function canonicalizeMunicipality(rawCity) {
             return officialCity;
         }
     }
-    // Caso seja grafia alternativa de São Francisco do Itabapoana
     if (normInput === "sao francisco do itabapoana") return "São Francisco de Itabapoana";
 
-    // Formatação Title Case padrão caso não conste na lista estrita
     return String(rawCity).trim().replace(/\s+/g, ' ').split(' ').map((word, idx) => {
         const lower = word.toLowerCase();
         if (idx > 0 && ['de', 'da', 'do', 'das', 'dos', 'e'].includes(lower)) return lower;
         return lower.charAt(0).toUpperCase() + lower.slice(1);
     }).join(' ');
+}
+
+/**
+ * Padroniza a Região do Estado garantindo que "Metropolitana I" funcione
+ * com 100% de precisão mesmo quando a planilha trouxer grafias alternativas.
+ */
+function canonicalizeRegion(rawRegion, municipioPadronizado) {
+    const normMuni = normalizeString(municipioPadronizado);
+    if (MAPA_REGIAO_POR_MUNICIPIO[normMuni]) {
+        return MAPA_REGIAO_POR_MUNICIPIO[normMuni];
+    }
+
+    const r = normalizeString(rawRegion);
+    if (!r) return "Não informada";
+    if (r === "metropolitana i" || r === "metropolitana 1" || r.includes("capital") || (r === "metropolitana" && normMuni === "rio de janeiro")) return "Metropolitana I";
+    if (r === "metropolitana ii" || r === "metropolitana 2" || r.includes("baixada fluminense")) return "Metropolitana II";
+    if (r === "metropolitana iii" || r === "metropolitana 3" || r.includes("leste fluminense")) return "Metropolitana III";
+    if (r.includes("baixadas litoraneas") || r.includes("baixada litoranea")) return "Baixadas Litorâneas";
+    if (r.includes("centro sul")) return "Centro-Sul";
+    if (r.includes("costa verde")) return "Costa Verde";
+    if (r.includes("medio paraiba")) return "Médio Paraíba";
+    if (r.includes("noroeste")) return "Noroeste Fluminense";
+    if (r.includes("norte fluminense")) return "Norte Fluminense";
+    if (r.includes("serrana")) return "Serrana";
+
+    return rawRegion;
 }
 
 function parseCoordinate(val) {
@@ -239,14 +352,79 @@ function isWithinRJ(lat, lng) {
     return (lat >= -23.5 && lat <= -20.6) && (lng >= -45.0 && lng <= -40.8);
 }
 
-function inferirZonaRJ(endereco, municipio, zonaAtual) {
-    if (!normalizeString(municipio).includes("rio de janeiro")) return "";
-    if (zonaAtual && zonaAtual.trim() !== "") return zonaAtual.trim();
-    const endNorm = normalizeString(endereco);
-    for (const [zona, bairros] of Object.entries(ZONAS_CAPITAL_RJ)) {
-        if (bairros.some(b => endNorm.includes(b))) return zona;
+/**
+ * Identifica se a instituição possui acervo ou endereço predominantemente Digital / Virtual.
+ * Regra de negócio: Instituições digitais/virtuais nunca recebem pino no mapa.
+ */
+function isDigitalOrVirtualInstitution(acervo, endereco, natureza, nome) {
+    const aNorm = normalizeString(acervo);
+    const eNorm = normalizeString(endereco);
+    const nNorm = normalizeString(natureza);
+    const nomeNorm = normalizeString(nome);
+
+    return (
+        aNorm.includes("virtual") ||
+        aNorm.includes("digital") ||
+        eNorm === "virtual" ||
+        eNorm === "digital" ||
+        eNorm.includes("museu virtual") ||
+        eNorm.includes("acervo digital") ||
+        nNorm.includes("virtual") ||
+        nomeNorm.includes("museu virtual")
+    );
+}
+
+/**
+ * Detecta se a coordenada da planilha no município do Rio de Janeiro é o ponto genérico
+ * central retornado pelo Nominatim quando o logradouro falhou (-22.9068,-43.1729 ou -22.9110,-43.2094).
+ */
+function isGenericRioCityCentroid(lat, lng) {
+    if (lat === null || lng === null) return true;
+    const isCentroid1 = Math.abs(lat - (-22.9110)) < 0.0020 && Math.abs(lng - (-43.2094)) < 0.0020;
+    const isCentroid2 = Math.abs(lat - (-22.9068)) < 0.0012 && Math.abs(lng - (-43.1729)) < 0.0012;
+    const isCentroid3 = Math.abs(lat - (-22.9083)) < 0.0015 && Math.abs(lng - (-43.1964)) < 0.0015;
+    return isCentroid1 || isCentroid2 || isCentroid3;
+}
+
+/**
+ * Resolve a localização por bairro/setor dentro do Município do Rio de Janeiro
+ * quando a coordenada da planilha caiu no ponto genérico da cidade.
+ */
+function resolverCoordenadaBairroRio(endereco, nome, historico, zonaPlanilha) {
+    const textoBusca = normalizeString(`${endereco} ${nome} ${historico}`);
+    for (const item of COORDENADAS_BAIRROS_RIO) {
+        if (item.termos.some(t => textoBusca.includes(t))) {
+            return { lat: item.lat, lng: item.lng, zona: item.zona };
+        }
     }
-    return "";
+    if (textoBusca.includes("centro") && endereco && endereco.trim().length > 4) {
+        return { lat: -22.9052, lng: -43.1780, zona: "Centro" };
+    }
+    return null;
+}
+
+/**
+ * Gera o ícone SVG colorido do pino de acordo com a região da instituição.
+ */
+function createRegionPinIcon(regiao) {
+    const normReg = normalizeString(regiao);
+    const fillColor = CORES_REGIOES_RJ[normReg] || "#006666";
+
+    const svgHtml = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="28" height="40" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.35));">
+            <path d="M14 1C6.82 1 1 6.82 1 14c0 9.75 13 24.5 13 24.5S27 23.75 27 14C27 6.82 21.18 1 14 1z"
+                  fill="${fillColor}" stroke="#1e293b" stroke-width="1.6"/>
+            <circle cx="14" cy="14" r="5" fill="#ffffff" stroke="#1e293b" stroke-width="1"/>
+        </svg>
+    `;
+
+    return L.divIcon({
+        className: 'custom-region-pin',
+        html: svgHtml,
+        iconSize: [28, 40],
+        iconAnchor: [14, 39],
+        popupAnchor: [0, -36]
+    });
 }
 
 // ============================================================================
@@ -290,9 +468,12 @@ async function processParsedData(rawData) {
         if (!nome) continue;
 
         const municipioPadronizado = canonicalizeMunicipality(getColValue(row, ["Município", "Municipio"]));
+        const regiaoPadronizada = canonicalizeRegion(getColValue(row, ["Região", "Regiao"]), municipioPadronizado);
         const endereco = getColValue(row, ["Endereço", "Endereco", "Logradouro"]);
         const acervo = getColValue(row, ["Acervo Predominante", "Acervo"]);
         const natureza = getColValue(row, ["Natureza Administrativa do Museu", "Natureza Administrativa", "Natureza"]) || "Privada";
+        const historico = getColValue(row, ["Histórico", "Historico", "Histórico do Museu"]);
+        let zona = getColValue(row, ["Zona do Rio", "Zona"]);
 
         let lat = parseCoordinate(getColValue(row, ["Lat", "Latitude"]));
         let lng = parseCoordinate(getColValue(row, ["Lng", "Longitude", "Lon"]));
@@ -302,17 +483,44 @@ async function processParsedData(rawData) {
             lng = null;
         }
 
-        // Verifica se a instituição é estritamente virtual
-        const isVirtual = normalizeString(acervo).includes("virtual") || normalizeString(endereco).includes("virtual");
-        let coordAproximada = false;
+        const isDigital = isDigitalOrVirtualInstitution(acervo, endereco, natureza, nome);
+        let motivoSemGeo = "";
 
-        // Garantia de plotagem por município para instituições físicas do RJ sem coordenada prévia na planilha
-        if ((lat === null || lng === null) && !isVirtual) {
+        if (isDigital) {
+            // Regra: Acervo predominantemente digital/virtual nunca recebe pino no mapa
+            lat = null;
+            lng = null;
+            motivoSemGeo = "Acervo Digital / Virtual";
+        } else {
             const normCity = normalizeString(municipioPadronizado);
-            if (COORDENADAS_MUNICIPIOS_RJ[normCity]) {
-                lat = COORDENADAS_MUNICIPIOS_RJ[normCity].lat;
-                lng = COORDENADAS_MUNICIPIOS_RJ[normCity].lng;
-                coordAproximada = true;
+
+            if (normCity === "rio de janeiro") {
+                // Corrige coordenadas que caíram no centroide genérico da cidade do Rio
+                if (isGenericRioCityCentroid(lat, lng)) {
+                    const resolvidoBairro = resolverCoordenadaBairroRio(endereco, nome, historico, zona);
+                    if (resolvidoBairro) {
+                        lat = resolvidoBairro.lat;
+                        lng = resolvidoBairro.lng;
+                        if (!zona) zona = resolvidoBairro.zona;
+                    } else {
+                        lat = null;
+                        lng = null;
+                        motivoSemGeo = "Endereço Pendente de Coordenada";
+                    }
+                } else if (!zona) {
+                    const resolvidoBairro = resolverCoordenadaBairroRio(endereco, nome, historico, "");
+                    if (resolvidoBairro) zona = resolvidoBairro.zona;
+                }
+            } else if ((lat === null || lng === null) && COORDENADAS_MUNICIPIOS_RJ[normCity]) {
+                // Para os demais municípios fluminenses (ex: Macaé, Itaboraí), garante o pino municipal caso o endereço específico tenha falhado
+                if (endereco && endereco.trim().length > 2) {
+                    lat = COORDENADAS_MUNICIPIOS_RJ[normCity].lat;
+                    lng = COORDENADAS_MUNICIPIOS_RJ[normCity].lng;
+                } else {
+                    motivoSemGeo = "Sem Endereço Físico Cadastrado";
+                }
+            } else if (lat === null || lng === null) {
+                motivoSemGeo = "Endereço Pendente de Coordenada";
             }
         }
 
@@ -324,8 +532,8 @@ async function processParsedData(rawData) {
             cnpj: getColValue(row, ["CNPJ"]),
             documento_criacao: getColValue(row, ["Documento de Criação", "Documento"]),
             municipio: municipioPadronizado,
-            regiao: getColValue(row, ["Região", "Regiao"]) || "Não informada",
-            zona: inferirZonaRJ(endereco, municipioPadronizado, getColValue(row, ["Zona do Rio", "Zona"])),
+            regiao: regiaoPadronizada,
+            zona: zona,
             endereco: endereco,
             telefone: getColValue(row, ["Telefone Institucional", "Telefone", "Contato"]),
             email: getColValue(row, ["E-mail Institucional", "Email Institucional", "Email"]),
@@ -342,12 +550,13 @@ async function processParsedData(rawData) {
             educativo: getColValue(row, ["Setor Educativo", "Educativo"]),
             museologo: getColValue(row, ["Museólogo", "Museologo"]),
             acessibilidade: getColValue(row, ["Acessibilidade", "Acessibilidade Universal"]),
-            historico_museu: getColValue(row, ["Histórico", "Historico", "Histórico do Museu"]),
+            historico_museu: historico,
             resp_nome: getColValue(row, ["Responsável pelo Cadastro", "Responsável", "Responsavel"]),
             resp_email: getColValue(row, ["E-mail do Responsável", "Email Responsavel"]),
             lat: lat,
             lng: lng,
-            coord_aproximada: coordAproximada,
+            is_digital: isDigital,
+            motivo_sem_geo: motivoSemGeo,
             visivel: true,
             hidden_fields: {},
             history: []
@@ -356,6 +565,13 @@ async function processParsedData(rawData) {
         if (localEditsMemory[mObj.nome]) {
             mObj = { ...mObj, ...localEditsMemory[mObj.nome] };
             mObj.municipio = canonicalizeMunicipality(mObj.municipio);
+            mObj.regiao = canonicalizeRegion(mObj.regiao, mObj.municipio);
+            if (isDigitalOrVirtualInstitution(mObj.acervo, mObj.endereco, mObj.natureza, mObj.nome)) {
+                mObj.lat = null;
+                mObj.lng = null;
+                mObj.is_digital = true;
+                mObj.motivo_sem_geo = "Acervo Digital / Virtual";
+            }
         }
 
         cleanData.push(mObj);
@@ -372,7 +588,6 @@ function populateCityFilter() {
     const currentSelection = select.value;
     select.innerHTML = '<option value="">Todos os Municípios</option>';
 
-    // Conjunto canônico deduplicado e ordenado alfabeticamente em português
     const uniqueCities = [...new Set(museumsData.map(m => canonicalizeMunicipality(m.municipio)).filter(c => c && c !== "Não informado"))]
         .sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
@@ -385,7 +600,7 @@ function populateCityFilter() {
 }
 
 // ============================================================================
-// 3. SISTEMA DE FILTRAGEM E DESLOCAMENTO GEOMÉTRICO ANTI-SOBREPOSIÇÃO
+// 3. SISTEMA DE FILTRAGEM E RENDERIZAÇÃO DE PINOS COLORIDOS POR REGIÃO
 // ============================================================================
 function getCheckedValues(containerId) {
     return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(el => normalizeString(el.value));
@@ -433,9 +648,10 @@ window.applyFilters = function() {
         if (gratuidade && !mGrat.includes(gratuidade)) return false;
         if (acesso && !mAcc.includes(acesso)) return false;
 
-        if (regioes.length > 0 && !regioes.some(r => mReg.includes(r))) return false;
+        // Comparação exata da região canônica para que "Metropolitana I" nunca falhe nem colida com II e III
+        if (regioes.length > 0 && !regioes.includes(mReg)) return false;
         if (naturezas.length > 0 && !naturezas.some(n => mNat.includes(n))) return false;
-        if (acervos.length > 0 && !acervos.some(a => mAcer.includes(a))) return false;
+        if (acervos.length > 0 && !acervos.some(a => mAcer.includes(a) || (a === "virtual" && m.is_digital))) return false;
         if (situacoes.length > 0 && !situacoes.some(s => mSit.includes(s))) return false;
         if (turnos.length > 0 && !turnos.some(t => mFunc.includes(t))) return false;
         if (ingressos.length > 0 && !ingressos.some(i => mIng.includes(i))) return false;
@@ -448,14 +664,14 @@ window.applyFilters = function() {
             if (!zonas.some(z => mZona.includes(z))) return false;
         }
 
-        const hasValidPin = m.lat !== null && m.lng !== null;
+        const hasValidPin = m.lat !== null && m.lng !== null && !m.is_digital;
         if (mapStat === 'sim' && !hasValidPin) return false;
         if (mapStat === 'nao' && hasValidPin) return false;
 
         return true;
     });
 
-    renderMuseums(currentFilteredData, Boolean(muni));
+    renderMuseums(currentFilteredData, Boolean(muni || regioes.length > 0));
     updateAdminDashboardMetrics();
     if (isGestor) {
         renderVisibilityList();
@@ -470,11 +686,6 @@ window.resetFilters = function() {
     if (map) map.setView([-22.55, -42.95], 8);
 };
 
-/**
- * Renderiza os marcadores no mapa aplicando deslocamento em espiral (spiderfy offset)
- * quando duas ou mais instituições compartilham a mesma coordenada, garantindo que
- * todos os pinos de municípios como Macaé (3) e Itaboraí (4) fiquem visíveis e clicáveis.
- */
 function renderMuseums(data, focusOnPins = false) {
     markersArray.forEach(m => map.removeLayer(m));
     markersArray = [];
@@ -491,6 +702,7 @@ function renderMuseums(data, focusOnPins = false) {
                     <tr>
                         <th>Instituição</th>
                         <th>Município</th>
+                        <th>Região</th>
                         <th>Natureza</th>
                         <th>Situação</th>
                         <th class="text-end">Ação</th>
@@ -499,7 +711,6 @@ function renderMuseums(data, focusOnPins = false) {
                 <tbody>`;
     let htmlList = '';
 
-    // Controle de sobreposição de coordenadas para deslocamento suave de pinos idênticos
     const coordUsageCount = {};
     const boundsPoints = [];
 
@@ -510,28 +721,38 @@ function renderMuseums(data, focusOnPins = false) {
         else if (sitNorm.includes('parcial') || sitNorm.includes('implantacao')) sitBadge = 'badge-secec-amber';
         else if (sitNorm.includes('desativado') || sitNorm.includes('fechado')) sitBadge = 'badge-secec-red';
 
+        const regColor = CORES_REGIOES_RJ[normalizeString(m.regiao)] || "#006666";
         const btnFicha = `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openProfile(${m.id})"><i class="fa-regular fa-folder-open me-1"></i>Ver Ficha</button>`;
+        const tagSemGeo = (m.lat === null || m.lng === null || m.is_digital)
+            ? `<span class="badge-secec badge-secec-purple ms-1"><i class="fa-solid fa-laptop-file"></i> ${m.is_digital ? 'Acervo Digital' : 'Sem Pino'}</span>`
+            : '';
 
         htmlTable += `
             <tr class="tr-lista-item">
-                <td class="fw-bold text-dark">${m.nome}</td>
+                <td class="fw-bold text-dark">${m.nome} ${tagSemGeo}</td>
                 <td>${m.municipio}</td>
+                <td><span class="region-color-dot" style="background:${regColor};"></span>${m.regiao}</td>
                 <td>${ isFieldHidden(m, 'natureza') ? '<span class="text-muted">-</span>' : m.natureza }</td>
                 <td><span class="badge-secec ${sitBadge}">${ isFieldHidden(m, 'situacao') ? 'Oculto' : m.situacao }</span></td>
                 <td class="text-end">${btnFicha}</td>
             </tr>`;
 
         htmlList += `
-            <div class="museum-result-card p-3 mb-2 d-flex justify-content-between align-items-center gap-2">
+            <div class="museum-result-card p-3 mb-2 d-flex justify-content-between align-items-center gap-2" style="border-left-color: ${regColor};">
                 <div>
                     <h6 class="fw-bold text-primary mb-1" style="font-size: 0.92rem;">${m.nome}</h6>
-                    <div class="small text-secondary"><i class="fa-solid fa-location-dot text-danger me-1"></i>${m.municipio} • ${ isFieldHidden(m, 'natureza') ? '' : m.natureza }</div>
-                    <div class="mt-1"><span class="badge-secec ${sitBadge}">${ isFieldHidden(m, 'situacao') ? 'Restrito' : m.situacao }</span></div>
+                    <div class="small text-secondary">
+                        <span class="region-color-dot" style="background:${regColor};"></span>${m.municipio} (${m.regiao})
+                    </div>
+                    <div class="mt-1">
+                        <span class="badge-secec ${sitBadge}">${ isFieldHidden(m, 'situacao') ? 'Restrito' : m.situacao }</span>
+                        ${tagSemGeo}
+                    </div>
                 </div>
                 <div class="flex-shrink-0">${btnFicha}</div>
             </div>`;
 
-        if (m.lat !== null && m.lng !== null) {
+        if (m.lat !== null && m.lng !== null && !m.is_digital) {
             const coordKey = `${m.lat.toFixed(4)}_${m.lng.toFixed(4)}`;
             const count = coordUsageCount[coordKey] || 0;
             coordUsageCount[coordKey] = count + 1;
@@ -539,17 +760,21 @@ function renderMuseums(data, focusOnPins = false) {
             let plotLat = m.lat;
             let plotLng = m.lng;
 
-            // Deslocamento angular caso outra instituição ocupe exatamente o mesmo ponto
+            // Microdeslocamento espiral de ângulo áureo (Fibonacci) para instituições que dividem o mesmo ponto
             if (count > 0) {
-                const angle = count * (2 * Math.PI / 6);
-                const radius = 0.0022 * Math.ceil(count / 6);
-                plotLat += radius * Math.cos(angle);
-                plotLng += radius * Math.sin(angle);
+                const goldenAngle = count * 2.3999632;
+                const radius = 0.0014 * Math.sqrt(count);
+                plotLat += radius * Math.cos(goldenAngle);
+                plotLng += radius * Math.sin(goldenAngle);
             }
 
-            const marker = L.marker([plotLat, plotLng]).addTo(map);
+            const marker = L.marker([plotLat, plotLng], {
+                icon: createRegionPinIcon(m.regiao)
+            }).addTo(map);
+
             marker.bindPopup(`
-                <div class="text-center p-1" style="min-width: 180px;">
+                <div class="text-center p-1" style="min-width: 190px;">
+                    <span class="badge-secec badge-secec-slate mb-1">${m.regiao}</span>
                     <h6 class="fw-bold text-primary mb-1">${m.nome}</h6>
                     <small class="d-block text-secondary mb-2"><i class="fa-solid fa-location-dot me-1"></i>${m.municipio}</small>
                     <button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openProfile(${m.id})">Ver Ficha Completa</button>
@@ -562,720 +787,4 @@ function renderMuseums(data, focusOnPins = false) {
 
     htmlTable += '</tbody></table></div>';
     if (document.getElementById('container-lista-geral')) {
-        document.getElementById('container-lista-geral').innerHTML = htmlTable;
-    }
-    if (document.getElementById('museum-list-container')) {
-        document.getElementById('museum-list-container').innerHTML = htmlList || '<div class="alert alert-light border text-center small text-muted">Nenhuma instituição encontrada para os filtros selecionados.</div>';
-    }
-
-    if (focusOnPins && boundsPoints.length > 0 && map) {
-        map.fitBounds(boundsPoints, { padding: [45, 45], maxZoom: 14 });
-    }
-}
-
-window.filterListaTexto = function() {
-    const input = normalizeString(document.getElementById('searchLista').value);
-    document.querySelectorAll('#container-lista-geral tbody tr').forEach(row => {
-        row.style.display = normalizeString(row.innerText).includes(input) ? '' : 'none';
-    });
-};
-
-// ============================================================================
-// 4. CONTROLE DE VISIBILIDADE (INDIVIDUAL + EDIÇÃO EM BLOCO) E FICHA PÚBLICA
-// ============================================================================
-function isFieldHidden(museum, fieldId) {
-    if (globalHiddenFields && globalHiddenFields[fieldId]) return true;
-    if (museum.hidden_fields && museum.hidden_fields[fieldId]) return true;
-    return false;
-}
-
-window.openProfile = function(id) {
-    const m = museumsData.find(x => x.id === id);
-    if (!m) return;
-
-    const val = (vStr, idCampo) => {
-        if (isFieldHidden(m, idCampo)) {
-            return '<span class="badge-secec badge-secec-slate"><i class="fa-solid fa-eye-slash"></i> Informação Oculta pela Gestão</span>';
-        }
-        return (vStr && String(vStr).trim() !== '') ? vStr : '<span class="text-muted fst-italic">Não informado</span>';
-    };
-
-    document.getElementById('modalTitle').innerText = m.nome;
-
-    const siteHtml = (!isFieldHidden(m, 'site') && m.site)
-        ? `<a href="${m.site.startsWith('http') ? m.site : 'https://' + m.site}" target="_blank" rel="noopener">${m.site}</a>`
-        : val(m.site, 'site');
-
-    const html = `
-        <div class="row mb-3 border-bottom pb-3">
-            <div class="col-md-8">
-                <p class="mb-1 text-primary fw-bold"><i class="fa-solid fa-location-dot me-1"></i> ${val(m.endereco, 'endereco')}</p>
-                <p class="mb-1 text-secondary small">
-                    <strong>Município:</strong> ${val(m.municipio, 'municipio')} |
-                    <strong>Região:</strong> ${val(m.regiao, 'regiao')}
-                    ${m.zona ? ` | <strong>Zona:</strong> ${val(m.zona, 'zona')}` : ''}
-                </p>
-                <p class="mt-2 mb-1 small">
-                    <strong>Telefone:</strong> ${val(m.telefone, 'telefone')} |
-                    <strong>E-mail:</strong> ${val(m.email, 'email')}
-                </p>
-                <p class="mb-0 small">
-                    <strong>Site:</strong> ${siteHtml}
-                    ${m.instagram ? ` | <strong>Instagram:</strong> ${val(m.instagram, 'instagram')}` : ''}
-                </p>
-            </div>
-            <div class="col-md-4 text-md-end mt-2 mt-md-0">
-                <div class="mb-1"><span class="badge-secec badge-secec-blue">${val(m.natureza, 'natureza')}</span></div>
-                <div><span class="badge-secec badge-secec-green">${val(m.situacao, 'situacao')}</span></div>
-                ${m.sigla ? `<div class="small text-muted mt-1">Sigla: ${val(m.sigla, 'sigla')}</div>` : ''}
-            </div>
-        </div>
-
-        <h6 class="modal-subtitle">Funcionamento, Acesso e Acervo</h6>
-        <div class="row small mb-3 g-2">
-            <div class="col-12"><strong>Acervo Predominante:</strong> ${val(m.acervo, 'acervo')}</div>
-            <div class="col-sm-6"><strong>Dias e Turnos:</strong> ${val(m.funcionamento, 'funcionamento')}</div>
-            <div class="col-sm-6"><strong>Valor do Ingresso:</strong> ${val(m.ingresso, 'ingresso')}</div>
-            <div class="col-12"><strong>Política de Gratuidades:</strong> ${val(m.gratuidades, 'gratuidades')}</div>
-            <div class="col-sm-6"><strong>Setor Educativo:</strong> ${val(m.educativo, 'educativo')}</div>
-            <div class="col-sm-6"><strong>Possui Museólogo:</strong> ${val(m.museologo, 'museologo')}</div>
-            <div class="col-12"><strong>Acessibilidade Universal:</strong> ${val(m.acessibilidade, 'acessibilidade')}</div>
-        </div>
-
-        <h6 class="modal-subtitle">Histórico da Instituição</h6>
-        <p class="small text-secondary mb-0" style="text-align: justify;">${val(m.historico_museu, 'historico_museu')}</p>
-    `;
-
-    document.getElementById('modalPublicBody').innerHTML = html;
-    profileModal.show();
-};
-
-// ============================================================================
-// 5. NAVEGAÇÃO PÚBLICA SPA E OUVIDORIA / FAQ
-// ============================================================================
-window.switchView = function(viewId) {
-    document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
-    const target = document.getElementById('view-' + viewId);
-    if (target) target.style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    if (viewId === 'home' && map) {
-        setTimeout(() => { map.invalidateSize(); }, 200);
-    }
-};
-
-window.showPlaceholder = function(titleText) {
-    document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
-    document.getElementById('view-em-construcao').style.display = 'block';
-    document.getElementById('construcao-title').innerText = titleText;
-};
-
-window.submitPublicFeedback = function(e) {
-    e.preventDefault();
-    const registro = {
-        id: Date.now(),
-        data: new Date().toLocaleString('pt-BR'),
-        nome: document.getElementById('fbNome').value.trim(),
-        email: document.getElementById('fbEmail').value.trim(),
-        tipo: document.getElementById('fbTipo').value,
-        mensagem: document.getElementById('fbMensagem').value.trim()
-    };
-    publicFeedbacks.unshift(registro);
-    localStorage.setItem('simrj_feedbacks', JSON.stringify(publicFeedbacks));
-    document.getElementById('faqForm').reset();
-    updateAdminDashboardMetrics();
-    alert("Sua manifestação foi registrada com sucesso e encaminhada à equipe técnica da Superintendência de Museus (SUPMU).");
-};
-
-// ============================================================================
-// 6. BACK-OFFICE SECEC (PAINEL DO GESTOR, EDIÇÃO EM BLOCO E AUDITORIA)
-// ============================================================================
-window.openAdminOrLogin = function() {
-    if (isGestor) {
-        document.getElementById('admin-panel').style.display = 'flex';
-        updateAdminDashboardMetrics();
-        renderVisibilityList();
-        renderBulkFieldsPanel();
-        renderAdminFeedbacks();
-    } else {
-        document.getElementById('login-overlay').style.display = 'flex';
-    }
-};
-
-window.closeLogin = function() {
-    document.getElementById('login-overlay').style.display = 'none';
-};
-
-window.minimizarPainelGestor = function() {
-    document.getElementById('admin-panel').style.display = 'none';
-    if (map) setTimeout(() => map.invalidateSize(), 200);
-};
-
-window.checkAdminPassword = function() {
-    const passInput = document.getElementById('adminPassword').value;
-    const nameInput = document.getElementById('adminUserNameInput').value.trim();
-
-    if (passInput === adminSavedPassword) {
-        isGestor = true;
-        if (nameInput) {
-            currentOperatorName = nameInput;
-            document.getElementById('adminUserDisplayName').innerText = nameInput;
-            document.getElementById('adminDropdownName').innerText = nameInput;
-            const initials = nameInput.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-            document.getElementById('adminUserInitials').innerText = initials || 'GS';
-        }
-        document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('d-none'));
-        closeLogin();
-        openAdminOrLogin();
-    } else {
-        alert('Credencial administrativa incorreta.');
-    }
-};
-
-window.logoutGestor = function() {
-    isGestor = false;
-    document.querySelectorAll('.gestor-only').forEach(el => el.classList.add('d-none'));
-    minimizarPainelGestor();
-    applyFilters();
-};
-
-window.toggleAdminSidebar = function() {
-    const sidebar = document.getElementById('adminSidebar');
-    if (window.innerWidth <= 991) {
-        toggleAdminSidebarMobile();
-    } else {
-        sidebar.classList.toggle('collapsed');
-    }
-};
-
-window.toggleAdminSidebarMobile = function() {
-    const sidebar = document.getElementById('adminSidebar');
-    const backdrop = document.getElementById('adminSidebarBackdrop');
-    sidebar.classList.toggle('mobile-open');
-    backdrop.classList.toggle('show');
-};
-
-window.switchAdminTab = function(tabKey, title, subtitle) {
-    document.querySelectorAll('.admin-tab-pane').forEach(el => el.style.display = 'none');
-    const target = document.getElementById('admin-tab-' + tabKey);
-    if (target) target.style.display = 'block';
-
-    document.querySelectorAll('.admin-nav-link').forEach(btn => btn.classList.remove('active'));
-    if (event && event.currentTarget) event.currentTarget.classList.add('active');
-
-    document.getElementById('adminTopbarTitle').innerText = title;
-    document.getElementById('adminTopbarSubtitle').innerText = subtitle;
-
-    if (window.innerWidth <= 991) {
-        document.getElementById('adminSidebar').classList.remove('mobile-open');
-        document.getElementById('adminSidebarBackdrop').classList.remove('show');
-    }
-    if (tabKey === 'feedbacks') renderAdminFeedbacks();
-};
-
-function updateAdminDashboardMetrics() {
-    const total = museumsData.length;
-    const semPino = museumsData.filter(m => m.lat === null || m.lng === null || m.coord_aproximada).length;
-    const comPino = total - semPino;
-    const ocultosBloco = Object.values(globalHiddenFields).filter(Boolean).length;
-
-    if (document.getElementById('kpiTotalMuseus')) document.getElementById('kpiTotalMuseus').innerText = total;
-    if (document.getElementById('kpiComPino')) document.getElementById('kpiComPino').innerText = comPino;
-    if (document.getElementById('kpiSemPino')) document.getElementById('kpiSemPino').innerText = semPino;
-    if (document.getElementById('kpiCamposOcultos')) document.getElementById('kpiCamposOcultos').innerText = ocultosBloco;
-    if (document.getElementById('gestaoCount')) document.getElementById('gestaoCount').innerText = total;
-    if (document.getElementById('pendingCount')) document.getElementById('pendingCount').innerText = semPino;
-    if (document.getElementById('feedbackCount')) document.getElementById('feedbackCount').innerText = publicFeedbacks.length;
-}
-
-// Renderiza o painel de Edição em Bloco (Liga/Desliga campo em todas as fichas)
-function renderBulkFieldsPanel() {
-    const container = document.getElementById('bulkFieldsContainer');
-    if (!container) return;
-
-    let html = '';
-    CATALOGO_CAMPOS_CFM.forEach(campo => {
-        const isCurrentlyVisible = !globalHiddenFields[campo.id];
-        html += `
-            <div class="col-md-6 col-lg-4">
-                <div class="p-3 border rounded d-flex justify-content-between align-items-center bg-light">
-                    <div>
-                        <div class="fw-bold small text-dark">${campo.label}</div>
-                        <small class="${isCurrentlyVisible ? 'text-success' : 'text-danger'} fw-semibold" id="status_label_bulk_${campo.id}">
-                            ${isCurrentlyVisible ? 'Visível em todas as fichas' : 'Oculto em bloco'}
-                        </small>
-                    </div>
-                    <div class="form-check form-switch m-0">
-                        <input class="form-check-input bulk-field-switch" type="checkbox" role="switch"
-                            id="bulk_switch_${campo.id}" data-field="${campo.id}"
-                            ${isCurrentlyVisible ? 'checked' : ''}
-                            onchange="updateBulkSwitchLabel('${campo.id}', this.checked)">
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    container.innerHTML = html;
-}
-
-window.updateBulkSwitchLabel = function(fieldId, isChecked) {
-    const lbl = document.getElementById(`status_label_bulk_${fieldId}`);
-    if (!lbl) return;
-    lbl.innerText = isChecked ? 'Visível em todas as fichas' : 'Oculto em bloco';
-    lbl.className = isChecked ? 'text-success fw-semibold' : 'text-danger fw-semibold';
-};
-
-window.setAllBulkFields = function(visibleState) {
-    document.querySelectorAll('.bulk-field-switch').forEach(sw => {
-        sw.checked = visibleState;
-        updateBulkSwitchLabel(sw.dataset.field, visibleState);
-    });
-};
-
-window.saveBulkFieldVisibility = function() {
-    const updatedBulk = {};
-    document.querySelectorAll('.bulk-field-switch').forEach(sw => {
-        const fieldId = sw.dataset.field;
-        if (!sw.checked) {
-            updatedBulk[fieldId] = true;
-        }
-    });
-
-    globalHiddenFields = updatedBulk;
-    localStorage.setItem('simrj_bulk_hidden_fields', JSON.stringify(globalHiddenFields));
-    applyFilters();
-    alert("Configuração de visibilidade em bloco aplicada com sucesso a todas as fichas da plataforma.");
-};
-
-// Lista de Gestão Individual
-window.renderVisibilityList = function() {
-    const term = normalizeString(document.getElementById('searchVisibility')?.value || '');
-    const list = document.getElementById('visibility-list');
-    if (!list) return;
-    list.innerHTML = '';
-
-    museumsData.forEach(m => {
-        if (term && !normalizeString(m.nome).includes(term) && !normalizeString(m.municipio).includes(term)) return;
-        const rowClass = m.visivel ? "bg-white border" : "item-hidden border";
-        const badgeStatus = m.visivel
-            ? '<span class="badge-secec badge-secec-green">Pública</span>'
-            : '<span class="badge-secec badge-secec-red">Oculta</span>';
-
-        list.innerHTML += `
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 p-3 rounded ${rowClass}">
-                <div>
-                    <div class="d-flex align-items-center gap-2">
-                        <h6 class="fw-bold mb-0 text-dark">${m.nome}</h6>
-                        ${badgeStatus}
-                    </div>
-                    <small class="text-secondary">${m.municipio} • Edições auditadas: <strong>${m.history ? m.history.length : 0}</strong></small>
-                </div>
-                <button class="btn-admin-primary btn-sm mt-2 mt-sm-0" onclick="openGestorEdit(${m.id})">
-                    <i class="fa-solid fa-pen-to-square me-1"></i> Editar Ficha e Visibilidade
-                </button>
-            </div>
-        `;
-    });
-};
-
-window.openGestorEdit = function(id) {
-    editingMuseumId = id;
-    const m = museumsData.find(x => x.id === id);
-    if (!m) return;
-
-    document.getElementById('gestorEditTitle').innerText = m.nome;
-    document.getElementById('gestorMuseumVisible').checked = !m.visivel;
-    document.getElementById('gestorAuthor').value = currentOperatorName !== "Gestor SUPMU" ? currentOperatorName : "";
-
-    const fields = [
-        { id: 'nome', label: 'Nome da Instituição' },
-        ...CATALOGO_CAMPOS_CFM,
-        { id: 'lat', label: 'Latitude' },
-        { id: 'lng', label: 'Longitude' }
-    ];
-
-    let html = '';
-    fields.forEach(f => {
-        const isHiddenIndividually = m.hidden_fields && m.hidden_fields[f.id];
-        const isHiddenGlobally = globalHiddenFields && globalHiddenFields[f.id];
-        html += `
-            <div class="col-md-6 border-bottom pb-2">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label class="fw-bold text-primary small">${f.label}</label>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="vis_${f.id}" ${(!isHiddenIndividually && !isHiddenGlobally) ? 'checked' : ''}>
-                        <small class="text-muted" style="font-size:0.7rem;">${isHiddenGlobally ? 'Oculto em Bloco' : 'Visível'}</small>
-                    </div>
-                </div>
-                <input type="text" class="form-control form-control-sm" id="edit_${f.id}" value="${m[f.id] !== null && m[f.id] !== undefined ? m[f.id] : ''}">
-            </div>
-        `;
-    });
-    document.getElementById('gestorEditFields').innerHTML = html;
-
-    const hLog = document.getElementById('gestorHistoryLog');
-    hLog.innerHTML = m.history && m.history.length > 0
-        ? m.history.map(h => `> [${h.date}] Atualizado por: <b>${h.user}</b>`).join('<br>')
-        : '> Nenhum histórico de edição registrado para esta instituição.';
-
-    editModal.show();
-};
-
-window.saveGestorEdits = function() {
-    const author = document.getElementById('gestorAuthor').value.trim();
-    if (!author || author.length < 3) {
-        return alert("Informe o nome completo do responsável técnico para registro no histórico da ficha.");
-    }
-
-    const m = museumsData.find(x => x.id === editingMuseumId);
-    if (!m) return;
-
-    m.hidden_fields = {};
-    const allEditableKeys = ['nome', ...CATALOGO_CAMPOS_CFM.map(c => c.id), 'lat', 'lng'];
-
-    allEditableKeys.forEach(f => {
-        const inputEl = document.getElementById(`edit_${f}`);
-        const visEl = document.getElementById(`vis_${f}`);
-        if (inputEl) m[f] = inputEl.value;
-        if (visEl && !visEl.checked) m.hidden_fields[f] = true;
-    });
-
-    m.municipio = canonicalizeMunicipality(m.municipio);
-    m.lat = parseCoordinate(m.lat);
-    m.lng = parseCoordinate(m.lng);
-    if (m.lat && m.lng) m.coord_aproximada = false;
-    m.visivel = !document.getElementById('gestorMuseumVisible').checked;
-
-    if (!m.history) m.history = [];
-    m.history.push({ date: new Date().toLocaleString('pt-BR'), user: author });
-
-    localEditsMemory[m.nome] = m;
-    localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
-
-    populateCityFilter();
-    applyFilters();
-    editModal.hide();
-};
-
-// Modais de Perfil e Troca de Senha do Operador (Conformidade Topbar Seção 1.4.2)
-window.openAdminProfileModal = function() {
-    const modal = new bootstrap.Modal(document.getElementById('adminAccountModal'));
-    document.getElementById('adminAccountModalTitle').innerText = "Meu Perfil de Operador";
-    document.getElementById('adminAccountModalBody').innerHTML = `
-        <div class="mb-3">
-            <label class="form-label small fw-bold">Nome do Operador Ativo</label>
-            <input type="text" id="profOperatorName" class="form-control form-control-sm" value="${currentOperatorName}">
-        </div>
-        <div class="mb-3">
-            <label class="form-label small fw-bold">Unidade Administrativa</label>
-            <input type="text" class="form-control form-control-sm" value="SECEC-RJ / Superintendência de Museus (SUPMU)" disabled>
-        </div>
-        <button class="btn-admin-primary w-100" onclick="saveOperatorProfile()">Atualizar Identificação</button>
-    `;
-    modal.show();
-};
-
-window.saveOperatorProfile = function() {
-    const val = document.getElementById('profOperatorName').value.trim();
-    if (val) {
-        currentOperatorName = val;
-        document.getElementById('adminUserDisplayName').innerText = val;
-        document.getElementById('adminDropdownName').innerText = val;
-    }
-    bootstrap.Modal.getInstance(document.getElementById('adminAccountModal')).hide();
-};
-
-window.openAdminPasswordModal = function() {
-    const modal = new bootstrap.Modal(document.getElementById('adminAccountModal'));
-    document.getElementById('adminAccountModalTitle').innerText = "Alterar Senha Administrativa";
-    document.getElementById('adminAccountModalBody').innerHTML = `
-        <div class="mb-3">
-            <label class="form-label small fw-bold">Nova Senha do Painel</label>
-            <input type="password" id="newAdminPass" class="form-control form-control-sm" placeholder="Mínimo 4 caracteres">
-        </div>
-        <button class="btn-admin-primary w-100" onclick="saveNewAdminPassword()">Salvar Nova Senha</button>
-    `;
-    modal.show();
-};
-
-window.saveNewAdminPassword = function() {
-    const newPass = document.getElementById('newAdminPass').value.trim();
-    if (newPass.length < 4) return alert("A senha deve possuir ao menos 4 caracteres.");
-    adminSavedPassword = newPass;
-    localStorage.setItem('simrj_admin_pass', newPass);
-    bootstrap.Modal.getInstance(document.getElementById('adminAccountModal')).hide();
-    alert("Senha administrativa atualizada com sucesso.");
-};
-
-function renderAdminFeedbacks() {
-    const container = document.getElementById('adminFeedbackList');
-    if (!container) return;
-    if (publicFeedbacks.length === 0) {
-        container.innerHTML = '<div class="alert alert-light border small text-muted mb-0">Nenhuma manifestação registrada até o momento.</div>';
-        return;
-    }
-    container.innerHTML = publicFeedbacks.map(f => `
-        <div class="p-3 mb-2 border rounded bg-white">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="badge-secec badge-secec-blue">${f.tipo}</span>
-                <small class="text-muted">${f.data}</small>
-            </div>
-            <div class="fw-bold small text-dark">${f.nome} (${f.email})</div>
-            <p class="small text-secondary mb-0 mt-1">${f.mensagem}</p>
-        </div>
-    `).join('');
-}
-
-// ============================================================================
-// 7. CADASTRO MANUAL, MAPEAMENTO DE PENDÊNCIAS E ROBÔ GEOCODIFICADOR
-// ============================================================================
-window.buscarCepManual = async function(cep) {
-    const limpo = String(cep).replace(/\D/g, '');
-    if (limpo.length !== 8) return;
-    try {
-        const res = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
-        const d = await res.json();
-        if (!d.erro) {
-            document.getElementById('man_endereco').value = d.logradouro || '';
-            document.getElementById('man_municipio').value = canonicalizeMunicipality(d.localidade || '');
-        }
-    } catch (e) {}
-};
-
-window.saveManualGestor = function() {
-    const nome = document.getElementById('man_nome').value.trim();
-    if (!nome) return alert("O Nome da Instituição é obrigatório.");
-
-    const muni = canonicalizeMunicipality(document.getElementById('man_municipio').value);
-    let lat = parseCoordinate(document.getElementById('man_lat').value);
-    let lng = parseCoordinate(document.getElementById('man_lng').value);
-
-    if ((lat === null || lng === null) && COORDENADAS_MUNICIPIOS_RJ[normalizeString(muni)]) {
-        lat = COORDENADAS_MUNICIPIOS_RJ[normalizeString(muni)].lat;
-        lng = COORDENADAS_MUNICIPIOS_RJ[normalizeString(muni)].lng;
-    }
-
-    const newM = {
-        id: Date.now(),
-        id_cfm: document.getElementById('man_id_cfm').value,
-        nome: nome,
-        sigla: document.getElementById('man_sigla').value,
-        cnpj: document.getElementById('man_cnpj').value,
-        documento_criacao: document.getElementById('man_documento_criacao').value,
-        municipio: muni,
-        regiao: document.getElementById('man_regiao').value,
-        zona: document.getElementById('man_zona').value,
-        endereco: `${document.getElementById('man_endereco').value} ${document.getElementById('man_numero').value} ${document.getElementById('man_complemento').value}`.trim(),
-        telefone: document.getElementById('man_telefone').value,
-        email: document.getElementById('man_email').value,
-        site: document.getElementById('man_site').value,
-        facebook: document.getElementById('man_facebook').value,
-        instagram: document.getElementById('man_instagram').value,
-        twitter: document.getElementById('man_twitter').value,
-        natureza: document.getElementById('man_natureza').value,
-        situacao: document.getElementById('man_situacao').value,
-        funcionamento: document.getElementById('man_funcionamento').value,
-        ingresso: document.getElementById('man_ingresso').value,
-        gratuidades: document.getElementById('man_gratuidades').value,
-        educativo: document.getElementById('man_educativo').value,
-        museologo: document.getElementById('man_museologo').value,
-        acervo: document.getElementById('man_acervo').value,
-        acessibilidade: document.getElementById('man_acessibilidade').value,
-        historico_museu: document.getElementById('man_historico').value,
-        resp_nome: document.getElementById('man_resp_nome').value,
-        resp_email: document.getElementById('man_resp_email').value,
-        lat: lat,
-        lng: lng,
-        coord_aproximada: false,
-        visivel: true,
-        hidden_fields: {},
-        history: [{ date: new Date().toLocaleString('pt-BR'), user: `${currentOperatorName} (Cadastro Manual)` }]
-    };
-
-    museumsData.push(newM);
-    localEditsMemory[nome] = newM;
-    localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
-    populateCityFilter();
-    applyFilters();
-    alert("Instituição cadastrada e publicada com sucesso.");
-    document.querySelectorAll('#formManualGestor input, #formManualGestor textarea').forEach(el => el.value = '');
-};
-
-function updatePendingList() {
-    const list = document.getElementById('pending-list');
-    if (!list) return;
-    list.innerHTML = '';
-
-    const pendings = museumsData.filter(m => m.lat === null || m.lng === null || m.coord_aproximada);
-    pendings.forEach(m => {
-        const tipoTag = m.coord_aproximada
-            ? '<span class="badge-secec badge-secec-amber">Pino na Sede Municipal (Ajustar Rua)</span>'
-            : '<span class="badge-secec badge-secec-red">Sem Coordenada / Virtual</span>';
-        list.innerHTML += `
-            <div class="p-3 mb-2 bg-white border rounded d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <div>
-                    <div class="d-flex align-items-center gap-2">
-                        <strong class="text-dark">${m.nome}</strong>
-                        ${tipoTag}
-                    </div>
-                    <small class="text-secondary">${m.municipio} • ${m.endereco || 'Endereço não informado'}</small>
-                </div>
-                <button class="btn btn-sm btn-warning fw-bold" onclick="openAdminMapPicker(${m.id})">
-                    <i class="fa-solid fa-location-crosshairs me-1"></i> Marcar no Mapa
-                </button>
-            </div>
-        `;
-    });
-}
-
-let adminMapInstance;
-let adminTempMarker;
-
-window.openAdminMapPicker = function(id) {
-    editingMuseumId = id;
-    const m = museumsData.find(x => x.id === id);
-    if (!m) return;
-
-    document.getElementById('adminMapTitle').innerText = m.nome;
-    document.getElementById('adminMapSearchInput').value = `${m.endereco || ''}, ${m.municipio || ''}, RJ`;
-
-    new bootstrap.Modal(document.getElementById('adminMapModal')).show();
-    setTimeout(() => {
-        if (!adminMapInstance) {
-            adminMapInstance = L.map('adminLeafletMap').setView([-22.75, -43.10], 8);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMapInstance);
-            adminMapInstance.on('click', e => {
-                if (adminTempMarker) adminMapInstance.removeLayer(adminTempMarker);
-                adminTempMarker = L.marker(e.latlng).addTo(adminMapInstance);
-            });
-        }
-        adminMapInstance.invalidateSize();
-        if (m.lat && m.lng) {
-            adminMapInstance.setView([m.lat, m.lng], 14);
-        }
-    }, 350);
-};
-
-window.searchAddressOnAdminMap = async function() {
-    const query = document.getElementById('adminMapSearchInput').value;
-    try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
-        const d = await res.json();
-        if (d && d.length > 0) {
-            const lat = parseFloat(d[0].lat);
-            const lng = parseFloat(d[0].lon);
-            adminMapInstance.setView([lat, lng], 16);
-            if (adminTempMarker) adminMapInstance.removeLayer(adminTempMarker);
-            adminTempMarker = L.marker([lat, lng]).addTo(adminMapInstance);
-        } else {
-            alert("Logradouro não localizado automaticamente. Clique diretamente sobre o ponto desejado no mapa.");
-        }
-    } catch (e) {}
-};
-
-window.saveAdminPin = function() {
-    if (!adminTempMarker) return alert("Clique sobre o mapa para posicionar o pino antes de salvar.");
-    const m = museumsData.find(x => x.id === editingMuseumId);
-    if (m) {
-        m.lat = adminTempMarker.getLatLng().lat;
-        m.lng = adminTempMarker.getLatLng().lng;
-        m.coord_aproximada = false;
-        localEditsMemory[m.nome] = m;
-        localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
-        applyFilters();
-        bootstrap.Modal.getInstance(document.getElementById('adminMapModal')).hide();
-    }
-};
-
-// Exportação de Relatório CSV Consolidado
-window.exportRelatorio = function() {
-    const dataToExport = currentFilteredData.length > 0 ? currentFilteredData : museumsData;
-    const csv = Papa.unparse(dataToExport.map(({ history, hidden_fields, ...rest }) => rest));
-    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "relatorio_cfm_simrj.csv";
-    link.click();
-};
-
-window.startUpdateImport = function() {
-    const file = document.getElementById('csvFileUpdate').files[0];
-    if (!file) return alert("Selecione um arquivo CSV para importação.");
-    const statEl = document.getElementById('upload-status');
-    statEl.classList.remove('d-none');
-    statEl.className = 'alert alert-info small p-2 mt-3 mb-0';
-    statEl.innerText = "Processando planilha e sincronizando coordenadas...";
-
-    Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async function(results) {
-            await processParsedData(results.data);
-            statEl.className = 'alert alert-success small p-2 mt-3 mb-0';
-            statEl.innerText = `Sincronização concluída! ${museumsData.length} instituições carregadas.`;
-        }
-    });
-};
-
-window.startRobotProcessing = function() {
-    const file = document.getElementById('csvFileRobot').files[0];
-    if (!file) return alert("Selecione uma planilha CSV primeiro.");
-    document.getElementById('btnRobot').disabled = true;
-    document.getElementById('robotProgressContainer').classList.remove('d-none');
-    document.getElementById('robotLog').classList.remove('d-none');
-
-    const log = msg => {
-        const el = document.getElementById('robotLog');
-        el.innerHTML += `<br>> ${msg}`;
-        el.scrollTop = el.scrollHeight;
-    };
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-    Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async function(results) {
-            const data = results.data;
-            for (let i = 0; i < data.length; i++) {
-                const row = data[i];
-                const nome = getColValue(row, ["Nome da Instituição", "Nome"]);
-                const muni = canonicalizeMunicipality(getColValue(row, ["Município", "Municipio"]));
-                row["Município"] = muni;
-
-                if (!row["Lat"] && !row["Lng"] && nome) {
-                    log(`Geocodificando: ${nome} (${muni})...`);
-                    const end = getColValue(row, ["Endereço", "Endereco", "Logradouro"]);
-                    const query = `${end}, ${muni}, RJ, Brasil`.replace(/,\s*,/g, ',').trim();
-                    try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
-                        const d = await res.json();
-                        if (d && d.length > 0 && isWithinRJ(parseFloat(d[0].lat), parseFloat(d[0].lon))) {
-                            row["Lat"] = String(d[0].lat).replace(',', '.');
-                            row["Lng"] = String(d[0].lon).replace(',', '.');
-                            log(`   -> Coordenada exata obtida.`);
-                        } else if (COORDENADAS_MUNICIPIOS_RJ[normalizeString(muni)]) {
-                            row["Lat"] = String(COORDENADAS_MUNICIPIOS_RJ[normalizeString(muni)].lat);
-                            row["Lng"] = String(COORDENADAS_MUNICIPIOS_RJ[normalizeString(muni)].lng);
-                            log(`   -> Aplicada coordenada municipal de ${muni}.`);
-                        }
-                    } catch (e) {
-                        log(`   -> Falha de rede na requisição.`);
-                    }
-                    await sleep(1100);
-                }
-                const pct = Math.round(((i + 1) / data.length) * 100);
-                const pBar = document.getElementById('robotProgressBar');
-                pBar.style.width = `${pct}%`;
-                pBar.innerText = `${pct}%`;
-            }
-            log(`Processamento finalizado. Iniciando download de dados.csv...`);
-            const csv = Papa.unparse(data);
-            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "dados.csv";
-            link.click();
-            document.getElementById('btnRobot').disabled = false;
-        }
-    });
-};
+        document.getElementById('container-lista-geral').innerHTML = html
