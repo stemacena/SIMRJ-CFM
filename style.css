@@ -1,53 +1,242 @@
+/**
+ * SISTEMA ESTADUAL DE MUSEUS DO RIO DE JANEIRO (SIM-RJ)
+ * CADASTRO FLUMINENSE DE MUSEUS (CFM)
+ * Folha de Estilos Principal - Conformidade Protocolo TI-SECEC (Anexo D v2.0)
+ */
+
 :root {
-    /* Identidade Visual Oficial */
+    /* Paleta Institucional Área Pública (Seção 2 - Identidade SIM-RJ / SECEC) */
     --color-purple: #6b4e7e;
     --color-blue: #0034bb;
     --color-green-olive: #899b1c;
     --color-yellow: #e2a512;
     --color-cfm-teal: #006666;
-    --color-dark: #2c3e50;
-    --color-light-bg: #f4f6f8;
+    --color-dark: #202735;
+    --color-light-bg: #f5f7fa;
+    --color-surface: #ffffff;
+    --color-border: #d7dee8;
+
+    /* Cores Oficiais das Regiões no Mapa */
+    --reg-centro-sul: #ef8739;
+    --reg-serrana: #0d92df;
+    --reg-medio-paraiba: #58cfa5;
+    --reg-costa-verde: #0d6b2a;
+    --reg-metropolitanas: #af8447;
+    --reg-baixadas-litoraneas: #aabddb;
+    --reg-norte-fluminense: #d69f9d;
+    --reg-noroeste-fluminense: #edeb40;
+
+    /* Filete e Assinatura Institucional SECEC-RJ (Seção 2.5) */
+    --marca-acento-1: #0034bb;
+    --marca-acento-2: #006666;
+    --marca-acento-3: #899b1c;
+
+    /* Tokens Vinculantes de Back-Office (Seção 1 - Layout Administrativo SECEC) */
+    --admin-text-main: #0F172A;
+    --admin-text-sec: #475569;
+    --admin-text-muted: #94A3B8;
+    --admin-bg: #F1F5F9;
+    --admin-card: #FFFFFF;
+    --admin-border: #E2E8F0;
+    --admin-primary: #3B82F6;
+    --admin-primary-hover: #2563EB;
+    --admin-secondary: #6366F1;
+    --admin-sidebar: #0F172A;
+    --admin-success: #10B981;
+    --admin-warning: #F59E0B;
+    --admin-danger: #EF4444;
+    --admin-info: #06B6D4;
+
+    /* Raios e Sombras Padronizados (Seções 1.7 e 2.9) */
+    --radius-card: 10px;
+    --radius-sm: 6px;
+    --radius-pill: 9999px;
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--color-light-bg); color: #333; }
-section { scroll-margin-top: 110px; }
+/* ==========================================================================
+   1. BASE E TIPOGRAFIA (Seções 1.6 e 2.8)
+   ========================================================================== */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    background-color: var(--color-light-bg);
+    color: var(--color-dark);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
 
-/* --- CABEÇALHO GOV E NAVBAR --- */
-.gov-bar { background-color: var(--color-blue); font-size: 0.8rem; font-weight: 500; }
-.navbar { padding-top: 0.5rem; padding-bottom: 0.5rem; background-color: #e5e9b0; border-bottom: 4px solid var(--color-green-olive); }
+h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
+}
 
-/* Classes para as duas logos da Navbar */
-.header-logo-secec { max-height: 50px; object-fit: contain; border-right: 2px solid #b3b782; padding-right: 15px; margin-right: 15px; }
-.header-logo-simrj { max-height: 75px; object-fit: contain; }
+section {
+    scroll-margin-top: 110px;
+}
 
-.nav-link { font-weight: 600; color: var(--color-dark) !important; text-transform: uppercase; font-size: 0.85rem; margin: 0 5px; transition: color 0.2s; }
-.nav-link:hover, .nav-link.active { color: var(--color-cfm-teal) !important; }
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid var(--color-cfm-teal);
+    outline-offset: 2px;
+}
 
-@media (min-width: 992px) { .dropdown:hover .dropdown-menu { display: block; margin-top: 0; } }
-.dropdown-item { font-size: 0.85rem; font-weight: 500; }
+/* ==========================================================================
+   2. CABEÇALHO INSTITUCIONAL E NAVEGAÇÃO PÚBLICA (Seção 2.5 e 2.14)
+   ========================================================================== */
+.filete-institucional-top {
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--marca-acento-1) 0%, var(--marca-acento-2) 50%, var(--marca-acento-3) 100%);
+}
 
-.btn-custom { background-color: var(--color-cfm-teal); border: none; color: #fff !important; font-weight: 600; border-radius: 20px; padding: 8px 20px; }
-.btn-custom:hover { background-color: #004d4d; }
-.btn-outline-custom { border: 2px solid var(--color-cfm-teal); color: var(--color-cfm-teal); font-weight: 600; border-radius: 20px; padding: 6px 20px; }
-.btn-outline-custom:hover { background-color: var(--color-cfm-teal); color: #fff; }
+.gov-bar {
+    background-color: var(--color-blue);
+    font-size: 0.8rem;
+    font-weight: 500;
+    position: relative;
+    z-index: 1030;
+}
 
-/* --- HERO CAROUSEL --- */
-.hero-wrapper { position: relative; width: 100%; height: 70vh; min-height: 400px; overflow: hidden; background-color: #000; }
-.hero-carousel, .carousel-inner, .carousel-item { height: 100%; }
-.hero-carousel img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+.gov-bar a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: color 0.2s;
+}
 
-/* --- NOVA LOGO ESTÁTICA (DESIGN PREMIUM EM PÍLULA) --- */
+.gov-bar a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.assinatura-secec-badge {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    font-size: 0.72rem;
+}
+
+.navbar {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    background-color: #e5e9b0;
+    border-bottom: 4px solid var(--color-green-olive);
+    position: relative;
+    z-index: 1025;
+}
+
+.header-logo-secec {
+    max-height: 48px;
+    object-fit: contain;
+    border-right: 2px solid #b3b782;
+    padding-right: 15px;
+    margin-right: 15px;
+}
+
+.header-logo-simrj {
+    max-height: 70px;
+    object-fit: contain;
+}
+
+.nav-link {
+    font-weight: 600;
+    color: var(--color-dark) !important;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    margin: 0 4px;
+    transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--color-cfm-teal) !important;
+}
+
+@media (min-width: 992px) {
+    .dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0;
+    }
+}
+
+.dropdown-menu {
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-elevated);
+}
+
+.dropdown-item {
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 8px 16px;
+}
+
+.dropdown-item:hover {
+    background-color: #eff6ff;
+    color: var(--color-blue);
+}
+
+.btn-custom {
+    background-color: var(--color-cfm-teal);
+    border: none;
+    color: #fff !important;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    padding: 8px 18px;
+    transition: background-color 0.2s;
+}
+
+.btn-custom:hover {
+    background-color: #004d4d;
+}
+
+/* ==========================================================================
+   3. HERO CAROUSEL E TÍTULOS DE SEÇÃO
+   ========================================================================== */
+.hero-wrapper {
+    position: relative;
+    width: 100%;
+    height: 65vh;
+    min-height: 380px;
+    overflow: hidden;
+    background-color: #000;
+    z-index: 1;
+}
+
+.hero-carousel,
+.carousel-inner,
+.carousel-item {
+    height: 100%;
+}
+
+.hero-carousel img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.72;
+}
+
 .hero-logo-container {
     position: absolute;
-    bottom: 40px;
-    right: 40px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.65) 100%);
-    padding: 12px 35px;
+    bottom: 35px;
+    right: 35px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.75) 100%);
+    padding: 12px 32px;
     border-radius: 60px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     z-index: 10;
     display: flex;
     align-items: center;
@@ -55,46 +244,572 @@ section { scroll-margin-top: 110px; }
 }
 
 .hero-logo-small-static {
-    width: 280px; 
+    width: 260px;
     height: auto;
     object-fit: contain;
 }
 
-/* --- SEÇÕES E TÍTULOS --- */
-.section-title { color: var(--color-blue); font-weight: 700; margin-bottom: 1.5rem; text-align: center; }
-.section-title::after { content: ''; display: block; width: 80px; height: 4px; background-color: var(--color-yellow); margin: 10px auto 0; }
+.section-title {
+    color: var(--color-blue);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
 
-/* --- FORMULÁRIO WIZARD (CADASTRE-SE) E MANUAL --- */
-.wizard-container, .admin-form-container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-.step-indicator { display: flex; justify-content: space-between; margin-bottom: 30px; }
-.step-dot { width: 35px; height: 35px; border-radius: 50%; background-color: #e9ecef; color: #6c757d; display: flex; justify-content: center; align-items: center; font-weight: bold; border: 2px solid #dee2e6; }
-.step-dot.active { background-color: var(--color-cfm-teal); color: white; border-color: var(--color-cfm-teal); }
-.wizard-step { display: none; }
-.wizard-step.active { display: block; }
-.google-btn { background-color: #fff; color: #444; border: 1px solid #ddd; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
-.google-btn:hover { background-color: #f8f9fa; border-color: #ccc; }
-.check-group { background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e1e1e1; }
+.section-title::after {
+    content: '';
+    display: block;
+    width: 72px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-yellow), var(--color-green-olive));
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
 
-/* --- FILTROS E MAPA CFM --- */
-.sidebar-filters { border-top: 4px solid var(--color-cfm-teal); background-color: #fff; }
-.filter-label { font-size: 0.85rem; font-weight: 700; color: var(--color-cfm-teal); margin-bottom: 5px; display: block; }
-.filter-scroll-box { max-height: 140px; overflow-y: auto; background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 8px; border-radius: 4px; margin-bottom: 1rem; }
+/* ==========================================================================
+   4. FILTROS, PINOS COLORIDOS POR REGIÃO E LISTA DE RESULTADOS
+   ========================================================================== */
+.sidebar-filters {
+    border-top: 4px solid var(--color-cfm-teal);
+    background-color: var(--color-surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+}
 
-.museum-card { border-left: 5px solid var(--color-green-olive); transition: transform 0.2s, box-shadow 0.2s; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.museum-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+.filter-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-cfm-teal);
+    margin-bottom: 5px;
+    display: block;
+}
 
-/* --- MODAL E ADMIN --- */
-.login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
-.login-box { background: white; padding: 2rem; border-radius: 8px; width: 300px; text-align: center; }
+.filter-scroll-box {
+    max-height: 155px;
+    overflow-y: auto;
+    background-color: #f8fafc;
+    border: 1px solid var(--admin-border);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+}
 
-.modal-header { background-color: var(--color-cfm-teal); color: white; }
-.modal-subtitle { color: var(--color-blue); font-weight: bold; border-bottom: 2px solid var(--color-yellow); margin-top: 1rem; margin-bottom: 0.5rem; display: inline-block; }
+.filter-scroll-box label {
+    display: flex;
+    align-items: center;
+    font-size: 0.83rem;
+    color: #334155;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
 
-.pending-list { max-height: 350px; overflow-y: auto; }
-.pending-item { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
-.req-item { background: #fff; border-left: 4px solid var(--color-yellow); border-radius: 4px; padding: 10px; margin-bottom: 10px; color: #333; }
+.filter-scroll-box input[type="checkbox"] {
+    margin-right: 7px;
+    flex-shrink: 0;
+}
 
-/* --- ESTILOS DE EQUIPE --- */
-.team-member img { width: 170px; height: 170px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-.team-member h6 { margin-top: 15px; font-weight: bold; color: var(--color-blue); font-size: 1.1rem; }
-.team-member p { font-size: 0.8rem; color: #666; }
+.region-color-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-right: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.custom-region-pin {
+    background: transparent !important;
+    border: none !important;
+}
+
+.accordion-button {
+    padding: 9px 14px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--color-blue);
+    background-color: #f1f5f9;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e0f2fe;
+    color: var(--color-blue);
+}
+
+.results-scroll-container {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.museum-result-card {
+    background: var(--color-surface);
+    border: 1px solid var(--admin-border);
+    border-left: 4px solid var(--color-cfm-teal);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.museum-result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+}
+
+/* ==========================================================================
+   5. BADGES SEMÂNTICAS (Seção 1.5 - Regra Fundo Tom 50 / Texto Tom 600)
+   ========================================================================== */
+.badge-secec {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.badge-secec-green { background-color: #ECFDF5; color: #059669; }
+.badge-secec-amber { background-color: #FFFBEB; color: #D97706; }
+.badge-secec-red   { background-color: #FEF2F2; color: #DC2626; }
+.badge-secec-blue  { background-color: #EFF6FF; color: #2563EB; }
+.badge-secec-purple{ background-color: #F5F3FF; color: #7C3AED; }
+.badge-secec-slate { background-color: #F1F5F9; color: #64748B; }
+
+/* ==========================================================================
+   6. EQUIPE, CARDS INSTITUCIONAIS E MEMORIAL DE FÓRUNS
+   ========================================================================== */
+.surface-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+}
+
+.team-member {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.team-member img {
+    width: 136px;
+    height: 136px;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: var(--shadow-elevated);
+    margin-bottom: 10px;
+}
+
+.team-member h6 {
+    margin-top: 6px;
+    font-weight: 700;
+    color: var(--color-blue);
+    font-size: 1.02rem;
+    margin-bottom: 2px;
+}
+
+.team-role {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+}
+
+.team-intern {
+    font-size: 0.76rem;
+    color: #64748B;
+    margin: 0;
+    font-style: italic;
+}
+
+.forum-timeline-item {
+    border-left: 3px solid var(--color-cfm-teal);
+    padding-left: 20px;
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.forum-timeline-item::before {
+    content: '';
+    width: 13px;
+    height: 13px;
+    background-color: var(--color-cfm-teal);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    position: absolute;
+    left: -8px;
+    top: 4px;
+}
+
+/* ==========================================================================
+   7. SEÇÃO 1: LAYOUT ADMINISTRATIVO VINCULANTE (Back-Office SECEC)
+   ========================================================================== */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.82);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-box {
+    background: var(--admin-card);
+    padding: 2rem;
+    border-radius: var(--radius-card);
+    width: 340px;
+    text-align: center;
+    border: 1px solid var(--admin-border);
+    box-shadow: var(--shadow-elevated);
+}
+
+/* Z-index 1040 garante que os Modais Bootstrap (2100) abram sempre à frente do painel */
+.admin-panel-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--admin-bg);
+    z-index: 1040;
+    display: flex;
+    overflow: hidden;
+    color: var(--admin-text-main);
+}
+
+.admin-sidebar {
+    width: 260px;
+    background-color: var(--admin-sidebar);
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width 0.25s ease, transform 0.25s ease;
+    z-index: 1045;
+}
+
+.admin-sidebar.collapsed {
+    width: 72px;
+}
+
+.admin-sidebar.collapsed .sidebar-text,
+.admin-sidebar.collapsed .sidebar-section-label,
+.admin-sidebar.collapsed .sidebar-footer-text {
+    display: none;
+}
+
+.admin-sidebar-brand {
+    height: 64px;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #ffffff;
+}
+
+.admin-sidebar-brand-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background-color: var(--admin-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.admin-sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    overflow-y: auto;
+}
+
+.sidebar-section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--admin-text-muted);
+    padding: 10px 10px 6px;
+}
+
+.admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    color: #cbd5e1;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    transition: background-color 0.15s, color 0.15s;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+}
+
+.admin-nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+}
+
+.admin-nav-link.active {
+    background-color: rgba(59, 130, 246, 0.18);
+    color: #60a5fa;
+    font-weight: 600;
+}
+
+.admin-sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.72rem;
+    color: var(--admin-text-muted);
+}
+
+.admin-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.admin-topbar {
+    height: 64px;
+    background-color: var(--admin-card);
+    border-bottom: 1px solid var(--admin-border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.admin-page-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--admin-text-main);
+    margin: 0;
+}
+
+.admin-page-subtitle {
+    font-size: 0.75rem;
+    color: var(--admin-text-sec);
+    margin: 0;
+}
+
+.admin-user-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--admin-border);
+    background: #fff;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.admin-user-trigger:hover {
+    background-color: #f8fafc;
+}
+
+.admin-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--admin-secondary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-content-area {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.admin-kpi-card {
+    background-color: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.admin-kpi-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background-color: #eff6ff;
+    color: var(--admin-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.admin-kpi-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--admin-text-main);
+    line-height: 1.1;
+}
+
+.admin-kpi-label {
+    font-size: 0.75rem;
+    color: var(--admin-text-sec);
+    margin-top: 2px;
+}
+
+.admin-card {
+    background-color: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 18px;
+}
+
+.btn-admin-primary {
+    background-color: var(--admin-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    transition: background-color 0.15s;
+}
+
+.btn-admin-primary:hover {
+    background-color: var(--admin-primary-hover);
+    color: #ffffff;
+}
+
+.btn-admin-secondary {
+    background-color: #ffffff;
+    color: var(--admin-text-sec);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 14px;
+}
+
+.btn-admin-secondary:hover {
+    background-color: #f8fafc;
+}
+
+.item-hidden {
+    background-color: #FEF2F2 !important;
+    border-left: 4px solid var(--admin-danger) !important;
+}
+
+.history-log {
+    max-height: 160px;
+    overflow-y: auto;
+    background: #0F172A;
+    color: #A7F3D0;
+    font-family: monospace;
+    font-size: 0.8rem;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+}
+
+.admin-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 1042;
+}
+
+@media (max-width: 991px) {
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+    }
+    .admin-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    .admin-sidebar-backdrop.show {
+        display: block;
+    }
+    .admin-content-area {
+        padding: 16px;
+    }
+}
+
+/* ==========================================================================
+   8. MODAIS (CAMADA SUPERIOR GARANTIDA) E RODAPÉ INSTITUCIONAL
+   ========================================================================== */
+.modal-backdrop {
+    z-index: 2050 !important;
+}
+
+.modal {
+    z-index: 2100 !important;
+}
+
+.modal-header {
+    background-color: var(--color-cfm-teal);
+    color: white;
+}
+
+.modal-subtitle {
+    color: var(--color-blue);
+    font-weight: 700;
+    border-bottom: 2px solid var(--color-yellow);
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+}
+
+.rodape-institucional {
+    background-color: #0F172A;
+    color: #e2e8f0;
+    border-top: 4px solid var(--color-green-olive);
+    margin-top: auto;
+}
+
+.rodape-institucional a {
+    color: #93c5fd;
+    text-decoration: none;
+}
+
+.rodape-institucional a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.footer-logo-box {
+    background: rgba(255, 255, 255, 0.92);
+    padding: 8px 16px;
+    border-radius: var(--radius-card);
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+}
