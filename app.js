@@ -330,8 +330,7 @@ function initHeroCarousel() {
 }
 
 /**
- * Garante as atualizações de camadas de modais (z-index), remoção do item "Marco Legal"
- * da navbar, remoção da Portaria da aba Legislação e atualização da Equipe Técnica.
+ * Garante as atualizações de camadas de modais (z-index)
  */
 function applyStructuralDOMUpdates() {
     // 1. Eleva o z-index dos modais do Bootstrap acima do painel administrativo (#admin-panel)
@@ -345,7 +344,7 @@ function applyStructuralDOMUpdates() {
     `;
     document.head.appendChild(styleFix);
 
-    // 2. Remove "Marco Legal Fluminense" do dropdown "Diretrizes do campo" na navbar
+    
     document.querySelectorAll('.navbar .dropdown-item').forEach(item => {
         if (item.textContent && item.textContent.toLowerCase().includes('marco legal')) {
             const li = item.closest('li');
@@ -353,7 +352,7 @@ function applyStructuralDOMUpdates() {
         }
     });
 
-    // 3. Remove a Portaria da Comissão Consultiva da aba Legislação (mantendo-a apenas na aba Comissão)
+    
     const legSection = document.getElementById('view-legislacao');
     if (legSection) {
         legSection.querySelectorAll('a').forEach(link => {
@@ -363,7 +362,7 @@ function applyStructuralDOMUpdates() {
         });
     }
 
-    // 4. Atualiza a Equipe Técnica: remove Alice Araújo de Museologia e adiciona Catharyna Reimol na Coordenação do Sistema
+    
     const equipeSection = document.getElementById('view-equipe');
     if (equipeSection) {
         equipeSection.querySelectorAll('.team-member').forEach(member => {
