@@ -58,6 +58,11 @@
 /* ==========================================================================
    1. BASE E TIPOGRAFIA (Seções 1.6 e 2.8)
    ========================================================================== */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 1rem;
@@ -356,6 +361,13 @@ textarea:focus-visible {
     box-shadow: var(--shadow-elevated);
 }
 
+.museum-result-card h6,
+.museum-result-card .small,
+.table td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
 /* ==========================================================================
    5. BADGES SEMÂNTICAS (Seção 1.5 - Regra Fundo Tom 50 / Texto Tom 600)
    ========================================================================== */
@@ -464,6 +476,7 @@ textarea:focus-visible {
     padding: 2rem;
     border-radius: var(--radius-card);
     width: 340px;
+    max-width: 92vw;
     text-align: center;
     border: 1px solid var(--admin-border);
     box-shadow: var(--shadow-elevated);
@@ -745,6 +758,45 @@ textarea:focus-visible {
 }
 
 @media (max-width: 991px) {
+    .header-logo-secec {
+        max-height: 36px;
+        padding-right: 10px;
+        margin-right: 10px;
+    }
+
+    .header-logo-simrj {
+        max-height: 48px;
+    }
+
+    .hero-wrapper {
+        height: 42vh;
+        min-height: 240px;
+    }
+
+    .hero-logo-container {
+        bottom: 16px;
+        right: 16px;
+        padding: 8px 18px;
+        border-radius: 30px;
+    }
+
+    .hero-logo-small-static {
+        width: 150px;
+    }
+
+    .sidebar-filters {
+        padding: 16px !important;
+        margin-bottom: 16px;
+    }
+
+    #map {
+        height: 380px !important;
+    }
+
+    .results-scroll-container {
+        max-height: 380px;
+    }
+
     .admin-sidebar {
         position: fixed;
         top: 0;

@@ -292,10 +292,42 @@ const ZONAS_CAPITAL_RJ = {
 // ============================================================================
 document.addEventListener('DOMContentLoaded', async function() {
     applyStructuralDOMUpdates();
+    initHeroCarousel();
     initMapSystem();
     renderBulkFieldsPanel();
     await loadInitialCSVData();
 });
+
+/**
+ * Inicializa o carrossel da página inicial e trata eventuais falhas de imagem
+ * para garantir a transição automática contínua em desktop e dispositivos móveis.
+ */
+function initHeroCarousel() {
+    const carouselEl = document.getElementById('heroCarouselBg');
+    if (!carouselEl || typeof bootstrap === 'undefined' || !bootstrap.Carousel) return;
+
+    carouselEl.querySelectorAll('img').forEach(img => {
+        img.addEventListener('error', () => {
+            const item = img.closest('.carousel-item');
+            if (item && carouselEl.querySelectorAll('.carousel-item').length > 1) {
+                const wasActive = item.classList.contains('active');
+                item.remove();
+                if (wasActive) {
+                    const firstRemaining = carouselEl.querySelector('.carousel-item');
+                    if (firstRemaining) firstRemaining.classList.add('active');
+                }
+            }
+        });
+    });
+
+    const instance = bootstrap.Carousel.getOrCreateInstance(carouselEl, {
+        interval: 4000,
+        ride: 'carousel',
+        pause: false,
+        wrap: true
+    });
+    instance.cycle();
+}
 
 /**
  * Garante as atualizações de camadas de modais (z-index), remoção do item "Marco Legal"
@@ -528,7 +560,6 @@ function resolveRioNeighborhoodCoordinate(nome, endereco, indexSeed) {
     const searchTarget = normalizeString(`${endereco} ${nome}`);
     for (const [bairroKey, coords] of Object.entries(COORDENADAS_BAIRROS_RIO)) {
         if (searchTarget.includes(bairroKey)) {
-            // Microdeslocamento orgânico em espiral áurea (máx ~120m) para evitar sobreposição exata no mesmo bairro
             const goldenAngle = indexSeed * 2.399963229728653;
             const microRadius = 0.00045 * Math.sqrt((indexSeed % 9) + 1);
             return {
@@ -538,7 +569,6 @@ function resolveRioNeighborhoodCoordinate(nome, endereco, indexSeed) {
         }
     }
 
-    // Se o endereço é no Centro do Rio, posiciona na área central comercial/histórica sem formar cruz
     if (searchTarget.includes("centro") || searchTarget.includes("rua ") || searchTarget.includes("av ") || searchTarget.includes("avenida ") || searchTarget.includes("praca ")) {
         const goldenAngle = indexSeed * 2.399963229728653;
         const microRadius = 0.0008 * Math.sqrt((indexSeed % 12) + 1);
@@ -619,11 +649,9 @@ async function processParsedData(rawData) {
         let coordAproximada = false;
 
         if (isDigital) {
-            // Regra obrigatória: instituições com acervo predominantemente digital/virtual ficam sem pino no mapa
             lat = null;
             lng = null;
         } else if (normalizeString(municipioPadronizado) === "rio de janeiro" && isGenericRioCentroid(lat, lng)) {
-            // Corrige o agrupamento em cruz no centro da capital reposicionando pelo bairro/logradouro real
             const resolvedRio = resolveRioNeighborhoodCoordinate(nome, endereco, i);
             if (resolvedRio) {
                 lat = resolvedRio.lat;
@@ -634,7 +662,6 @@ async function processParsedData(rawData) {
                 lng = null;
             }
         } else if (lat === null || lng === null) {
-            // Se não possui endereço físico informado, mantém sem pino para constar em "Sem Geolocalização"
             const endNorm = normalizeString(endereco);
             const hasPhysicalAddress = endNorm && endNorm !== "nao informado" && endNorm !== "sem endereco" && endNorm.length >= 4;
             const normCity = normalizeString(municipioPadronizado);
@@ -772,7 +799,6 @@ window.applyFilters = function() {
         if (gratuidade && !mGrat.includes(gratuidade)) return false;
         if (acesso && !mAcc.includes(acesso)) return false;
 
-        // Comparação exata de Região para distinguir Metropolitana I, Metropolitana II e Metropolitana III
         if (regioes.length > 0 && !regioes.includes(mReg)) return false;
         if (naturezas.length > 0 && !naturezas.some(n => mNat.includes(n))) return false;
         if (acervos.length > 0 && !acervos.some(a => mAcer.includes(a))) return false;
@@ -847,7 +873,7 @@ function renderMuseums(data, focusOnPins = false) {
 
         const regColor = getRegionPinColor(m.regiao);
         const hasPin = m.lat !== null && m.lng !== null && !m.is_digital;
-        const digitalTag = !hasPin ? `<span class="badge-secec badge-secec-purple ms-1"><i class="fa-solid fa-Laptop"></i> Sem Pino / Digital</span>` : '';
+        const digitalTag = !hasPin ? `<span class="badge-secec badge-secec-purple ms-1"><i class="fa-solid fa-laptop"></i> Sem Pino / Digital</span>` : '';
 
         const btnFicha = `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openProfile(${m.id})"><i class="fa-regular fa-folder-open me-1"></i>Ver Ficha</button>`;
 
@@ -884,7 +910,6 @@ function renderMuseums(data, focusOnPins = false) {
             let plotLat = m.lat;
             let plotLng = m.lng;
 
-            // Microdispersão em espiral de ângulo áureo (137.5°) caso duas instituições dividam o mesmo ponto
             if (count > 0) {
                 const goldenAngle = count * 2.399963229728653;
                 const radius = 0.00055 * Math.sqrt(count);
@@ -1091,10 +1116,6 @@ window.checkAdminPassword = function() {
     }
 };
 
-/**
- * Encerra a sessão administrativa limpando todos os modais, dropdowns e overlays ativos,
- * retornando diretamente ao portal público sem exibir popups residuais.
- */
 window.logoutGestor = function(e) {
     if (e) {
         e.preventDefault();
@@ -1102,7 +1123,6 @@ window.logoutGestor = function(e) {
     }
     isGestor = false;
 
-    // Fecha quaisquer modais administrativos ou menus abertos
     ['gestorEditModal', 'adminMapModal', 'adminAccountModal'].forEach(modalId => {
         const el = document.getElementById(modalId);
         if (el) {
@@ -1115,7 +1135,6 @@ window.logoutGestor = function(e) {
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
 
-    // Oculta painel e tela de login
     document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('login-overlay').style.display = 'none';
     const passField = document.getElementById('adminPassword');
@@ -1688,7 +1707,6 @@ window.startRobotProcessing = function() {
                     log(`[DIGITAL/VIRTUAL] ${nome} -> Mantido sem pino.`);
                 } else if (!row["Lat"] && !row["Lng"] && nome) {
                     log(`Geocodificando: ${nome} (${muni})...`);
-                    // Higieniza complementos e CEP do logradouro para evitar falha no Nominatim
                     const endLimpo = end.replace(/cep[:\s]*[\d.-]+/gi, '').replace(/\([^)]*\)/g, '').split(' - ')[0].trim();
                     const query = `${endLimpo}, ${muni}, RJ, Brasil`.replace(/,\s*,/g, ',').trim();
                     try {
