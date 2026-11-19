@@ -1,7 +1,7 @@
 /**
  * SISTEMA ESTADUAL DE MUSEUS DO RIO DE JANEIRO (SIM-RJ)
  * CADASTRO FLUMINENSE DE MUSEUS (CFM)
- * Script Principal de Controle, Geoprocessamento e Governança de Dados (Padrão ATI / SECEC-RJ)
+ * Script Principal de Controle, Geoprocessamento e Governança de Dados
  */
 
 let map;
@@ -14,15 +14,11 @@ let isGestor = false;
 let editingMuseumId = null;
 let currentOperatorName = "Gestor SUPMU";
 
-// Armazenamento indexado por ID Fixo (chave primária imutável) e estado consolidado
-let localEditsById = JSON.parse(localStorage.getItem('simrj_edits_by_id')) || {};
-let manualMuseumsMemory = JSON.parse(localStorage.getItem('simrj_manual_museums')) || [];
+// Persistência local de edições, visibilidade em bloco, manifestações e credencial administrativa
+let localEditsMemory = JSON.parse(localStorage.getItem('simrj_edits')) || {};
 let globalHiddenFields = JSON.parse(localStorage.getItem('simrj_bulk_hidden_fields')) || {};
 let publicFeedbacks = JSON.parse(localStorage.getItem('simrj_feedbacks')) || [];
 let adminSavedPassword = localStorage.getItem('simrj_admin_pass') || 'simrj';
-
-// Migração preventiva caso existam edições antigas salvas pelo nome no navegador
-const legacyEditsByName = JSON.parse(localStorage.getItem('simrj_edits')) || {};
 
 // Paleta oficial de cores dos pinos por Região do Estado do Rio de Janeiro
 const CORES_REGIOES_RJ = {
@@ -200,6 +196,7 @@ const COORDENADAS_MUNICIPIOS_RJ = {
 };
 
 // Coordenadas de precisão por bairro e logradouro cultural do Rio de Janeiro
+// Corrige pinos que haviam recebido o centroide genérico da capital (-22.9110, -43.2094)
 const COORDENADAS_BAIRROS_RIO = {
     "vidigal": { lat: -22.9935, lng: -43.2335 },
     "rocinha": { lat: -22.9882, lng: -43.2484 },
@@ -291,63 +288,21 @@ const ZONAS_CAPITAL_RJ = {
 };
 
 // ============================================================================
-// 1. INICIALIZAÇÃO, AJUSTES DOM E CARREGAMENTO DE ESTADO ATI
+// 1. INICIALIZAÇÃO, AJUSTES DOM E NORMALIZAÇÃO
 // ============================================================================
 document.addEventListener('DOMContentLoaded', async function() {
     applyStructuralDOMUpdates();
     initMapSystem();
-    await loadServerStateJSON();
     renderBulkFieldsPanel();
     await loadInitialCSVData();
 });
 
 /**
- * Carrega o arquivo estado_cfm.json da raiz do servidor (se publicado no repositório/ATI),
- * sincronizando edições de fichas por ID fixo, visibilidade em bloco, museus manuais e histórico.
- */
-async function loadServerStateJSON() {
-    try {
-        const res = await fetch('estado_cfm.json', { cache: "no-store" });
-        if (!res.ok) return;
-        const serverState = await res.json();
-
-        // Mescla o estado oficial do servidor com eventuais edições mais recentes da sessão local
-        if (serverState.edits_by_id && typeof serverState.edits_by_id === 'object') {
-            localEditsById = { ...serverState.edits_by_id, ...localEditsById };
-            localStorage.setItem('simrj_edits_by_id', JSON.stringify(localEditsById));
-        }
-        if (serverState.global_hidden_fields && typeof serverState.global_hidden_fields === 'object') {
-            globalHiddenFields = { ...serverState.global_hidden_fields, ...globalHiddenFields };
-            localStorage.setItem('simrj_bulk_hidden_fields', JSON.stringify(globalHiddenFields));
-        }
-        if (Array.isArray(serverState.manual_museums)) {
-            const existingIds = new Set(manualMuseumsMemory.map(m => String(m.id)));
-            serverState.manual_museums.forEach(m => {
-                if (!existingIds.has(String(m.id))) {
-                    manualMuseumsMemory.push(m);
-                }
-            });
-            localStorage.setItem('simrj_manual_museums', JSON.stringify(manualMuseumsMemory));
-        }
-        if (Array.isArray(serverState.public_feedbacks)) {
-            const existingFbIds = new Set(publicFeedbacks.map(f => String(f.id)));
-            serverState.public_feedbacks.forEach(f => {
-                if (!existingFbIds.has(String(f.id))) {
-                    publicFeedbacks.push(f);
-                }
-            });
-            localStorage.setItem('simrj_feedbacks', JSON.stringify(publicFeedbacks));
-        }
-    } catch (e) {
-        // Arquivo estado_cfm.json opcional ainda não publicado na raiz
-    }
-}
-
-/**
- * Aplica ajustes estruturais de interface e injeta os controles de Governança ATI
- * (Exportação e Restauração de estado_cfm.json e dados.csv consolidados).
+ * Garante as atualizações de camadas de modais (z-index), remoção do item "Marco Legal"
+ * da navbar, remoção da Portaria da aba Legislação e atualização da Equipe Técnica.
  */
 function applyStructuralDOMUpdates() {
+    // 1. Eleva o z-index dos modais do Bootstrap acima do painel administrativo (#admin-panel)
     const styleFix = document.createElement('style');
     styleFix.innerHTML = `
         #gestorEditModal, #adminMapModal, #adminAccountModal, #museumModal { z-index: 2200 !important; }
@@ -358,7 +313,7 @@ function applyStructuralDOMUpdates() {
     `;
     document.head.appendChild(styleFix);
 
-    // Remove "Marco Legal Fluminense" do dropdown "Diretrizes do campo" na navbar
+    // 2. Remove "Marco Legal Fluminense" do dropdown "Diretrizes do campo" na navbar
     document.querySelectorAll('.navbar .dropdown-item').forEach(item => {
         if (item.textContent && item.textContent.toLowerCase().includes('marco legal')) {
             const li = item.closest('li');
@@ -366,7 +321,7 @@ function applyStructuralDOMUpdates() {
         }
     });
 
-    // Remove a Portaria da Comissão Consultiva da aba Legislação
+    // 3. Remove a Portaria da Comissão Consultiva da aba Legislação (mantendo-a apenas na aba Comissão)
     const legSection = document.getElementById('view-legislacao');
     if (legSection) {
         legSection.querySelectorAll('a').forEach(link => {
@@ -376,7 +331,7 @@ function applyStructuralDOMUpdates() {
         });
     }
 
-    // Atualiza a Equipe Técnica: remove Alice Araújo e adiciona Catharyna Reimol na Coordenação do Sistema
+    // 4. Atualiza a Equipe Técnica: remove Alice Araújo de Museologia e adiciona Catharyna Reimol na Coordenação do Sistema
     const equipeSection = document.getElementById('view-equipe');
     if (equipeSection) {
         equipeSection.querySelectorAll('.team-member').forEach(member => {
@@ -412,53 +367,6 @@ function applyStructuralDOMUpdates() {
                 }
             }
         });
-    }
-
-    // Injeta o painel de Governança e Publicação ATI na aba de Importação e na Sidebar do Gestor
-    const importTab = document.getElementById('admin-tab-import');
-    if (importTab && !document.getElementById('atiGovernanceCard')) {
-        const atiCard = document.createElement('div');
-        atiCard.id = 'atiGovernanceCard';
-        atiCard.className = 'admin-card mb-4 border-start border-4 border-primary';
-        atiCard.innerHTML = `
-            <div class="row align-items-center g-3">
-                <div class="col-lg-7">
-                    <span class="badge-secec badge-secec-blue mb-1"><i class="fa-solid fa-server me-1"></i>Persistência para Repositório / ATI</span>
-                    <h6 class="fw-bold text-dark mb-1">Publicação de Alterações Permanentes (ID Fixo + Histórico)</h6>
-                    <p class="small text-secondary mb-0">
-                        Todas as edições de fichas, visibilidade em bloco e logs de auditoria ficam salvos neste navegador pelo <strong>ID Fixo</strong> da instituição. Para tornar as alterações permanentes para todos os usuários no servidor (GitHub / Netlify / ATI), baixe os arquivos consolidados abaixo e substitua-os na pasta raiz do projeto.
-                    </p>
-                </div>
-                <div class="col-lg-5 d-flex flex-column gap-2">
-                    <button type="button" class="btn-admin-primary w-100" onclick="exportConsolidatedStateJSON()">
-                        <i class="fa-solid fa-file-code me-1"></i> 1. Baixar Estado Consolidado (estado_cfm.json)
-                    </button>
-                    <button type="button" class="btn btn-success btn-sm fw-bold py-2 w-100" onclick="exportRelatorio()">
-                        <i class="fa-solid fa-file-csv me-1"></i> 2. Baixar Planilha Consolidada (dados.csv)
-                    </button>
-                    <div class="input-group input-group-sm mt-1">
-                        <input type="file" id="jsonStateUpload" class="form-control" accept=".json" title="Carregar estado_cfm.json">
-                        <button class="btn-admin-secondary" type="button" onclick="importConsolidatedStateJSON()">
-                            <i class="fa-solid fa-upload me-1"></i> Restaurar JSON
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        importTab.prepend(atiCard);
-    }
-
-    const sidebarNav = document.querySelector('.admin-sidebar-nav');
-    if (sidebarNav && !document.getElementById('btnSidebarExportJSON')) {
-        const btnJson = document.createElement('button');
-        btnJson.id = 'btnSidebarExportJSON';
-        btnJson.className = 'admin-nav-link';
-        btnJson.onclick = () => exportConsolidatedStateJSON();
-        btnJson.innerHTML = `
-            <i class="fa-solid fa-cloud-arrow-down text-info"></i>
-            <span class="sidebar-text">Salvar Estado (estado_cfm.json)</span>
-        `;
-        sidebarNav.appendChild(btnJson);
     }
 }
 
@@ -525,6 +433,10 @@ function canonicalizeMunicipality(rawCity) {
     }).join(' ');
 }
 
+/**
+ * Padroniza a Região do Estado (garantindo distinção exata entre Metropolitana I, II e III)
+ * com base na coluna Região e na validação cruzada pelo Município.
+ */
 function canonicalizeRegion(rawRegion, canonicalMuni) {
     const normMuni = normalizeString(canonicalMuni);
     for (const [regiaoOficial, listaMunis] of Object.entries(REGIOES_POR_MUNICIPIO)) {
@@ -582,11 +494,19 @@ function isWithinRJ(lat, lng) {
     return (lat >= -23.5 && lat <= -20.6) && (lng >= -45.0 && lng <= -40.8);
 }
 
+/**
+ * Identifica se o acervo ou endereço da instituição é predominantemente digital/virtual.
+ * Instituições digitais/virtuais não devem possuir pino no mapa.
+ */
 function isPredominantlyDigital(acervo, endereco, natureza) {
     const combined = normalizeString(`${acervo || ''} ${endereco || ''} ${natureza || ''}`);
     return /\b(digital|virtual|on line|online|cibermuseu|web)\b/.test(combined);
 }
 
+/**
+ * Verifica se uma coordenada no município do Rio de Janeiro corresponde ao ponto genérico
+ * de centroide municipal (-22.9110, -43.2094 ou -22.9068, -43.1729) que gerava o agrupamento em cruz.
+ */
 function isGenericRioCentroid(lat, lng) {
     if (lat === null || lng === null) return false;
     const isNominatimRioCenter = Math.abs(lat - (-22.9110137)) < 0.0012 && Math.abs(lng - (-43.2093727)) < 0.0012;
@@ -594,6 +514,11 @@ function isGenericRioCentroid(lat, lng) {
     return isNominatimRioCenter || isDefaultRioCenter;
 }
 
+/**
+ * Resolve a localização real por bairro ou logradouro de instituições da Capital que
+ * caíram no centroide genérico do município. Caso não haja endereço físico válido, retorna null
+ * para que a instituição vá para a fila "Sem Geolocalização".
+ */
 function resolveRioNeighborhoodCoordinate(nome, endereco, indexSeed) {
     const endNorm = normalizeString(endereco);
     if (!endNorm || endNorm === "nao informado" || endNorm === "s/n" || endNorm.length < 4) {
@@ -603,6 +528,7 @@ function resolveRioNeighborhoodCoordinate(nome, endereco, indexSeed) {
     const searchTarget = normalizeString(`${endereco} ${nome}`);
     for (const [bairroKey, coords] of Object.entries(COORDENADAS_BAIRROS_RIO)) {
         if (searchTarget.includes(bairroKey)) {
+            // Microdeslocamento orgânico em espiral áurea (máx ~120m) para evitar sobreposição exata no mesmo bairro
             const goldenAngle = indexSeed * 2.399963229728653;
             const microRadius = 0.00045 * Math.sqrt((indexSeed % 9) + 1);
             return {
@@ -612,6 +538,7 @@ function resolveRioNeighborhoodCoordinate(nome, endereco, indexSeed) {
         }
     }
 
+    // Se o endereço é no Centro do Rio, posiciona na área central comercial/histórica sem formar cruz
     if (searchTarget.includes("centro") || searchTarget.includes("rua ") || searchTarget.includes("av ") || searchTarget.includes("avenida ") || searchTarget.includes("praca ")) {
         const goldenAngle = indexSeed * 2.399963229728653;
         const microRadius = 0.0008 * Math.sqrt((indexSeed % 12) + 1);
@@ -635,11 +562,11 @@ function inferirZonaRJ(endereco, municipio, zonaAtual) {
 }
 
 // ============================================================================
-// 2. LEITURA E PROCESSAMENTO DA BASE DE DADOS (dados.csv + ID FIXO)
+// 2. LEITURA E PROCESSAMENTO DA BASE DE DADOS (dados.csv)
 // ============================================================================
 async function loadInitialCSVData() {
     try {
-        const response = await fetch('dados.csv', { cache: "no-store" });
+        const response = await fetch('dados.csv');
         if (!response.ok) throw new Error("Arquivo dados.csv não localizado.");
         const csvText = await response.text();
         Papa.parse(csvText, {
@@ -659,7 +586,7 @@ const getColValue = (row, names) => {
         const target = normalizeString(name);
         for (const key in row) {
             if (normalizeString(key) === target) {
-                return row[key] !== undefined && row[key] !== null ? String(row[key]).trim() : "";
+                return row[key] ? String(row[key]).trim() : "";
             }
         }
     }
@@ -668,26 +595,20 @@ const getColValue = (row, names) => {
 
 async function processParsedData(rawData) {
     let cleanData = [];
-    let migratedLegacy = false;
 
     for (let i = 0; i < rawData.length; i++) {
         const row = rawData[i];
-        const nomeOriginal = getColValue(row, ["Nome da Instituição", "Nome", "nome"]);
-        if (!nomeOriginal) continue;
+        const nome = getColValue(row, ["Nome da Instituição", "Nome"]);
+        if (!nome) continue;
 
-        // Chave Primária Imutável: Lê ID_Fixo se exportado anteriormente ou gera ID determinístico da linha
-        const rawFixedId = getColValue(row, ["ID_Fixo", "id_fixo", "id"]);
-        const fixedId = rawFixedId ? (isNaN(Number(rawFixedId)) ? rawFixedId : Number(rawFixedId)) : (i + 1000);
-        const fixedIdKey = String(fixedId);
+        const municipioPadronizado = canonicalizeMunicipality(getColValue(row, ["Município", "Municipio"]));
+        const regiaoPadronizada = canonicalizeRegion(getColValue(row, ["Região", "Regiao"]), municipioPadronizado);
+        const endereco = getColValue(row, ["Endereço", "Endereco", "Logradouro"]);
+        const acervo = getColValue(row, ["Acervo Predominante", "Acervo"]);
+        const natureza = getColValue(row, ["Natureza Administrativa do Museu", "Natureza Administrativa", "Natureza"]) || "Privada";
 
-        const municipioPadronizado = canonicalizeMunicipality(getColValue(row, ["Município", "Municipio", "municipio"]));
-        const regiaoPadronizada = canonicalizeRegion(getColValue(row, ["Região", "Regiao", "regiao"]), municipioPadronizado);
-        const endereco = getColValue(row, ["Endereço", "Endereco", "Logradouro", "endereco"]);
-        const acervo = getColValue(row, ["Acervo Predominante", "Acervo", "acervo"]);
-        const natureza = getColValue(row, ["Natureza Administrativa do Museu", "Natureza Administrativa", "Natureza", "natureza"]) || "Privada";
-
-        let lat = parseCoordinate(getColValue(row, ["Lat", "Latitude", "lat"]));
-        let lng = parseCoordinate(getColValue(row, ["Lng", "Longitude", "Lon", "lng"]));
+        let lat = parseCoordinate(getColValue(row, ["Lat", "Latitude"]));
+        let lng = parseCoordinate(getColValue(row, ["Lng", "Longitude", "Lon"]));
 
         if (lat !== null && lng !== null && !isWithinRJ(lat, lng)) {
             lat = null;
@@ -698,10 +619,12 @@ async function processParsedData(rawData) {
         let coordAproximada = false;
 
         if (isDigital) {
+            // Regra obrigatória: instituições com acervo predominantemente digital/virtual ficam sem pino no mapa
             lat = null;
             lng = null;
         } else if (normalizeString(municipioPadronizado) === "rio de janeiro" && isGenericRioCentroid(lat, lng)) {
-            const resolvedRio = resolveRioNeighborhoodCoordinate(nomeOriginal, endereco, i);
+            // Corrige o agrupamento em cruz no centro da capital reposicionando pelo bairro/logradouro real
+            const resolvedRio = resolveRioNeighborhoodCoordinate(nome, endereco, i);
             if (resolvedRio) {
                 lat = resolvedRio.lat;
                 lng = resolvedRio.lng;
@@ -711,6 +634,7 @@ async function processParsedData(rawData) {
                 lng = null;
             }
         } else if (lat === null || lng === null) {
+            // Se não possui endereço físico informado, mantém sem pino para constar em "Sem Geolocalização"
             const endNorm = normalizeString(endereco);
             const hasPhysicalAddress = endNorm && endNorm !== "nao informado" && endNorm !== "sem endereco" && endNorm.length >= 4;
             const normCity = normalizeString(municipioPadronizado);
@@ -725,82 +649,46 @@ async function processParsedData(rawData) {
             }
         }
 
-        // Recupera metadados de governança embutidos no CSV consolidado (caso existam)
-        let csvVisivel = true;
-        const rawVisivel = getColValue(row, ["Visivel_Publico", "visivel"]);
-        if (rawVisivel && (rawVisivel.toLowerCase() === "false" || rawVisivel === "0" || rawVisivel.toLowerCase() === "nao")) {
-            csvVisivel = false;
-        }
-
-        let csvHiddenFields = {};
-        const rawHiddenJson = getColValue(row, ["Campos_Ocultos_JSON"]);
-        if (rawHiddenJson) {
-            try { csvHiddenFields = JSON.parse(rawHiddenJson); } catch (e) {}
-        }
-
-        let csvHistory = [];
-        const rawHistoryJson = getColValue(row, ["Historico_Edicoes_JSON"]);
-        if (rawHistoryJson) {
-            try { csvHistory = JSON.parse(rawHistoryJson); } catch (e) {}
-        }
-
         let mObj = {
-            id: fixedId,
-            id_cfm: getColValue(row, ["Nº CFM", "ID", "CFM", "id_cfm"]),
-            nome: nomeOriginal,
-            sigla: getColValue(row, ["Sigla", "sigla"]),
-            cnpj: getColValue(row, ["CNPJ", "cnpj"]),
-            documento_criacao: getColValue(row, ["Documento de Criação", "Documento", "documento_criacao"]),
+            id: i + 1000,
+            id_cfm: getColValue(row, ["Nº CFM", "ID", "CFM"]),
+            nome: nome,
+            sigla: getColValue(row, ["Sigla"]),
+            cnpj: getColValue(row, ["CNPJ"]),
+            documento_criacao: getColValue(row, ["Documento de Criação", "Documento"]),
             municipio: municipioPadronizado,
             regiao: regiaoPadronizada,
-            zona: inferirZonaRJ(endereco, municipioPadronizado, getColValue(row, ["Zona do Rio", "Zona", "zona"])),
+            zona: inferirZonaRJ(endereco, municipioPadronizado, getColValue(row, ["Zona do Rio", "Zona"])),
             endereco: endereco,
-            telefone: getColValue(row, ["Telefone Institucional", "Telefone", "Contato", "telefone"]),
-            email: getColValue(row, ["E-mail Institucional", "Email Institucional", "Email", "email"]),
-            site: getColValue(row, ["Site", "Site Oficial", "Website", "site"]),
-            facebook: getColValue(row, ["Facebook", "facebook"]),
-            instagram: getColValue(row, ["Instagram", "instagram"]),
-            twitter: getColValue(row, ["Twitter", "Twitter/X", "X", "twitter"]),
+            telefone: getColValue(row, ["Telefone Institucional", "Telefone", "Contato"]),
+            email: getColValue(row, ["E-mail Institucional", "Email Institucional", "Email"]),
+            site: getColValue(row, ["Site", "Site Oficial", "Website"]),
+            facebook: getColValue(row, ["Facebook"]),
+            instagram: getColValue(row, ["Instagram"]),
+            twitter: getColValue(row, ["Twitter", "Twitter/X", "X"]),
             natureza: natureza,
-            situacao: getColValue(row, ["Situação", "Situacao", "Status", "situacao"]) || "Aberto",
-            funcionamento: getColValue(row, ["Funcionamento", "Horário", "Turnos", "funcionamento"]),
-            ingresso: getColValue(row, ["Valor ingresso", "Valor do Ingresso", "Ingresso", "ingresso"]),
-            gratuidades: getColValue(row, ["Gratuidades", "Gratuidade", "gratuidades"]),
+            situacao: getColValue(row, ["Situação", "Situacao", "Status"]) || "Aberto",
+            funcionamento: getColValue(row, ["Funcionamento", "Horário", "Turnos"]),
+            ingresso: getColValue(row, ["Valor ingresso", "Valor do Ingresso", "Ingresso"]),
+            gratuidades: getColValue(row, ["Gratuidades", "Gratuidade"]),
             acervo: acervo,
-            educativo: getColValue(row, ["Setor Educativo", "Educativo", "educativo"]),
-            museologo: getColValue(row, ["Museólogo", "Museologo", "museologo"]),
-            acessibilidade: getColValue(row, ["Acessibilidade", "Acessibilidade Universal", "acessibilidade"]),
-            historico_museu: getColValue(row, ["Histórico", "Historico", "Histórico do Museu", "historico_museu"]),
-            resp_nome: getColValue(row, ["Responsável pelo Cadastro", "Responsável", "Responsavel", "resp_nome"]),
-            resp_email: getColValue(row, ["E-mail do Responsável", "Email Responsavel", "resp_email"]),
+            educativo: getColValue(row, ["Setor Educativo", "Educativo"]),
+            museologo: getColValue(row, ["Museólogo", "Museologo"]),
+            acessibilidade: getColValue(row, ["Acessibilidade", "Acessibilidade Universal"]),
+            historico_museu: getColValue(row, ["Histórico", "Historico", "Histórico do Museu"]),
+            resp_nome: getColValue(row, ["Responsável pelo Cadastro", "Responsável", "Responsavel"]),
+            resp_email: getColValue(row, ["E-mail do Responsável", "Email Responsavel"]),
             lat: lat,
             lng: lng,
             is_digital: isDigital,
             coord_aproximada: coordAproximada,
-            visivel: csvVisivel,
-            hidden_fields: csvHiddenFields,
-            history: csvHistory
+            visivel: true,
+            hidden_fields: {},
+            history: []
         };
 
-        // Migração automática caso exista edição antiga salva pelo nome
-        if (!localEditsById[fixedIdKey] && legacyEditsByName[nomeOriginal]) {
-            localEditsById[fixedIdKey] = { ...legacyEditsByName[nomeOriginal], id: fixedId };
-            migratedLegacy = true;
-        }
-
-        // Aplica as edições salvas pelo ID Fixo (preserva alterações mesmo se o nome do museu tiver sido editado)
-        if (localEditsById[fixedIdKey]) {
-            const savedEdit = localEditsById[fixedIdKey];
-            const mergedHistory = Array.isArray(savedEdit.history) && savedEdit.history.length >= mObj.history.length
-                ? savedEdit.history
-                : mObj.history;
-
-            mObj = {
-                ...mObj,
-                ...savedEdit,
-                id: fixedId,
-                history: mergedHistory
-            };
+        if (localEditsMemory[mObj.nome]) {
+            mObj = { ...mObj, ...localEditsMemory[mObj.nome] };
             mObj.municipio = canonicalizeMunicipality(mObj.municipio);
             mObj.regiao = canonicalizeRegion(mObj.regiao, mObj.municipio);
             if (isPredominantlyDigital(mObj.acervo, mObj.endereco, mObj.natureza)) {
@@ -812,21 +700,6 @@ async function processParsedData(rawData) {
 
         cleanData.push(mObj);
     }
-
-    if (migratedLegacy) {
-        localStorage.setItem('simrj_edits_by_id', JSON.stringify(localEditsById));
-    }
-
-    // Reintegra instituições cadastradas manualmente que ainda não estavam nas linhas originais do CSV
-    const loadedIds = new Set(cleanData.map(m => String(m.id)));
-    manualMuseumsMemory.forEach(manMuseum => {
-        const manIdKey = String(manMuseum.id);
-        if (!loadedIds.has(manIdKey)) {
-            const latestMan = localEditsById[manIdKey] ? { ...manMuseum, ...localEditsById[manIdKey] } : manMuseum;
-            cleanData.push(latestMan);
-            loadedIds.add(manIdKey);
-        }
-    });
 
     museumsData = cleanData;
     populateCityFilter();
@@ -899,6 +772,7 @@ window.applyFilters = function() {
         if (gratuidade && !mGrat.includes(gratuidade)) return false;
         if (acesso && !mAcc.includes(acesso)) return false;
 
+        // Comparação exata de Região para distinguir Metropolitana I, Metropolitana II e Metropolitana III
         if (regioes.length > 0 && !regioes.includes(mReg)) return false;
         if (naturezas.length > 0 && !naturezas.some(n => mNat.includes(n))) return false;
         if (acervos.length > 0 && !acervos.some(a => mAcer.includes(a))) return false;
@@ -973,9 +847,9 @@ function renderMuseums(data, focusOnPins = false) {
 
         const regColor = getRegionPinColor(m.regiao);
         const hasPin = m.lat !== null && m.lng !== null && !m.is_digital;
-        const digitalTag = !hasPin ? `<span class="badge-secec badge-secec-purple ms-1"><i class="fa-solid fa-laptop"></i> Sem Pino / Digital</span>` : '';
+        const digitalTag = !hasPin ? `<span class="badge-secec badge-secec-purple ms-1"><i class="fa-solid fa-Laptop"></i> Sem Pino / Digital</span>` : '';
 
-        const btnFicha = `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openProfile('${m.id}')"><i class="fa-regular fa-folder-open me-1"></i>Ver Ficha</button>`;
+        const btnFicha = `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openProfile(${m.id})"><i class="fa-regular fa-folder-open me-1"></i>Ver Ficha</button>`;
 
         htmlTable += `
             <tr class="tr-lista-item">
@@ -1010,6 +884,7 @@ function renderMuseums(data, focusOnPins = false) {
             let plotLat = m.lat;
             let plotLng = m.lng;
 
+            // Microdispersão em espiral de ângulo áureo (137.5°) caso duas instituições dividam o mesmo ponto
             if (count > 0) {
                 const goldenAngle = count * 2.399963229728653;
                 const radius = 0.00055 * Math.sqrt(count);
@@ -1027,7 +902,7 @@ function renderMuseums(data, focusOnPins = false) {
                     <small class="d-block text-secondary mb-2">
                         <span class="map-legend-swatch" style="background:${regColor};"></span>${m.municipio} • ${m.regiao}
                     </small>
-                    <button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openProfile('${m.id}')">Ver Ficha Completa</button>
+                    <button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openProfile(${m.id})">Ver Ficha Completa</button>
                 </div>
             `);
             markersArray.push(marker);
@@ -1169,7 +1044,7 @@ window.submitPublicFeedback = function(e) {
 };
 
 // ============================================================================
-// 6. BACK-OFFICE SECEC (PAINEL DO GESTOR, EDIÇÃO POR ID FIXO E LOGOUT LIMPO)
+// 6. BACK-OFFICE SECEC (PAINEL DO GESTOR, EDIÇÃO EM BLOCO E LOGOUT LIMPO)
 // ============================================================================
 window.openAdminOrLogin = function() {
     if (isGestor) {
@@ -1216,6 +1091,10 @@ window.checkAdminPassword = function() {
     }
 };
 
+/**
+ * Encerra a sessão administrativa limpando todos os modais, dropdowns e overlays ativos,
+ * retornando diretamente ao portal público sem exibir popups residuais.
+ */
 window.logoutGestor = function(e) {
     if (e) {
         e.preventDefault();
@@ -1223,6 +1102,7 @@ window.logoutGestor = function(e) {
     }
     isGestor = false;
 
+    // Fecha quaisquer modais administrativos ou menus abertos
     ['gestorEditModal', 'adminMapModal', 'adminAccountModal'].forEach(modalId => {
         const el = document.getElementById(modalId);
         if (el) {
@@ -1235,6 +1115,7 @@ window.logoutGestor = function(e) {
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
 
+    // Oculta painel e tela de login
     document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('login-overlay').style.display = 'none';
     const passField = document.getElementById('adminPassword');
@@ -1353,10 +1234,10 @@ window.saveBulkFieldVisibility = function() {
     globalHiddenFields = updatedBulk;
     localStorage.setItem('simrj_bulk_hidden_fields', JSON.stringify(globalHiddenFields));
     applyFilters();
-    alert("Configuração de visibilidade em bloco salva localmente! Para publicar no servidor/ATI, baixe o arquivo 'estado_cfm.json' ou 'dados.csv' na aba Importação.");
+    alert("Configuração de visibilidade em bloco aplicada com sucesso a todas as fichas.");
 };
 
-// Lista de Gestão Individual (Exibe o ID Fixo da ficha)
+// Lista de Gestão Individual
 window.renderVisibilityList = function() {
     const term = normalizeString(document.getElementById('searchVisibility')?.value || '');
     const list = document.getElementById('visibility-list');
@@ -1364,7 +1245,7 @@ window.renderVisibilityList = function() {
     list.innerHTML = '';
 
     museumsData.forEach(m => {
-        if (term && !normalizeString(m.nome).includes(term) && !normalizeString(m.municipio).includes(term) && !String(m.id).includes(term)) return;
+        if (term && !normalizeString(m.nome).includes(term) && !normalizeString(m.municipio).includes(term)) return;
         const rowClass = m.visivel ? "bg-white border" : "item-hidden border";
         const badgeStatus = m.visivel
             ? '<span class="badge-secec badge-secec-green">Pública</span>'
@@ -1377,14 +1258,13 @@ window.renderVisibilityList = function() {
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 p-3 rounded ${rowClass}">
                 <div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="badge-secec badge-secec-slate" title="ID Fixo do Sistema">#${m.id}</span>
                         <h6 class="fw-bold mb-0 text-dark">${m.nome}</h6>
                         ${badgeStatus}
                         ${badgeGeo}
                     </div>
                     <small class="text-secondary">${m.municipio} (${m.regiao}) • Edições auditadas: <strong>${m.history ? m.history.length : 0}</strong></small>
                 </div>
-                <button type="button" class="btn-admin-primary btn-sm mt-2 mt-sm-0" onclick="openGestorEdit('${m.id}')">
+                <button type="button" class="btn-admin-primary btn-sm mt-2 mt-sm-0" onclick="openGestorEdit(${m.id})">
                     <i class="fa-solid fa-pen-to-square me-1"></i> Editar Ficha e Visibilidade
                 </button>
             </div>
@@ -1397,7 +1277,7 @@ window.openGestorEdit = function(id) {
     const m = museumsData.find(x => String(x.id) === String(id));
     if (!m) return;
 
-    document.getElementById('gestorEditTitle').innerText = `${m.nome} (ID Fixo: #${m.id})`;
+    document.getElementById('gestorEditTitle').innerText = m.nome;
     document.getElementById('gestorMuseumVisible').checked = !m.visivel;
     document.getElementById('gestorAuthor').value = currentOperatorName !== "Gestor SUPMU" ? currentOperatorName : "";
 
@@ -1437,10 +1317,6 @@ window.openGestorEdit = function(id) {
     editModal.show();
 };
 
-/**
- * Salva as edições vinculadas diretamente ao ID Fixo (String(m.id)),
- * garantindo que alterações no nome ou endereço nunca quebrem o vínculo com a ficha.
- */
 window.saveGestorEdits = function() {
     const author = document.getElementById('gestorAuthor').value.trim();
     if (!author || author.length < 3) {
@@ -1477,17 +1353,8 @@ window.saveGestorEdits = function() {
     if (!m.history) m.history = [];
     m.history.push({ date: new Date().toLocaleString('pt-BR'), user: author });
 
-    // Salva na memória indexada pelo ID Fixo imutável
-    const fixedIdKey = String(m.id);
-    localEditsById[fixedIdKey] = { ...m };
-    localStorage.setItem('simrj_edits_by_id', JSON.stringify(localEditsById));
-
-    // Se for um museu criado manualmente, atualiza também na lista manual
-    const manIdx = manualMuseumsMemory.findIndex(item => String(item.id) === fixedIdKey);
-    if (manIdx !== -1) {
-        manualMuseumsMemory[manIdx] = { ...m };
-        localStorage.setItem('simrj_manual_museums', JSON.stringify(manualMuseumsMemory));
-    }
+    localEditsMemory[m.nome] = m;
+    localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
 
     populateCityFilter();
     applyFilters();
@@ -1563,7 +1430,7 @@ function renderAdminFeedbacks() {
 }
 
 // ============================================================================
-// 7. CADASTRO MANUAL, ABA "SEM GEOLOCALIZAÇÃO" E PACOTE DE ESTADO ATI
+// 7. CADASTRO MANUAL, ABA "SEM GEOLOCALIZAÇÃO" E ROBÔ GEOCODIFICADOR
 // ============================================================================
 window.buscarCepManual = async function(cep) {
     const limpo = String(cep).replace(/\D/g, '');
@@ -1594,9 +1461,8 @@ window.saveManualGestor = function() {
     let lat = isDigital ? null : parseCoordinate(document.getElementById('man_lat').value);
     let lng = isDigital ? null : parseCoordinate(document.getElementById('man_lng').value);
 
-    const fixedManualId = Date.now();
     const newM = {
-        id: fixedManualId,
+        id: Date.now(),
         id_cfm: document.getElementById('man_id_cfm').value,
         nome: nome,
         sigla: document.getElementById('man_sigla').value,
@@ -1630,22 +1496,22 @@ window.saveManualGestor = function() {
         coord_aproximada: false,
         visivel: true,
         hidden_fields: {},
-        history: [{ date: new Date().toLocaleString('pt-BR'), user: `${currentOperatorName} (Cadastro Manual Oficial)` }]
+        history: [{ date: new Date().toLocaleString('pt-BR'), user: `${currentOperatorName} (Cadastro Manual)` }]
     };
 
     museumsData.push(newM);
-    manualMuseumsMemory.push(newM);
-    localEditsById[String(fixedManualId)] = newM;
-
-    localStorage.setItem('simrj_manual_museums', JSON.stringify(manualMuseumsMemory));
-    localStorage.setItem('simrj_edits_by_id', JSON.stringify(localEditsById));
-
+    localEditsMemory[nome] = newM;
+    localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
     populateCityFilter();
     applyFilters();
-    alert(`Instituição cadastrada com sucesso sob o ID Fixo #${fixedManualId}.`);
+    alert("Instituição cadastrada e publicada com sucesso.");
     document.querySelectorAll('#formManualGestor input, #formManualGestor textarea').forEach(el => el.value = '');
 };
 
+/**
+ * Atualiza a aba "Sem Geolocalização" do Painel do Gestor listando todas as instituições
+ * com acervo digital/virtual ou sem coordenadas definidas, permitindo testar e mapear manualmente.
+ */
 function updatePendingList() {
     const list = document.getElementById('pending-list');
     if (!list) return;
@@ -1673,17 +1539,16 @@ function updatePendingList() {
             <div class="p-3 mb-2 bg-white border rounded d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span class="badge-secec badge-secec-slate">#${m.id}</span>
                         <strong class="text-dark">${m.nome}</strong>
                         ${tipoTag}
                     </div>
                     <small class="text-secondary">${m.municipio} (${m.regiao}) • Acervo: ${m.acervo || 'Não informado'} • Endereço: ${m.endereco || 'Sem endereço físico'}</small>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn-admin-secondary btn-sm" onclick="openGestorEdit('${m.id}')">
+                    <button type="button" class="btn-admin-secondary btn-sm" onclick="openGestorEdit(${m.id})">
                         <i class="fa-solid fa-pen me-1"></i> Editar Ficha
                     </button>
-                    <button type="button" class="btn btn-sm btn-warning fw-bold" onclick="openAdminMapPicker('${m.id}')">
+                    <button type="button" class="btn btn-sm btn-warning fw-bold" onclick="openAdminMapPicker(${m.id})">
                         <i class="fa-solid fa-location-crosshairs me-1"></i> Marcar no Mapa
                     </button>
                 </div>
@@ -1700,7 +1565,7 @@ window.openAdminMapPicker = function(id) {
     const m = museumsData.find(x => String(x.id) === String(id));
     if (!m) return;
 
-    document.getElementById('adminMapTitle').innerText = `${m.nome} (#${m.id})`;
+    document.getElementById('adminMapTitle').innerText = m.nome;
     document.getElementById('adminMapSearchInput').value = `${m.endereco || ''}, ${m.municipio || ''}, RJ`;
 
     const modalEl = document.getElementById('adminMapModal');
@@ -1751,124 +1616,20 @@ window.saveAdminPin = function() {
         m.lng = adminTempMarker.getLatLng().lng;
         m.is_digital = false;
         m.coord_aproximada = false;
-        if (!m.history) m.history = [];
-        m.history.push({ date: new Date().toLocaleString('pt-BR'), user: `${currentOperatorName} (Mapeamento Manual)` });
-
-        const fixedIdKey = String(m.id);
-        localEditsById[fixedIdKey] = { ...m };
-        localStorage.setItem('simrj_edits_by_id', JSON.stringify(localEditsById));
-
+        localEditsMemory[m.nome] = m;
+        localStorage.setItem('simrj_edits', JSON.stringify(localEditsMemory));
         applyFilters();
         bootstrap.Modal.getInstance(document.getElementById('adminMapModal')).hide();
     }
 };
 
-/**
- * Exporta o arquivo estado_cfm.json com todas as edições indexadas por ID Fixo,
- * histórico de auditoria, visibilidade em bloco e cadastros manuais para publicação no repositório/ATI.
- */
-window.exportConsolidatedStateJSON = function() {
-    const statePayload = {
-        metadata: {
-            system: "SIM-RJ / Cadastro Fluminense de Museus (CFM)",
-            agency: "SECEC-RJ / Superintendência de Museus",
-            updated_at: new Date().toLocaleString('pt-BR'),
-            exported_by: currentOperatorName
-        },
-        global_hidden_fields: globalHiddenFields,
-        edits_by_id: localEditsById,
-        manual_museums: manualMuseumsMemory,
-        public_feedbacks: publicFeedbacks
-    };
-
-    const blob = new Blob([JSON.stringify(statePayload, null, 2)], { type: 'application/json;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "estado_cfm.json";
-    link.click();
-};
-
-/**
- * Permite carregar manualmente um arquivo estado_cfm.json no painel para restaurar ou revisar
- * alterações feitas por outro gestor antes do envio para a ATI.
- */
-window.importConsolidatedStateJSON = function() {
-    const fileInput = document.getElementById('jsonStateUpload');
-    if (!fileInput || !fileInput.files[0]) {
-        return alert("Selecione o arquivo 'estado_cfm.json' para restaurar.");
-    }
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        try {
-            const parsed = JSON.parse(e.target.result);
-            if (parsed.edits_by_id) {
-                localEditsById = { ...localEditsById, ...parsed.edits_by_id };
-                localStorage.setItem('simrj_edits_by_id', JSON.stringify(localEditsById));
-            }
-            if (parsed.global_hidden_fields) {
-                globalHiddenFields = parsed.global_hidden_fields;
-                localStorage.setItem('simrj_bulk_hidden_fields', JSON.stringify(globalHiddenFields));
-            }
-            if (Array.isArray(parsed.manual_museums)) {
-                manualMuseumsMemory = parsed.manual_museums;
-                localStorage.setItem('simrj_manual_museums', JSON.stringify(manualMuseumsMemory));
-            }
-            renderBulkFieldsPanel();
-            await loadInitialCSVData();
-            alert("Estado consolidado 'estado_cfm.json' carregado e aplicado com sucesso!");
-        } catch (err) {
-            alert("Erro ao ler o arquivo JSON. Verifique se o formato é válido.");
-        }
-    };
-    reader.readAsText(fileInput.files[0]);
-};
-
-/**
- * Exporta a planilha consolidada dados.csv já com os cabeçalhos oficiais + ID_Fixo,
- * Visibilidade e Histórico de Auditoria embutidos, pronta para substituir o dados.csv do projeto.
- */
 window.exportRelatorio = function() {
-    const csvRows = museumsData.map(m => ({
-        "ID_Fixo": m.id,
-        "Nº CFM": m.id_cfm || "",
-        "Nome da Instituição": m.nome || "",
-        "Sigla": m.sigla || "",
-        "CNPJ": m.cnpj || "",
-        "Documento de Criação": m.documento_criacao || "",
-        "Município": m.municipio || "",
-        "Região": m.regiao || "",
-        "Zona do Rio": m.zona || "",
-        "Endereço": m.endereco || "",
-        "Telefone Institucional": m.telefone || "",
-        "E-mail Institucional": m.email || "",
-        "Site Oficial": m.site || "",
-        "Facebook": m.facebook || "",
-        "Instagram": m.instagram || "",
-        "Twitter": m.twitter || "",
-        "Natureza Administrativa": m.natureza || "",
-        "Situação": m.situacao || "",
-        "Funcionamento": m.funcionamento || "",
-        "Valor ingresso": m.ingresso || "",
-        "Gratuidades": m.gratuidades || "",
-        "Setor Educativo": m.educativo || "",
-        "Museólogo": m.museologo || "",
-        "Acervo Predominante": m.acervo || "",
-        "Acessibilidade": m.acessibilidade || "",
-        "Histórico": m.historico_museu || "",
-        "Responsável pelo Cadastro": m.resp_nome || "",
-        "E-mail do Responsável": m.resp_email || "",
-        "Lat": m.lat !== null && m.lat !== undefined ? m.lat : "",
-        "Lng": m.lng !== null && m.lng !== undefined ? m.lng : "",
-        "Visivel_Publico": m.visivel ? "true" : "false",
-        "Campos_Ocultos_JSON": JSON.stringify(m.hidden_fields || {}),
-        "Historico_Edicoes_JSON": JSON.stringify(m.history || [])
-    }));
-
-    const csv = Papa.unparse(csvRows);
+    const dataToExport = currentFilteredData.length > 0 ? currentFilteredData : museumsData;
+    const csv = Papa.unparse(dataToExport.map(({ history, hidden_fields, ...rest }) => rest));
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "dados.csv";
+    link.download = "relatorio_cfm_simrj.csv";
     link.click();
 };
 
@@ -1878,7 +1639,7 @@ window.startUpdateImport = function() {
     const statEl = document.getElementById('upload-status');
     statEl.classList.remove('d-none');
     statEl.className = 'alert alert-info small p-2 mt-3 mb-0';
-    statEl.innerText = "Processando planilha e sincronizando com os IDs Fixos...";
+    statEl.innerText = "Processando planilha e sincronizando coordenadas...";
 
     Papa.parse(file, {
         header: true,
@@ -1886,7 +1647,7 @@ window.startUpdateImport = function() {
         complete: async function(results) {
             await processParsedData(results.data);
             statEl.className = 'alert alert-success small p-2 mt-3 mb-0';
-            statEl.innerText = `Sincronização concluída! ${museumsData.length} instituições ativas na base.`;
+            statEl.innerText = `Sincronização concluída! ${museumsData.length} instituições carregadas.`;
         }
     });
 };
@@ -1918,16 +1679,16 @@ window.startRobotProcessing = function() {
                 const acervo = getColValue(row, ["Acervo Predominante", "Acervo"]);
                 const natureza = getColValue(row, ["Natureza Administrativa do Museu", "Natureza Administrativa", "Natureza"]);
 
-                if (!row["ID_Fixo"]) row["ID_Fixo"] = i + 1000;
                 row["Município"] = muni;
                 row["Região"] = canonicalizeRegion(getColValue(row, ["Região", "Regiao"]), muni);
 
                 if (isPredominantlyDigital(acervo, end, natureza)) {
                     row["Lat"] = "";
                     row["Lng"] = "";
-                    log(`[DIGITAL/VIRTUAL] #${row["ID_Fixo"]} ${nome} -> Mantido sem pino.`);
+                    log(`[DIGITAL/VIRTUAL] ${nome} -> Mantido sem pino.`);
                 } else if (!row["Lat"] && !row["Lng"] && nome) {
-                    log(`Geocodificando #${row["ID_Fixo"]}: ${nome} (${muni})...`);
+                    log(`Geocodificando: ${nome} (${muni})...`);
+                    // Higieniza complementos e CEP do logradouro para evitar falha no Nominatim
                     const endLimpo = end.replace(/cep[:\s]*[\d.-]+/gi, '').replace(/\([^)]*\)/g, '').split(' - ')[0].trim();
                     const query = `${endLimpo}, ${muni}, RJ, Brasil`.replace(/,\s*,/g, ',').trim();
                     try {
